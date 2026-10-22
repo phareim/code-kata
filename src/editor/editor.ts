@@ -2,7 +2,7 @@ import { acceptCompletion, autocompletion, closeBrackets, closeBracketsKeymap } 
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { bracketMatching, ensureSyntaxTree, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
-import { EditorState, Prec, StateEffect, StateField } from '@codemirror/state'
+import { EditorState, type Extension, Prec, StateEffect, StateField } from '@codemirror/state'
 import {
   crosshairCursor,
   Decoration,
@@ -46,52 +46,56 @@ const errorLine = StateField.define<DecorationSet>({
   provide: (field) => EditorView.decorations.from(field),
 })
 
+const extensionsOf = new WeakMap<EditorView, Extension[]>()
+
 export function createEditor(parent: HTMLElement, options: EditorOptions): EditorView {
-  return new EditorView({
-    parent,
-    state: EditorState.create({
-      doc: options.doc,
-      extensions: [
-        lineNumbers(),
-        highlightActiveLineGutter(),
-        highlightSpecialChars(),
-        history(),
-        drawSelection(),
-        dropCursor(),
-        EditorState.allowMultipleSelections.of(true),
-        indentOnInput(),
-        indentUnit.of('  '),
-        EditorState.tabSize.of(2),
-        syntaxHighlighting(neonHighlight),
-        bracketMatching(),
-        closeBrackets(),
-        autocompletion(),
-        rectangularSelection(),
-        crosshairCursor(),
-        highlightActiveLine(),
-        highlightSelectionMatches(),
-        EditorView.lineWrapping,
-        kataJavascript(options.itemNames),
-        errorLine,
-        neonTheme,
-        // Mod-Enter is insertBlankLine in the default keymap; Tab takes an open completion before it indents.
-        Prec.highest(keymap.of([
-          { key: 'Mod-Enter', run: () => { options.onRun(); return true } },
-          { key: 'Tab', run: acceptCompletion },
-        ])),
-        keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, indentWithTab]),
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged) options.onChange(update.state.doc.toString())
-        }),
-        EditorView.contentAttributes.of({
-          'aria-label': 'JavaScript-kode',
-          autocapitalize: 'off',
-          autocorrect: 'off',
-          spellcheck: 'false',
-        }),
-      ],
+  const extensions: Extension[] = [
+    lineNumbers(),
+    highlightActiveLineGutter(),
+    highlightSpecialChars(),
+    history(),
+    drawSelection(),
+    dropCursor(),
+    EditorState.allowMultipleSelections.of(true),
+    indentOnInput(),
+    indentUnit.of('  '),
+    EditorState.tabSize.of(2),
+    syntaxHighlighting(neonHighlight),
+    bracketMatching(),
+    closeBrackets(),
+    autocompletion(),
+    rectangularSelection(),
+    crosshairCursor(),
+    highlightActiveLine(),
+    highlightSelectionMatches(),
+    EditorView.lineWrapping,
+    kataJavascript(options.itemNames),
+    errorLine,
+    neonTheme,
+    // Mod-Enter is insertBlankLine in the default keymap; Tab takes an open completion before it indents.
+    Prec.highest(keymap.of([
+      { key: 'Mod-Enter', run: () => { options.onRun(); return true } },
+      { key: 'Tab', run: acceptCompletion },
+    ])),
+    keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, indentWithTab]),
+    EditorView.updateListener.of((update) => {
+      if (update.docChanged) options.onChange(update.state.doc.toString())
     }),
-  })
+    EditorView.contentAttributes.of({
+      'aria-label': 'JavaScript-kode',
+      autocapitalize: 'off',
+      autocorrect: 'off',
+      spellcheck: 'false',
+    }),
+  ]
+  const view = new EditorView({ parent, state: EditorState.create({ doc: options.doc, extensions }) })
+  extensionsOf.set(view, extensions)
+  return view
+}
+
+/** Another document with a history of its own (another task's code); onChange doesn't fire for it. */
+export function replaceDoc(view: EditorView, doc: string): void {
+  view.setState(EditorState.create({ doc, extensions: extensionsOf.get(view) }))
 }
 
 /** Marks the line an error came from (null clears it) and scrolls it into view. */

@@ -1,50 +1,69 @@
 # Kodekata
 
-A small place for JavaScript katas: write a few lines, run them in the browser, read the console, and watch a row of
-items change as the code moves their pointers around.
-Neon Coast's pixel look from phareim.no (the night palette, Neon Shrine's 5×7 font, notched boxes).
+Small JavaScript tasks where pixel creatures ask you to sort, tidy and move them: reverse a list, bubble-sort a row,
+build a Tower of Hanoi, mirror a tree, find the way through a graph, flood-fill a grid. Write a few lines, run them in
+the browser, and watch the creatures do what the code says. Neon Coast's pixel look from phareim.no (the night
+palette, Neon Shrine's 5×7 font, notched boxes).
 
 Live: https://kata.phareim.no (public, no login; verified in Chrome and WebKit 2026-10-22).
 
 ## What it does
 
-- **Items**: a row of eight pixel creatures above the editor, a linked list of `Ting` to play with (below).
-- **Editor**: CodeMirror 6 with JavaScript highlighting, bracket matching, search and undo.
-- **Autocomplete** as you type, Tab or Enter to accept:
-  - names the code declares and can see from the cursor: variables, functions, parameters, classes
-  - `head`, the class `Ting` and the items' letters (`A`, `B` …)
-  - keywords and snippets (`for`, `if`, `function`, `log` → `console.log()`, `=>`)
-  - the globals the runner has (`Math`, `JSON`, `Map`, `setTimeout` …) and their members after a dot (`Math.floor`, `console.table`)
-  - after a dot on anything else: `value`, `color`, `next`, common array, string, number, promise and map/set members,
-    and the property names the code already uses
-- **Run** with «Kjør» or Cmd/Ctrl + Enter. Output is printed the way Node prints it (`{ a: 1 }`, `[ 1, 'x' ]`, `Map(1) { 'a' => 1 }`).
-  An uncaught error shows its line and marks it in the editor.
-- The code is saved in the browser's localStorage as you type.
+- **Tasks** (`#/<id>`): a bank of tasks, each with a text, hints one at a time, a level (lett, middels, vanskelig) and
+  a topic (lister, sortering, rydding og flytting, stabler og køer, trær, grafer, rutenett, objekter og klassen,
+  klassikere). «Kjør» runs the code and checks it: «Løst!» with confetti, a stamp and the creatures jumping, or
+  «Ikke ennå» with what is still wrong. The solution can be shown and put into the editor, after a «Sikker?».
+- **The bank** («Oppgaver», or `/`): every task, searchable (title, text, topic, level), filtered by level, topic and
+  «Bare uløste», with solved ones ticked. «Tilfeldig» picks one not solved yet, from the whole bank or from what the
+  filters show.
+- **Progress**: solved tasks, opened hints, the code and the class per task, and the seed of each task's items are
+  kept in localStorage (`code-kata:progress`). The header counts what is solved.
+- **Lekeplass** (`#/lekeplass`): the free playground, eight creatures in a list and no task (below).
+- **Editor**: CodeMirror 6 with JavaScript highlighting, bracket matching, search and undo, and autocomplete as you
+  type (Tab or Enter): the code's own names, the roots (`head`, `items`, `root` …), `Ting`, `vis` and the items'
+  letters, keywords and snippets, the runner's globals with their members, and common members after any other dot.
+- **Run** with «Kjør» or Cmd/Ctrl + Enter. Output is printed the way Node prints it (`{ a: 1 }`, `[ 1, 'x' ]`,
+  `Map(1) { 'a' => 1 }`). An uncaught error shows its line and marks it in the editor.
 
-## The items
+## The stage
 
-Each item is a `Ting` with `value`, `color` and `next`: a number 1–99, a colour name and a pointer to the next item (or
-`null`). Every visit makes a new set of eight, A to H, with different values, colours from the palette (`pink`,
-`cyan`, `gold`, `lime`, `violet`, `orange`, `red`, `teal`) and the list in a shuffled order.
+The creatures stand on the stage above the code. They are the task's items, each a `Ting` (a class the code can see
+and change, at the top of the objects pane), held by named globals, the roots. Each root gets a panel drawn by its
+shape:
 
-- In the code, `head` points at the first item and can be moved (`head = head.next`). Each item is also a fixed global
-  named by its letter, so `A.next = C` works; `A = …` throws, because the letter names the item, not a variable.
-- The letters are memory slots: A is the first item made, B the second, and so on. Items the code makes and links in
-  from `head` along `next` get the next letters.
-- The row shows the list as the pointers make it: HEAD, then each item along `next`, then how it ends: NULL, a pink
-  «til X» when `next` points back into the list (a loop), or a red «?» when `next` isn't an item. Items not in the list
-  stand apart as «løse», looking down. When a run changes the order, the creatures glide to their new places.
-- The objects pane on the right has the class at the top and writes the items under it as code, in slot order:
-  `head = D`, `A = Ting { value: 7, color: 'pink', next: C }`. Extra properties the code adds show up there too.
-  Pointing at an item lights it up in the row and the pane.
-- `color` can be any CSS colour (`'hotpink'`, `'#0f0'`); one that isn't gets a grey creature and a red «?».
-- Each run starts from the items as they are shown, and what the code leaves becomes the new state, so running a
-  reversal twice gives the first order back. «Nullstill» goes back to the set this visit started with; «Nye» makes a
-  new one. A run that is stopped (or hits the time limit) leaves the items as they were.
+| Root | Drawn as |
+|---|---|
+| `head` (or any root pointing at an item) | a list along `next`: HEAD → A → C → null; ⇄ where `prev` points back; «til X» for a loop |
+| `items`, or any array of items | a row with the index under each |
+| `stack`, `queue` | a stack standing up (top first), a queue with its front marked |
+| `pegs` (an array of arrays) | poles with the items stacked from the bottom as discs, as wide as their `value` |
+| `root` | a binary tree along `left` and `right` |
+| `nodes` with `views: { nodes: 'graph' }` | a graph around a circle, an edge per `neighbors` pair (an arrow when one-way) |
+| `grid` (an array of arrays of values) | squares: a colour name fills one, `'#'` is a wall |
+| anything else | `name = value` |
+
+- An item appears once on the stage; a second panel that holds it shows its letter. Items no panel draws come last,
+  dimmed when no root reaches them. One token per item across the panels, so a creature glides (and hops, if it goes
+  far) from where it was to where it is, even from one panel to another.
+- An item's `shape` picks its creature: `blob` (the default), `ghost`, `cat` or `bot`. `color` is a palette name
+  (`pink`, `cyan`, `gold`, `lime`, `violet`, `orange`, `red`, `teal`) or any CSS colour.
+- **`vis()`** takes a snapshot. After the run the stage plays the snapshots, then the end; «Hopp over» skips to the
+  end. Strings and numbers in the call make the snapshot's caption, items (or arrays of them) light up gold:
+  `vis('bytter', items[i], items[i + 1])`. At most 240 per run; a long run plays faster.
+- The objects pane writes the roots and the items as code, in slot order: `head = D`,
+  `A = Ting { value: 7, color: 'pink', next: C }`. Pointing at an item lights it up everywhere.
+- Letters are memory slots: A is the first item made, B the second. Items the code makes and links in (from a root,
+  along `next`/`prev`/`left`/`right`/`parent`, or in an array of Ting) get the next letters. `A.next = C` works;
+  `A = …` throws, because the letter names the item, not a variable.
+
+In a task, every run starts from the task's items as they started (the same until «Nye» rolls new ones), so a run
+can be tried again and again. In the playground each run starts from where the last one left the items, «Nullstill»
+goes back and «Nye» makes eight new ones.
 
 ### The Ting class
 
-The class every item is made of stands at the top of the objects pane, as code you can edit:
+The class the items are made of stands at the top of the objects pane. A task brings the class its shape needs
+(`next` for a list, `left`/`right` for a tree, `neighbors` for a graph):
 
 ```js
 class Ting {
@@ -55,14 +74,9 @@ class Ting {
 }
 ```
 
-- Add a field (`size = 1`) and press «Bruk» (or Cmd/Ctrl + Enter in the class): every item gets it, at its default.
-  Take a field out and every item loses it. Fields that stay keep each item's value.
-- «Bruk» rebuilds the items from the class without running the code; «Kjør» runs the class and then the code.
-- Methods in the class work on every item (`head.describe()`), and `new Ting({ value: 5, color: 'gold', next: head })`
-  makes a new one in the code.
-- How it works: each build makes every item a `new Ting()` and gives it back its stored props, except fields the class
-  has dropped since the last build (the world remembers the class's fields). The class is saved in localStorage like
-  the code.
+Add a field and press «Bruk» (or Cmd/Ctrl + Enter in the class): every item gets it at its default. In the
+playground, taking a field out takes it off every item. Methods in the class work on every item, and
+`new Ting({ value: 5, color: 'gold', next: head })` makes a new one in the code.
 
 ## How code runs
 
@@ -71,43 +85,73 @@ class Ting {
 - Off the main thread, so a loop that never ends can't freeze the page. «Stopp» ends a run, and so does a 10-second limit.
 - On an opaque origin: the code can't read the site's storage, and its requests carry none of the visitor's
   `*.phareim.no` cookies.
-- The code is the body of an async function in strict mode, so `await` works at the top level.
-- A run ends when the code has returned and no `setTimeout`/`setInterval` is left. An uncaught error ends it too.
+- The code is the body of an async function in strict mode, so `await` works at the top level. A run ends when the
+  code has returned and no `setTimeout`/`setInterval` is left, or at an uncaught error.
 - The class and the code run as one source: the class, a line that builds the items from it, then the code. So
   `Ting` in the code is the class the items are made of, and an error's line is placed back in the editor it came
-  from (`linje 3` or `Ting linje 4`).
-- The items go in and out as data: each property is another item by slot, a value that survives a structured clone,
-  or, for a function or a symbol, only its text. The worker sends them back before it reports the end of the run,
-  also after a runtime error (whatever the code changed before it failed).
-- Error lines come from the engine: Chrome names the code `kata.js` in the stack, WebKit sets `error.line`.
-  The worker measures the engine's line offset once with a probe. Chrome reports a SyntaxError without a line,
-  so the page takes the line where CodeMirror's parser fails. Firefox is untested; the worker reads its
-  `lineNumber` too.
+  from (`linje 3` or `Ting linje 4`). A task that asks for functions gets a last line that returns them.
+- The items go in and out as data (`src/world/world.ts`, and the comment at the top of the world section in
+  `worker.js`): each property is another item by slot, an array of items, a value that survives a structured clone,
+  or, for a function or a symbol, only its text.
+- **The check.** After a task's code has run, the worker runs the task's check with one argument, `t`: the roots as
+  the code left them (`t.head`, `t.items` …), the items it started with (`t.slots`), a plain copy of the start
+  (`t.start`), what the code printed (`t.out`), the functions it declared (`t.fn('count')`), and helpers to build test
+  lists and trees and to name items in a message. The check returns `true` or a sentence in Norwegian saying what is
+  still wrong. An error in a function the code declared counts as the code's (with its line); an error in the check
+  itself says so («Sjekken feilet»).
+- Error lines come from the engine: Chrome names the code `kata.js` in the stack, WebKit sets `error.line`. The
+  worker measures the engine's line offset once with a probe. Chrome reports a SyntaxError without a line, so the page
+  takes the line where CodeMirror's parser fails. Firefox is untested; the worker reads its `lineNumber` too.
+
+## Writing a task
+
+A task is an object in one of the topic files in `src/tasks/` (`types.ts` has the type, with comments):
+
+- `id`: a slug, stable forever (progress is stored by it). Retire a task with `hidden: true`; never rename one.
+- `title`, `level`, `topic`, `text` (Norwegian bokmål; a blank line starts a paragraph, `code` in backticks, lines
+  starting with "- " make a list), and two or more `hints`, from a nudge to nearly the answer.
+- `world(random)`: the items, from the builders in `src/tasks/build.ts` (`listWorld`, `arrayWorld`, `bstWorld`,
+  `treeWorld`, `graphWorld`, `makeWorld`), with the seeded `random` it gets.
+- `ting`: the class (`src/tasks/classes.ts`), when the items aren't a list.
+- `starter`, `solution` (and `solutionTing` when the task is about the class).
+- `check: (t) => …`: an arrow function that uses only `t` and JavaScript's globals. It travels to the worker as
+  source text, so anything else it names is undefined there.
+- `exports`: the functions the code must declare, for `t.fn`.
+- `views`: a view for a root its shape doesn't give away, such as `{ nodes: 'graph' }`.
+
+`npm test` runs every task through the real worker in Node: its solution must pass on three seeds, its starter must
+not, and the check must not break. `scripts/smoke-tasks.mjs` then solves every task in the built site in Chrome and
+WebKit, which also covers the checks as minified source.
 
 ## Files
 
-- `src/main.ts`: the page: the two editors, buttons, status, console output, saving, the items' state.
-- `src/editor/editor.ts`: the CodeMirror setup, key bindings and the error-line mark.
-- `src/editor/completion.ts`: the completion sources.
-- `src/editor/theme.ts`: editor colours and syntax highlighting from the Neon Coast palette.
-- `src/run/runner.ts`: starts, stops and times out the worker.
-- `src/run/worker.js`: the worker: console capture, value formatting, timers, error lines, the items in and out.
-- `src/world/world.ts`: the items' data, the palette, letters, random sets, and walking the list.
-- `src/world/row.ts`, `src/world/blob.ts`: the row and its creatures.
+- `src/main.ts`: the page: what is open (a task or the playground), routing, runs, playback, verdicts, saving.
+- `src/app/`: the bank (`bank.ts`), progress (`progress.ts`), the success effect (`celebrate.ts`), task text
+  (`text.ts`).
+- `src/tasks/`: the task bank: one file per topic, `index.ts` (the order they are numbered in), `build.ts`
+  (start worlds), `classes.ts` (the Ting classes), `types.ts`.
+- `src/stage/`: the stage (`stage.ts`: panels, views, tokens, glides) and the creatures (`creatures.ts`).
+- `src/world/world.ts`: the items' data, the palette, letters, random sets, walking a list, what the roots reach.
 - `src/world/objects.ts`: the objects pane.
-- `src/starter.ts`: the code and the class a first visit opens with (and the earlier starters it replaces).
-- `public/fonts/neon-pixel.woff`: Neon Shrine's 5×7 pixel font, drawn for phareim.no.
-- `scripts/smoke.mjs`: browser check in Chrome and WebKit, with screenshots.
+- `src/editor/`: the CodeMirror setup, completion sources and the theme.
+- `src/run/runner.ts`: starts, stops and times out the worker.
+- `src/run/worker.js`: the worker: console capture, value formatting, timers, error lines, the items in and out,
+  `vis()`, the check.
+- `src/starter.ts`: the playground's code and class (and the earlier starters it replaces).
+- `test/harness.ts`: runs `worker.js` in a Node vm the way the page runs it; `test/tasks.test.ts` uses it for every
+  task.
+- `scripts/smoke.mjs` (the playground) and `scripts/smoke-tasks.mjs` (the tasks): browser checks in Chrome and
+  WebKit, with screenshots.
 
 ## Develop
 
 ```sh
 npm install
 npm run dev        # http://127.0.0.1:5173
-npm test           # value formatting, error lines (V8), completions, the items' round trip
+npm test           # formatting, error lines, completions, the items' round trip, the engine, every task
 npm run build      # typecheck + dist/
 npm run preview    # serve dist/ on 4173
-PLAYWRIGHT=/path/to/playwright-core/index.mjs CHROME_BIN=/path/to/chrome node scripts/smoke.mjs http://127.0.0.1:4173/
+PLAYWRIGHT=/path/to/playwright-core/index.mjs CHROME_BIN=/path/to/chrome node scripts/smoke-tasks.mjs http://127.0.0.1:4173/
 ```
 
 ## Deploy

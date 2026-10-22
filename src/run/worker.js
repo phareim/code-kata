@@ -358,6 +358,9 @@ function errorLine(err, cal, compiling, lineCount) {
  *   t.head, t.items, t.root …   the roots as the code left them
  *   t.slots                     the items the run started with (A, B …), the same objects
  *   t.start                     a plain copy of how the run started: { slots, head, items … }
+ *   t.live(copy)                the item a copy in t.start stands for (null for null)
+ *   t.before(root, key)         the items in the order a root held them at the start: an array's elements, or a
+ *                               list along key ('next')
  *   t.out                       the lines the code printed
  *   t.fn(name)                  a function the code declared (one of the task's exports)
  *   t.Ting                      the class
@@ -425,11 +428,21 @@ function checkContext({ Ting, slots, start, roots, out, exported, slotOf }) {
     }
     return format(v, 1, new Set())
   }
+  const live = (copy) => {
+    if (copy === null || copy === undefined) return null
+    const i = start.slots.indexOf(copy)
+    return i >= 0 ? slots[i] : undefined
+  }
   const t = {
     Ting,
     slots,
     start,
     out,
+    live,
+    before: (name = 'head', key = 'next') => {
+      const v = start[name]
+      return (Array.isArray(v) ? v : chain(v, key) ?? []).map(live)
+    },
     fn: (name) => (typeof exported[name] === 'function' ? userCall(name, exported[name]) : undefined),
     chain,
     values: (node, key = 'next') => chain(node, key)?.map((n) => read(n, 'value')) ?? null,
@@ -698,7 +711,8 @@ function start() {
         roots: built.roots.map(([name]) => name),
         fields: built.fields,
         Ting,
-        start: buildWorld(msg.world, undefined),
+        // A copy of its own: raw values (a grid, a tag list) would otherwise be the code's to change.
+        start: buildWorld(structuredClone(msg.world), undefined),
       }
       // The letters name slots, so they can't be reassigned (strict mode throws); the roots can.
       world.objs.forEach((obj, i) => {

@@ -48,8 +48,9 @@ async function open(context, code, cls = null) {
       else localStorage.setItem(key, value)
     }
   }, [[KEY, code], [CLASS_KEY, cls]])
-  await page.goto(url)
+  await page.goto(`${url.replace(/#.*$/, '')}#/lekeplass`)
   await page.waitForSelector('.cm-content')
+  await page.waitForFunction(() => /Lekeplass/i.test(document.getElementById('task-title').textContent))
   return page
 }
 
@@ -72,7 +73,7 @@ async function setClass(page, text) {
 const countLines = (page, text) => page.$$eval('#objects .o-line', (els, t) => els.filter((e) => e.textContent.includes(t)).length, text)
 
 // The items row in list order, by letter, and the objects pane's head line.
-const rowLabels = (page) => page.$$eval('#items .link .token', (els) => els.map((e) => e.dataset.label))
+const rowLabels = (page) => page.$$eval('#stage .panel--list .link .token', (els) => els.map((e) => e.dataset.label))
 const headLine = (page) => page.$eval('#objects .o-line', (e) => e.textContent)
 
 const REVERSE = `let prev = null
@@ -164,14 +165,14 @@ async function suite(name, browser) {
     ['code runs on an opaque origin', "console.log(self.origin)\nconsole.log(typeof localStorage)\nconsole.log(typeof document)", (r) => r.output.split('\n').join(' ') === 'null undefined undefined'],
     ['letters are fixed names', 'A = 1', (r) => /Feil · linje 1/i.test(r.status) && r.output.includes('TypeError')],
     ['a cycle shows as a loop', 'let last = head\nwhile (last.next) last = last.next\nlast.next = head',
-      async (r, page) => /Ferdig/i.test(r.status) && (await page.locator('#items .end--loop').count()) === 1],
+      async (r, page) => /Ferdig/i.test(r.status) && (await page.locator('#stage .end--loop').count()) === 1],
     ['loose items, a loop, a CSS colour and a long value',
       "head = head.next.next\nlet last = head\nwhile (last.next) last = last.next\nlast.next = head\nA.color = 'hotpink'\nB.value = 'kirsebær'",
       async (r, page) => {
         await page.waitForTimeout(700)
         await page.screenshot({ path: join(shots, `${page.context().browser().browserType().name()}-shapes.png`) })
-        return /Ferdig/i.test(r.status) && (await page.locator('#items .loose .token').count()) === 2
-          && (await page.locator('#items .end--loop').count()) === 1
+        return /Ferdig/i.test(r.status) && (await page.locator('#stage .panel--rest .token.is-loose').count()) === 2
+          && (await page.locator('#stage .end--loop').count()) === 1
           && (await page.locator('#objects .o-comment').count()) === 2
       }],
     ['an old starter gives way to the new one', OLD_STARTER,
@@ -202,7 +203,7 @@ async function suite(name, browser) {
   await setClass(page, WITHOUT_COLOR)
   r = await runAndWait(page, undefined, undefined, '#apply')
   check(`${name}: a dropped field leaves all eight`,
-    (await countLines(page, 'color')) === 0 && (await page.locator('#items .token.no-color').count()) === 8, JSON.stringify(r))
+    (await countLines(page, 'color')) === 0 && (await page.locator('#stage .token.no-color').count()) === 8, JSON.stringify(r))
   r = await runAndWait(page)
   const withNew = await rowLabels(page)
   check(`${name}: new Ting in the code joins the list`, withNew.length === 9 && withNew[0] === 'I'

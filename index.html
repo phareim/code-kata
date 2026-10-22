@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0616" />
-  <meta name="description" content="Kodekata: små oppgaver i JavaScript, skrevet og kjørt rett i nettleseren." />
+  <meta name="description" content="Kodekata: små oppgaver i JavaScript, der pikselfigurer ber deg sortere, rydde og flytte dem. Skrevet og kjørt rett i nettleseren." />
   <title>Kodekata · JavaScript i nettleseren</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="/fonts/neon-pixel.woff" as="font" type="font/woff" crossorigin />
@@ -12,30 +12,51 @@
 <body>
   <div class="app">
     <header class="top">
-      <h1 class="title px">Kodekata</h1>
-      <p class="tagline px">i JavaScript</p>
+      <a class="title px" href="#/" title="Til oppgaven du var på">Kodekata</a>
+      <nav class="top-nav" aria-label="Oppgaver">
+        <button id="open-bank" class="btn px" type="button" title="Alle oppgavene, med søk (/)">Oppgaver</button>
+        <button id="random-task" class="btn btn--quiet px" type="button" title="En tilfeldig oppgave du ikke har løst">Tilfeldig</button>
+        <a id="playground-link" class="btn btn--quiet px" href="#/lekeplass" title="Fri lek med tingene, uten oppgave">Lekeplass</a>
+      </nav>
+      <span class="spacer"></span>
+      <div class="progress" id="progress" role="status">
+        <span class="progress-label px">Løst</span>
+        <span id="progress-count" class="progress-count px">0/0</span>
+        <span class="progress-bar" aria-hidden="true"><span id="progress-fill" class="progress-fill"></span></span>
+      </div>
     </header>
     <main class="desk">
-      <div class="col">
-        <section id="items" class="items" aria-label="Tingene i lista, fra head langs next"></section>
-        <section class="pane px-box editor-pane" aria-labelledby="code-title">
-          <div class="pane-bar">
-            <h2 id="code-title" class="pane-title px">Kode</h2>
+      <div class="col col--side">
+        <section id="task" class="pane px-box task-pane" aria-labelledby="task-title">
+          <div class="task-head">
+            <span id="task-meta" class="task-meta px"></span>
+            <span id="task-level"></span>
+            <span id="task-solved" class="task-solved px" hidden>✓ Løst</span>
             <span class="spacer"></span>
-            <span id="hint" class="hint px" aria-hidden="true"></span>
-            <button id="run" class="btn btn--pink px" type="button">Kjør</button>
+            <button id="prev-task" class="btn btn--quiet btn--small px" type="button" aria-label="Forrige oppgave" title="Forrige oppgave">&lt;</button>
+            <button id="next-task" class="btn btn--quiet btn--small px" type="button" aria-label="Neste oppgave" title="Neste oppgave">&gt;</button>
           </div>
-          <div id="editor" class="editor"></div>
+          <div class="task-scroll">
+            <h2 id="task-title" class="task-title px"></h2>
+            <div id="task-text" class="task-text"></div>
+            <div id="verdict" class="verdict" role="status" hidden></div>
+            <div id="task-actions" class="task-actions">
+              <button id="hint-btn" class="btn btn--gold px" type="button">Hint</button>
+              <button id="solution-btn" class="btn btn--quiet px" type="button">Løsning</button>
+              <button id="restart-btn" class="btn btn--quiet px" type="button" title="Sett koden og klassen tilbake til starten">Start på nytt</button>
+            </div>
+            <ol id="hints" class="hints"></ol>
+            <div id="solution" class="solution" hidden>
+              <pre id="solution-code" class="solution-code"></pre>
+              <button id="use-solution" class="btn btn--quiet px" type="button">Sett den inn i koden</button>
+            </div>
+          </div>
         </section>
-      </div>
-      <div class="col">
         <section class="pane px-box objects-pane" aria-labelledby="objects-title">
           <div class="pane-bar">
             <h2 id="objects-title" class="pane-title px">Objekter</h2>
             <span class="spacer"></span>
             <button id="apply" class="btn btn--teal px" type="button" title="Bygg tingene på nytt fra klassen">Bruk</button>
-            <button id="reset" class="btn btn--quiet px" type="button" title="Sett tingene tilbake slik de var">Nullstill</button>
-            <button id="fresh" class="btn btn--quiet px" type="button" title="Lag åtte nye ting">Nye</button>
           </div>
           <div class="objects-scroll">
             <div id="class-editor" class="class-editor" aria-label="Klassen Ting"></div>
@@ -52,8 +73,52 @@
           <div id="output" class="output" role="log" aria-live="polite"></div>
         </section>
       </div>
+      <div class="col col--work">
+        <section class="pane px-box stage-pane" aria-labelledby="stage-title">
+          <div class="pane-bar">
+            <h2 id="stage-title" class="pane-title px">Tingene</h2>
+            <span id="stage-note" class="stage-note px" aria-live="polite"></span>
+            <span class="spacer"></span>
+            <button id="skip" class="btn btn--gold px" type="button" hidden>Hopp over</button>
+            <button id="reset" class="btn btn--quiet px" type="button" title="Sett tingene tilbake slik de startet">Nullstill</button>
+            <button id="fresh" class="btn btn--quiet px" type="button" title="Nye ting å starte fra">Nye</button>
+          </div>
+          <div id="stage" class="stage" aria-label="Tingene, slik koden ser dem"></div>
+        </section>
+        <section class="pane px-box editor-pane" aria-labelledby="code-title">
+          <div class="pane-bar">
+            <h2 id="code-title" class="pane-title px">Kode</h2>
+            <span class="spacer"></span>
+            <span id="hint" class="hint px" aria-hidden="true"></span>
+            <button id="run" class="btn btn--pink px" type="button">Kjør</button>
+          </div>
+          <div id="editor" class="editor"></div>
+        </section>
+      </div>
     </main>
   </div>
+
+  <div id="bank" class="bank" role="dialog" aria-modal="true" aria-labelledby="bank-title" hidden>
+    <div class="bank-box px-box">
+      <div class="bank-head">
+        <h2 id="bank-title" class="pane-title px">Oppgavebanken</h2>
+        <span class="spacer"></span>
+        <button id="bank-random" class="btn btn--pink px" type="button" title="En tilfeldig blant dem som vises">Tilfeldig</button>
+        <button id="bank-close" class="btn btn--quiet px" type="button" aria-label="Lukk">Lukk</button>
+      </div>
+      <p id="bank-stats" class="bank-stats px"></p>
+      <div class="bank-filters">
+        <input id="bank-search" class="bank-search" type="search" placeholder="Søk: snu, tre, sorter, rosa …" aria-label="Søk i oppgavene" autocomplete="off" spellcheck="false" />
+        <div id="bank-levels" class="chips" role="group" aria-label="Nivå"></div>
+        <div id="bank-topics" class="chips" role="group" aria-label="Tema"></div>
+        <label class="toggle px"><input id="bank-unsolved" type="checkbox" /> Bare uløste</label>
+      </div>
+      <ol id="bank-list" class="bank-list"></ol>
+      <p id="bank-empty" class="bank-empty" hidden>Ingen oppgaver passer. Prøv et annet ord, eller ta bort et filter.</p>
+    </div>
+  </div>
+  <canvas id="confetti" class="confetti" aria-hidden="true" hidden></canvas>
+  <div id="stamp" class="stamp px" aria-hidden="true" hidden>Løst!</div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

@@ -1,22 +1,38 @@
 import '@fontsource/jetbrains-mono/400.css'
 import './style.css'
 import type { EditorView } from '@codemirror/view'
-import { createEditor, firstSyntaxErrorLine, goToLine, markErrorLine } from './editor/editor'
-import { Runner, TIME_LIMIT_MS, type Entry, type Outcome, type Where } from './run/runner'
+import { Bank, levelBadge, randomTask } from './app/bank'
+import { confetti, stamp } from './app/celebrate'
+import { isSolved, lastTask, markSolved, rememberLast, taskState, updateTask } from './app/progress'
+import { inlineText, richText } from './app/text'
+import { createEditor, firstSyntaxErrorLine, goToLine, markErrorLine, replaceDoc } from './editor/editor'
+import { Runner, TIME_LIMIT_MS, type Entry, type Outcome, type Verdict, type Where } from './run/runner'
+import { Stage } from './stage/stage'
 import { OLD_STARTERS, STARTER, TING_CLASS } from './starter'
+import { seeded } from './tasks/build'
+import { TASKS, taskById, taskNumber } from './tasks/index'
+import { TOPICS, type Task } from './tasks/types'
 import { renderObjects } from './world/objects'
-import { renderRow } from './world/row'
 import { label, randomWorld, type World } from './world/world'
 
-const CODE_KEY = 'code-kata:code'
-const CLASS_KEY = 'code-kata:ting'
+// The playground keeps the keys the page used before it had tasks.
+const PLAY_CODE = 'code-kata:code'
+const PLAY_CLASS = 'code-kata:ting'
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 const runButton = $<HTMLButtonElement>('run')
 const statusEl = $('status')
 const output = $('output')
-const itemsRow = $('items')
 const objectsPane = $('objects')
+const stageNote = $('stage-note')
+const skipButton = $<HTMLButtonElement>('skip')
+const verdictEl = $('verdict')
+const hintButton = $<HTMLButtonElement>('hint-btn')
+const solutionButton = $<HTMLButtonElement>('solution-btn')
+const hintsEl = $('hints')
+const solutionEl = $('solution')
+
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 function load(key: string, fallback: string, old: string[] = []): string {
   try {
@@ -35,20 +51,31 @@ function store(key: string, text: string): void {
   }
 }
 
-// The items: a new set of eight on every visit, built from the Ting class. Each run starts from `world` and its
-// result becomes the new one; «Nullstill» goes back to `initial`. `version` keeps a run that was overtaken by a
-// later one, or by «Nye»/«Nullstill», from landing.
-let initial = randomWorld()
-let world = initial
+/*
+ * What is open: a task, or the playground. In a task every run starts from `start`, the task's items for its seed,
+ * and is checked. In the playground each run starts from the last one's result, as before there were tasks.
+ */
+type Mode = { kind: 'task'; task: Task } | { kind: 'play' }
+/** Null until the first route: nothing is open, so there is nothing to save. */
+let mode: Mode | null = null
+let start: World = randomWorld()
+/** `start` as the class last built it: what «Kjør» snaps back to before the run plays. */
+let built: World | null = null
+let world: World = start
+/** Keeps a run that was overtaken (by another run, «Nye», «Nullstill», another task) from landing. */
 let version = 0
 
-function showWorld(next: World, animate: boolean): void {
+const stage = new Stage($('stage'))
+const currentTask = () => (mode?.kind === 'task' ? mode.task : null)
+
+function showWorld(next: World, animate: boolean, duration?: number): void {
   world = next
-  renderRow(itemsRow, world, animate)
+  stage.render(world, { animate, duration, views: currentTask()?.views })
   renderObjects(objectsPane, world)
+  stageNote.textContent = next.note ?? ''
 }
 
-// Pointing at an item lights it up everywhere: in the row, in the objects pane and where other items point at it.
+// Pointing at an item lights it up everywhere: on the stage, in the objects pane and where others point at it.
 function lightUp(name: string | undefined, on: boolean): void {
   if (!name) return
   for (const node of document.querySelectorAll(`[data-label="${name}"]`)) node.classList.toggle('is-hot', on)
@@ -60,31 +87,33 @@ for (const type of ['pointerover', 'pointerout'] as const) {
   })
 }
 
+// The editors: the code, and the Ting class at the top of the objects pane. Both are saved for what is open.
 const itemNames = () => [...world.roots.map((p) => p.key), 'Ting', 'vis', ...world.items.map((_, i) => label(i))]
-const timers: Record<string, number> = {}
-const saveLater = (key: string) => (text: string) => {
-  window.clearTimeout(timers[key])
-  timers[key] = window.setTimeout(() => store(key, text), 300)
+let saveTimer = 0
+function saveNow(): void {
+  window.clearTimeout(saveTimer)
+  if (!mode) return
+  const code = codeView.state.doc.toString()
+  const ting = classView.state.doc.toString()
+  if (mode.kind === 'task') {
+    const task = mode.task
+    updateTask(task.id, {
+      code: code === task.starter ? undefined : code,
+      ting: ting === (task.ting ?? TING_CLASS) ? undefined : ting,
+    })
+  } else {
+    store(PLAY_CODE, code)
+    store(PLAY_CLASS, ting)
+  }
 }
-
-// Two editors: the kata code, and the Ting class at the top of the objects pane.
-const codeView = createEditor($('editor'), {
-  doc: load(CODE_KEY, STARTER, OLD_STARTERS),
-  onRun: () => run('code'),
-  onChange: saveLater(CODE_KEY),
-  itemNames,
-})
-const classView = createEditor($('class-editor'), {
-  doc: load(CLASS_KEY, TING_CLASS),
-  onRun: () => run('class'),
-  onChange: saveLater(CLASS_KEY),
-  itemNames,
-})
+const saveSoon = () => {
+  window.clearTimeout(saveTimer)
+  saveTimer = window.setTimeout(saveNow, 300)
+}
+const codeView = createEditor($('editor'), { doc: '', onRun: () => run('code'), onChange: saveSoon, itemNames })
+const classView = createEditor($('class-editor'), { doc: '', onRun: () => run('class'), onChange: saveSoon, itemNames })
 const views: Record<Where, EditorView> = { kode: codeView, ting: classView }
-window.addEventListener('pagehide', () => {
-  store(CODE_KEY, codeView.state.doc.toString())
-  store(CLASS_KEY, classView.state.doc.toString())
-})
+window.addEventListener('pagehide', saveNow)
 
 const runner = new Runner()
 const builder = new Runner()
@@ -123,6 +152,18 @@ function formatMs(ms: number): string {
   return `${(ms / 1000).toFixed(1).replace('.', ',')} s`
 }
 
+/** A button that jumps to a line in an editor, and the line marked there. */
+function lineLink(where: Where, at: number): HTMLButtonElement {
+  const view = views[where]
+  const go = document.createElement('button')
+  go.type = 'button'
+  go.className = 'goto'
+  go.textContent = where === 'ting' ? `Ting linje ${at}` : `linje ${at}`
+  go.addEventListener('click', () => goToLine(view, at))
+  markErrorLine(view, at)
+  return go
+}
+
 /** An uncaught error: the message, a link to its line, and the line marked in the editor it belongs to. */
 function showError(outcome: Extract<Outcome, { kind: 'error' }>): void {
   let { line: at, where } = outcome
@@ -134,18 +175,9 @@ function showError(outcome: Extract<Outcome, { kind: 'error' }>): void {
     }
   }
   const div = line('error', `${outcome.name}: ${outcome.message}`)
-  const place = where === 'ting' ? `Ting linje ${at}` : `linje ${at}`
-  if (at !== null && where) {
-    const view = views[where]
-    const go = document.createElement('button')
-    go.type = 'button'
-    go.className = 'goto'
-    go.textContent = place
-    go.addEventListener('click', () => goToLine(view, at))
-    div.append(' · ', go)
-    markErrorLine(view, at)
-  }
+  if (at !== null && where) div.append(' · ', lineLink(where, at))
   appendLines([div])
+  const place = where === 'ting' ? `Ting linje ${at}` : `linje ${at}`
   setStatus(at !== null ? `Feil · ${place}` : where === 'ting' ? 'Feil · Ting' : 'Feil', 'error')
 }
 
@@ -173,46 +205,351 @@ function finished(outcome: Outcome, kind: 'code' | 'class'): void {
   }
 }
 
-/** «Kjør» runs the class and the code; «Bruk» (or Cmd+Enter in the class) only rebuilds the items from the class. */
+/*
+ * Playback: the frames vis() took, one after the other, then the items as the run left them. A step is shorter
+ * when there are many frames, so a long run still plays in a few seconds. «Hopp over» jumps to the end.
+ */
+let playback: { timer: number; final: World; then: () => void } | null = null
+
+function play(frames: World[], final: World, dropped: number, then: () => void): void {
+  if (!frames.length) {
+    showWorld(final, true)
+    then()
+    return
+  }
+  if (dropped) appendLines([line('note', `vis() ble kalt ${frames.length + dropped} ganger; bare de ${frames.length} første spilles av.`)])
+  const step = Math.max(110, Math.min(650, 5200 / frames.length))
+  let i = 0
+  playback = { timer: 0, final, then }
+  skipButton.hidden = false
+  const tick = () => {
+    if (!playback) return
+    if (i >= frames.length) return endPlayback(true)
+    showWorld(frames[i++], true, Math.min(520, step * 0.85))
+    playback.timer = window.setTimeout(tick, step)
+  }
+  tick()
+}
+
+/** Jumps to the end of the playback; `then` runs only when it played out or was skipped, not when overtaken. */
+function endPlayback(runThen: boolean): void {
+  if (!playback) return
+  const { timer, final, then } = playback
+  playback = null
+  window.clearTimeout(timer)
+  skipButton.hidden = true
+  showWorld(final, true)
+  if (runThen) then()
+}
+skipButton.addEventListener('click', () => endPlayback(true))
+
+/** «Kjør» runs the class and the code (and a task's check); «Bruk» (or Cmd+Enter in the class) only rebuilds. */
 function run(kind: 'code' | 'class'): void {
+  endPlayback(false)
   for (const view of Object.values(views)) markErrorLine(view, null)
   output.replaceChildren()
+  verdictEl.hidden = true
   setRunning(true)
   setStatus('Kjører', 'running')
   const started = ++version
-  const code = kind === 'class' ? '' : codeView.state.doc.toString()
-  runner.run(code, classView.state.doc.toString(), world, {
+  const task = currentTask()
+  const checked = task !== null && kind === 'code'
+  // A task's run starts from its items as they started; the playground goes on from where the last run left them.
+  const from = task ? start : world
+  if (checked && built) showWorld(built, true)
+  let result: { world: World; frames: World[]; dropped: number } | null = null
+  let verdict: Verdict | null = null
+  runner.run(kind === 'class' ? '' : codeView.state.doc.toString(), classView.state.doc.toString(), from, {
     output: (entries) => appendLines(entries.map((e) => line(e.level, e.text))),
     clear: () => output.replaceChildren(),
-    world: (next) => { if (version === started) showWorld(next, true) },
-    end: (outcome) => finished(outcome, kind),
-  })
+    world: (next, frames, dropped) => { result = { world: next, frames, dropped } },
+    verdict: (v) => { verdict = v },
+    end: (outcome) => {
+      finished(outcome, kind)
+      if (version !== started) return
+      const landed = result as typeof result
+      const judged = verdict as Verdict | null
+      if (kind === 'class' && landed && task) built = landed.world
+      const after = () => {
+        if (task && judged) showVerdict(task, judged)
+        else if (task && checked && outcome.kind === 'error') stage.shake()
+      }
+      if (landed) play(landed.frames, landed.world, landed.dropped, after)
+      else after()
+    },
+  }, checked ? { check: String(task.check), exports: task.exports } : undefined)
 }
 
-/** Builds a fresh set from the class without a word in the console, unless the class fails. */
+/** Builds the start from the class without a word in the console, unless the class fails. */
 function build(): void {
   const started = ++version
-  builder.run('', classView.state.doc.toString(), world, {
+  builder.run('', classView.state.doc.toString(), start, {
     output: () => {},
     clear: () => {},
-    world: (next) => { if (version === started) showWorld(next, true) },
+    world: (next) => {
+      if (version !== started) return
+      built = next
+      showWorld(next, true)
+    },
     end: (outcome) => { if (outcome.kind === 'error' && version === started) showError(outcome) },
   })
 }
 
-showWorld(world, false)
-build()
+function nextTask(task: Task, step: 1 | -1): Task | undefined {
+  return TASKS[TASKS.indexOf(task) + step]
+}
+
+/** The next task not solved yet, after this one in order (from the start when none is left after it). */
+function nextOpenTask(task: Task): Task | undefined {
+  const i = TASKS.indexOf(task)
+  const after = [...TASKS.slice(i + 1), ...TASKS.slice(0, i)]
+  return after.find((t) => !isSolved(t.id)) ?? nextTask(task, 1)
+}
+
+function updateProgress(): void {
+  const solved = TASKS.filter((t) => isSolved(t.id)).length
+  $('progress-count').textContent = `${solved}/${TASKS.length}`
+  $('progress-fill').style.width = `${(100 * solved) / TASKS.length}%`
+  $('progress').title = `${solved} av ${TASKS.length} oppgaver løst`
+}
+
+function showVerdict(task: Task, v: Verdict): void {
+  verdictEl.hidden = false
+  verdictEl.className = `verdict ${v.ok ? 'is-ok' : v.broken ? 'is-broken' : 'is-not'}`
+  const strong = (text: string) => {
+    const node = document.createElement('strong')
+    node.className = 'px'
+    node.textContent = text
+    return node
+  }
+  if (v.ok) {
+    const first = markSolved(task.id)
+    const next = nextOpenTask(task)
+    verdictEl.replaceChildren(strong('Løst!'), ` ${first ? 'Tingene er fornøyde.' : 'Løst igjen, like fint.'} `)
+    if (next) {
+      const link = document.createElement('a')
+      link.className = 'btn btn--pink btn--small px'
+      link.href = `#/${next.id}`
+      link.textContent = 'Neste oppgave'
+      verdictEl.append(link)
+    }
+    $('task-solved').hidden = false
+    updateProgress()
+    setStatus('Løst!', 'done')
+    stage.cheer()
+    const rect = $('stage').getBoundingClientRect()
+    confetti($<HTMLCanvasElement>('confetti'), rect, first)
+    stamp($('stamp'), rect)
+  } else if (v.broken) {
+    verdictEl.replaceChildren(strong('Sjekken feilet.'), ' ', inlineText(v.message), ' Det er oppgavens feil, ikke din.')
+    setStatus('Feil i sjekken', 'error')
+  } else {
+    verdictEl.replaceChildren(strong('Ikke ennå:'), ' ', inlineText(v.message))
+    if (v.line !== null && v.where) verdictEl.append(' · ', lineLink(v.where, v.line))
+    setStatus('Ikke ennå', 'stopped')
+    stage.shake()
+  }
+}
+
+// The task card.
+function renderHints(task: Task): void {
+  const opened = Math.min(taskState(task.id).hints ?? 0, task.hints.length)
+  hintsEl.replaceChildren(...task.hints.slice(0, opened).map((hint) => {
+    const li = document.createElement('li')
+    li.append(inlineText(hint))
+    return li
+  }))
+  hintButton.disabled = opened >= task.hints.length
+  hintButton.textContent = opened >= task.hints.length ? 'Ingen flere hint' : `Hint ${opened + 1}/${task.hints.length}`
+}
+
+let solutionArmed = 0
+function renderSolution(task: Task, open: boolean): void {
+  window.clearTimeout(solutionArmed)
+  solutionArmed = 0
+  solutionEl.hidden = !open
+  solutionButton.textContent = open ? 'Skjul løsningen' : 'Løsning'
+  $('solution-code').textContent = task.solutionTing ? `${task.solutionTing}\n\n${task.solution}` : task.solution
+}
+
+function renderTask(task: Task): void {
+  $('task-meta').textContent = `#${taskNumber(task)} · ${TOPICS[task.topic]}`
+  $('task-level').replaceChildren(levelBadge(task.level))
+  $('task-solved').hidden = !isSolved(task.id)
+  $('task-title').textContent = task.title
+  $('task-text').replaceChildren(richText(task.text))
+  $('task-actions').hidden = false
+  verdictEl.hidden = true
+  renderHints(task)
+  renderSolution(task, false)
+  $<HTMLButtonElement>('prev-task').hidden = false
+  $<HTMLButtonElement>('next-task').hidden = false
+  $<HTMLButtonElement>('prev-task').disabled = !nextTask(task, -1)
+  $<HTMLButtonElement>('next-task').disabled = !nextTask(task, 1)
+  document.title = `${task.title} · Kodekata`
+}
+
+function renderPlay(): void {
+  $('task-meta').textContent = 'Fri lek'
+  $('task-level').replaceChildren()
+  $('task-solved').hidden = true
+  $('task-title').textContent = 'Lekeplass'
+  $('task-text').replaceChildren(richText(`Her er det ingen oppgave og ingen sjekk: lek med tingene. Hver kjøring fortsetter der den forrige slapp. «Nullstill» går tilbake til starten, og «Nye» gir åtte nye ting.
+
+Vil du ha noe å bryne deg på, trykk «Oppgaver» eller «Tilfeldig» øverst.`))
+  $('task-actions').hidden = true
+  verdictEl.hidden = true
+  hintsEl.replaceChildren()
+  solutionEl.hidden = true
+  $<HTMLButtonElement>('prev-task').hidden = true
+  $<HTMLButtonElement>('next-task').hidden = true
+  document.title = 'Lekeplass · Kodekata'
+}
+
+function leave(): void {
+  saveNow()
+  endPlayback(false)
+  runner.stop()
+  builder.stop()
+  version++
+  for (const view of Object.values(views)) markErrorLine(view, null)
+  output.replaceChildren()
+  setStatus('Klar', 'idle')
+  setRunning(false)
+}
+
+const newSeed = () => Math.floor(Math.random() * 1_000_000_000)
+
+function openTask(task: Task): void {
+  leave()
+  mode = { kind: 'task', task }
+  rememberLast(task.id)
+  const state = taskState(task.id)
+  let seed = state.seed
+  if (seed === undefined) {
+    seed = newSeed()
+    updateTask(task.id, { seed })
+  }
+  start = task.world(seeded(seed))
+  built = null
+  replaceDoc(codeView, state.code ?? task.starter)
+  replaceDoc(classView, state.ting ?? task.ting ?? TING_CLASS)
+  renderTask(task)
+  showWorld(start, false)
+  build()
+}
+
+function openPlay(): void {
+  leave()
+  mode = { kind: 'play' }
+  start = randomWorld()
+  built = null
+  replaceDoc(codeView, load(PLAY_CODE, STARTER, OLD_STARTERS))
+  replaceDoc(classView, load(PLAY_CLASS, TING_CLASS))
+  renderPlay()
+  showWorld(start, false)
+  build()
+}
+
+const bank = new Bank($('bank'), () => currentTask()?.id ?? null)
+
+/** #/<task id>, #/lekeplass, or nothing: the last task, else the first. */
+function route(): void {
+  bank.close()
+  const id = decodeURIComponent(location.hash.replace(/^#\/?/, ''))
+  if (id === 'lekeplass') {
+    if (mode?.kind !== 'play') openPlay()
+    return
+  }
+  const task = taskById(id) ?? taskById(lastTask() ?? '') ?? TASKS[0]
+  if (id !== task.id) history.replaceState(null, '', `#/${task.id}`)
+  if (currentTask() !== task) openTask(task)
+}
+window.addEventListener('hashchange', route)
+
+hintButton.addEventListener('click', () => {
+  const task = currentTask()
+  if (!task) return
+  updateTask(task.id, { hints: Math.min((taskState(task.id).hints ?? 0) + 1, task.hints.length) })
+  renderHints(task)
+  hintsEl.lastElementChild?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' })
+})
+solutionButton.addEventListener('click', () => {
+  const task = currentTask()
+  if (!task) return
+  if (!solutionEl.hidden) return renderSolution(task, false)
+  if (!solutionArmed) {
+    solutionButton.textContent = 'Sikker? Trykk igjen'
+    solutionArmed = window.setTimeout(() => renderSolution(task, false), 4000)
+    return
+  }
+  updateTask(task.id, { peeked: true })
+  renderSolution(task, true)
+})
+/** Replaces an editor's text as an edit, so Cmd+Z brings the old text back. */
+function setText(view: EditorView, text: string): void {
+  view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } })
+}
+$('use-solution').addEventListener('click', () => {
+  const task = currentTask()
+  if (!task) return
+  setText(codeView, task.solution)
+  if (task.solutionTing) setText(classView, task.solutionTing)
+  codeView.focus()
+})
+$('restart-btn').addEventListener('click', () => {
+  const task = currentTask()
+  if (!task) return
+  setText(codeView, task.starter)
+  setText(classView, task.ting ?? TING_CLASS)
+  verdictEl.hidden = true
+  codeView.focus()
+})
+for (const [id, step] of [['prev-task', -1], ['next-task', 1]] as const) {
+  $(id).addEventListener('click', () => {
+    const task = currentTask()
+    const to = task && nextTask(task, step)
+    if (to) location.hash = `#/${to.id}`
+  })
+}
+$('open-bank').addEventListener('click', () => bank.open())
+$('random-task').addEventListener('click', () => {
+  const task = randomTask(TASKS, currentTask()?.id ?? null)
+  if (task) location.hash = `#/${task.id}`
+})
+document.addEventListener('keydown', (event) => {
+  if (event.key !== '/' || bank.isOpen || event.metaKey || event.ctrlKey || event.altKey) return
+  const target = event.target as HTMLElement | null
+  if (target?.closest('input, textarea, .cm-editor')) return
+  event.preventDefault()
+  bank.open()
+})
 
 $('fresh').addEventListener('click', () => {
-  initial = randomWorld()
-  showWorld(initial, false)
+  endPlayback(false)
+  const task = currentTask()
+  if (task) {
+    const seed = newSeed()
+    updateTask(task.id, { seed })
+    start = task.world(seeded(seed))
+  } else {
+    start = randomWorld()
+  }
+  built = null
+  verdictEl.hidden = true
+  showWorld(start, false)
   build()
 })
 $('reset').addEventListener('click', () => {
-  showWorld(initial, true)
+  endPlayback(false)
+  verdictEl.hidden = true
+  showWorld(built ?? start, true)
   build()
 })
 $('apply').addEventListener('click', () => run('class'))
 runButton.addEventListener('click', () => (runner.running ? runner.stop() : run('code')))
 $('clear').addEventListener('click', () => output.replaceChildren())
+
+updateProgress()
+route()
 codeView.focus()
