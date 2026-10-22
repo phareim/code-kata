@@ -60,7 +60,7 @@ for (const type of ['pointerover', 'pointerout'] as const) {
   })
 }
 
-const itemNames = () => ['head', 'Ting', ...world.items.map((_, i) => label(i))]
+const itemNames = () => [...world.roots.map((p) => p.key), 'Ting', 'vis', ...world.items.map((_, i) => label(i))]
 const timers: Record<string, number> = {}
 const saveLater = (key: string) => (text: string) => {
   window.clearTimeout(timers[key])

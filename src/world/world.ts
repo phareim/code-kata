@@ -1,13 +1,17 @@
 /*
- * The items above the editor: a linked list the kata code can change. Each item is { value, color, next }; `head`
- * points at the first. The page never changes a World: each run returns a new one from the worker
- * (src/run/worker.js describes the format, slots and labels).
+ * The items above the editor and the globals that hold them (roots: `head` for a list, `items` for an array, `root`
+ * for a tree …). Each item is a Ting such as { value, color, next }. The page never changes a World: each run returns
+ * a new one from the worker (src/run/worker.js describes the format, slots and labels).
  */
 
-/** One property: another item by slot (`ref`), a value that survives a clone (`raw`), or only its text (`lossy`). */
+/**
+ * One property: another item by slot (`ref`), an array holding items (`list`, its elements keyed by index), a value
+ * that survives a clone (`raw`), or only its text (`lossy`).
+ */
 export interface Prop {
   key: string
   ref?: number
+  list?: Prop[]
   raw?: unknown
   text: string
   lossy?: boolean
@@ -19,11 +23,19 @@ export interface Item {
 }
 export interface World {
   items: Item[]
-  head: Prop
+  /** The globals the code reads the items through, in the order the stage shows them. */
+  roots: Prop[]
   /** The fields a new Ting had when these items were built; the next build drops the ones the class lost. */
   fields?: string[]
   /** More items than the worker tracks; the rest are not shown. */
   truncated?: boolean
+  /** A vis() frame: the items it lit up, and its caption. */
+  marks?: number[]
+  note?: string
+}
+
+export function root(world: World, name: string): Prop | undefined {
+  return world.roots.find((p) => p.key === name)
 }
 
 /** The colour names new items get, from the Neon Coast palette. Any CSS colour works too. */
@@ -77,7 +89,7 @@ export function randomWorld(random: () => number = Math.random): World {
       ],
     }
   })
-  return { items, head: ref('head', order[0]), fields: ['value', 'color', 'next'] }
+  return { items, roots: [ref('head', order[0])], fields: ['value', 'color', 'next'] }
 }
 
 export type End =
@@ -94,10 +106,11 @@ export interface Walk {
   loose: number[]
 }
 
-export function walk(world: World): Walk {
+/** The list from a root (head) along a pointer key (next). */
+export function walk(world: World, from: Prop | undefined = root(world, 'head'), key = 'next'): Walk {
   const chain: number[] = []
   const seen = new Set<number>()
-  let p: Prop | undefined = world.head
+  let p: Prop | undefined = from
   let end: End
   for (;;) {
     if (!p) { end = { kind: 'null', text: 'undefined' }; break }
@@ -108,9 +121,23 @@ export function walk(world: World): Walk {
     if (seen.has(p.ref)) { end = { kind: 'loop', to: p.ref }; break }
     seen.add(p.ref)
     chain.push(p.ref)
-    p = prop(world.items[p.ref], 'next')
+    p = prop(world.items[p.ref], key)
   }
   return { chain, end, loose: world.items.map((_, i) => i).filter((i) => !seen.has(i)) }
+}
+
+/** The slots reachable from the roots through any pointer or array; the rest are loose. */
+export function reachable(world: World): Set<number> {
+  const seen = new Set<number>()
+  const visit = (p: Prop | undefined) => {
+    if (!p) return
+    if (p.list) for (const q of p.list) visit(q)
+    if (p.ref === undefined || seen.has(p.ref)) return
+    seen.add(p.ref)
+    for (const q of world.items[p.ref]?.props ?? []) visit(q)
+  }
+  for (const p of world.roots) visit(p)
+  return seen
 }
 
 /** The CSS colour an item's `color` stands for, or null when it isn't one. */

@@ -12,6 +12,21 @@ export type Level = 'log' | 'info' | 'warn' | 'error'
 export type Where = 'kode' | 'ting'
 export interface Entry { level: Level; text: string }
 
+/** A task's check: solved, or what is still wrong; `broken` when the check itself failed. */
+export interface Verdict {
+  ok: boolean
+  message: string
+  broken: boolean
+  line: number | null
+  where: Where | null
+}
+
+/** What the worker needs to check a task: the check function's source and the functions the code should declare. */
+export interface TaskRun {
+  check: string
+  exports?: string[]
+}
+
 export type Outcome =
   | { kind: 'done'; ms: number }
   | {
@@ -29,8 +44,13 @@ export type Outcome =
 export interface RunHandlers {
   output(entries: Entry[]): void
   clear(): void
-  /** The items as the code left them; comes before end() unless the run was stopped or didn't compile. */
-  world(world: World): void
+  /**
+   * The items as the code left them, and the frames vis() took on the way (`dropped`: frames past the cap); comes
+   * before end() unless the run was stopped or didn't compile.
+   */
+  world(world: World, frames: World[], dropped: number): void
+  /** A task's verdict, after world() and before end(). */
+  verdict?(verdict: Verdict): void
   end(outcome: Outcome): void
 }
 
@@ -41,8 +61,11 @@ export class Runner {
     return this.finish !== null
   }
 
-  /** Runs the Ting class, builds the items from it, then runs the code (empty: only rebuild the items). */
-  run(code: string, classSource: string, world: World, handlers: RunHandlers): void {
+  /**
+   * Runs the Ting class, builds the items from it, then runs the code (empty: only rebuild the items); with a task,
+   * then its check.
+   */
+  run(code: string, classSource: string, world: World, handlers: RunHandlers, task?: TaskRun): void {
     this.stop()
     const worker = new Worker(WORKER_URL)
     const timer = window.setTimeout(() => finish({ kind: 'stopped', reason: 'timeout' }), TIME_LIMIT_MS)
@@ -61,7 +84,8 @@ export class Runner {
       switch (msg?.type) {
         case 'console': handlers.output(msg.entries); break
         case 'clear': handlers.clear(); break
-        case 'world': handlers.world(msg.world); break
+        case 'world': handlers.world(msg.world, msg.frames ?? [], msg.dropped ?? 0); break
+        case 'verdict': handlers.verdict?.(msg); break
         case 'done': finish({ kind: 'done', ms: msg.ms }); break
         case 'error':
           finish({ kind: 'error', name: msg.name, message: msg.message, line: msg.line, where: msg.where, compile: msg.compile, ms: msg.ms })
@@ -72,7 +96,7 @@ export class Runner {
       event.preventDefault()
       finish({ kind: 'error', name: 'Error', message: event.message || 'Kjøringen stoppet uventet.', line: null, where: null, compile: false, ms: 0 })
     }
-    worker.postMessage({ type: 'run', code, classSource, world })
+    worker.postMessage({ type: 'run', code, classSource, world, task })
   }
 
   stop(): void {

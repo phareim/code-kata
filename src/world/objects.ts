@@ -1,10 +1,10 @@
 /*
- * The objects pane: the items in memory order (A, B, C …), written the way the code sees them.
+ * The objects pane: the roots, then the items in memory order (A, B, C …), written the way the code sees them.
  *   head = D
  *   A = Ting { value: 7, color: 'pink', next: C }
- * A pointer reads as the item's letter; an item outside the list gets `// løs`.
+ * A pointer reads as the item's letter; an item no root reaches gets `// løs`.
  */
-import { itemColor, label, walk, type Prop, type World } from './world'
+import { itemColor, label, reachable, type Prop, type World } from './world'
 
 function span(className: string, text: string): HTMLSpanElement {
   const node = document.createElement('span')
@@ -17,6 +17,12 @@ function value(p: Prop, color: string | null): HTMLSpanElement {
   if (p.ref !== undefined) {
     const node = span('o-ref', label(p.ref))
     node.dataset.label = label(p.ref)
+    return node
+  }
+  if (p.list) {
+    const node = span('o-list', '[')
+    p.list.forEach((q, i) => node.append(span('o-punct', i ? ', ' : ''), value(q, null)))
+    node.append(span('o-punct', ']'))
     return node
   }
   if (p.lossy) {
@@ -38,13 +44,15 @@ function value(p: Prop, color: string | null): HTMLSpanElement {
 }
 
 export function renderObjects(pane: HTMLElement, world: World): void {
-  const loose = new Set(walk(world).loose)
+  const reached = reachable(world)
   const lines: HTMLElement[] = []
 
-  const head = document.createElement('div')
-  head.className = 'o-line'
-  head.append(span('o-name', 'head'), span('o-punct', ' = '), value(world.head, null))
-  lines.push(head)
+  for (const p of world.roots) {
+    const line = document.createElement('div')
+    line.className = 'o-line'
+    line.append(span('o-name', p.key), span('o-punct', ' = '), value(p, null))
+    lines.push(line)
+  }
 
   world.items.forEach((item, slot) => {
     const name = label(slot)
@@ -59,7 +67,7 @@ export function renderObjects(pane: HTMLElement, world: World): void {
       line.append(span('o-punct', i ? ', ' : ' '), span('o-key', p.key), span('o-punct', ': '), value(p, color))
     })
     line.append(span('o-punct', item.props.length ? ' }' : '}'))
-    if (loose.has(slot)) line.append(span('o-comment', '  // løs'))
+    if (!reached.has(slot)) line.append(span('o-comment', '  // løs'))
     lines.push(line)
   })
 

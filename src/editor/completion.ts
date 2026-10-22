@@ -144,17 +144,25 @@ export function memberSource(scope: Record<string, unknown>): CompletionSource {
   }
 }
 
-/** head, Ting and the items' letters, read from the current world on every call. */
+const WORLD_DETAILS: Record<string, Completion> = {
+  Ting: { label: 'Ting', type: 'class', detail: 'klassen' },
+  vis: { label: 'vis', type: 'function', detail: 'ta et bilde av tingene' },
+  head: { label: 'head', type: 'variable', detail: 'første ting' },
+  items: { label: 'items', type: 'variable', detail: 'array av ting' },
+  root: { label: 'root', type: 'variable', detail: 'roten i treet' },
+}
+
+/** The roots (head, items …), Ting, vis and the items' letters, read from the current world on every call. */
 export function worldSource(names: () => string[]): CompletionSource {
   return (context) => {
     const path = completionPath(context)
     if (!path || path.path.length) return null
     return {
       from: context.pos - path.name.length,
-      options: names().map((label) => (
-        label === 'Ting' ? { label, type: 'class', detail: 'klassen', boost: 2 }
-          : { label, type: 'variable', detail: label === 'head' ? 'første ting' : 'ting', boost: 2 }
-      )),
+      options: names().map((label) => ({
+        ...(WORLD_DETAILS[label] ?? { label, type: 'variable', detail: /^[A-Z]\d*$/.test(label) ? 'ting' : 'global' }),
+        boost: 2,
+      })),
       validFor: Identifier,
     }
   }
