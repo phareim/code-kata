@@ -71,6 +71,16 @@ export function runWorker(msg: RunMessage, timeoutMs = 4000): Promise<WorkerRun>
     vm.runInContext('globalThis.self = globalThis', context)
     vm.runInContext(`${source}\nstart()`, context)
     const onmessage = (context as unknown as { onmessage: (event: { data: unknown }) => void }).onmessage
-    onmessage({ data: structuredClone({ type: 'run', ...msg }) })
+    // postMessage hands the worker objects of its own realm, so a plain object in the world is plain there too.
+    const intoContext = vm.runInContext(`(function copy(v) {
+      if (Array.isArray(v)) return v.map(copy)
+      if (v !== null && typeof v === 'object' && Object.getPrototypeOf(v)?.constructor?.name === 'Object') {
+        const o = {}
+        for (const k of Object.keys(v)) o[k] = copy(v[k])
+        return o
+      }
+      return v
+    })`, context) as (v: unknown) => unknown
+    onmessage({ data: intoContext(structuredClone({ type: 'run', ...msg })) })
   })
 }

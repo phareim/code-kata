@@ -84,7 +84,7 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 `UPDATE_DOCS=1 npx vitest run test/docs.test.ts` rewrites it.
 
 <!-- tasks:start -->
-54 tasks: 21 lett, 26 middels, 7 vanskelig.
+76 tasks: 28 lett, 37 middels, 11 vanskelig.
 
 ### Lister (20)
 
@@ -118,71 +118,93 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 | 21 | `bytt-de-ytterste` | Bytt de ytterste | lett |  |
 | 22 | `boblesortering` | Boblesortering | middels | [link](https://en.wikipedia.org/wiki/Bubble_sort) |
 
-### Rydding og flytting (1)
+### Rydding og flytting (12)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
 | 23 | `rosa-sammen` | De rosa vil stå sammen | middels |  |
+| 24 | `sma-til-venstre` | Små til venstre | lett | [link](https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme) |
+| 25 | `spokelsene-bakerst` | Spøkelsene bakerst | lett |  |
+| 26 | `tett-hullene` | Tett hullene | lett |  |
+| 27 | `snu-raden` | Snu raden på stedet | lett |  |
+| 28 | `en-av-hver-farge` | Én av hver farge | lett |  |
+| 29 | `roter-raden` | Roter raden | middels |  |
+| 30 | `tre-farger` | Tre farger på rad | middels | [link](https://en.wikipedia.org/wiki/Dutch_national_flag_problem) |
+| 31 | `bolgen` | Bølgen | middels |  |
+| 32 | `like-naboer` | Like naboer slår seg sammen | middels |  |
+| 33 | `neste-ordning` | Neste ordning | vanskelig | [link](https://en.wikipedia.org/wiki/Permutation#Generation_in_lexicographic_order) |
+| 34 | `faerrest-bytter` | Færrest mulig bytter | vanskelig |  |
 
 ### Stabler og køer (2)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 24 | `snu-koen` | Snu køen med en stabel | lett |  |
-| 25 | `hanois-tarn` | Hanois tårn | vanskelig | [link](https://en.wikipedia.org/wiki/Tower_of_Hanoi) |
+| 35 | `snu-koen` | Snu køen med en stabel | lett |  |
+| 36 | `hanois-tarn` | Hanois tårn | vanskelig | [link](https://en.wikipedia.org/wiki/Tower_of_Hanoi) |
 
 ### Trær (2)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 26 | `hvor-hoyt` | Hvor høyt er treet? | middels |  |
-| 27 | `speil-treet` | Speil treet | middels | [link](https://leetcode.com/problems/invert-binary-tree/) |
+| 37 | `hvor-hoyt` | Hvor høyt er treet? | middels |  |
+| 38 | `speil-treet` | Speil treet | middels | [link](https://leetcode.com/problems/invert-binary-tree/) |
 
 ### Grafer (1)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 28 | `steg-fra-a` | Hvor mange steg unna? | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
+| 39 | `steg-fra-a` | Hvor mange steg unna? | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
 
-### Rutenett (1)
+### Rutenett (12)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 29 | `malingsbotta` | Malingsbøtta | middels | [link](https://en.wikipedia.org/wiki/Flood_fill) |
+| 40 | `malingsbotta` | Malingsbøtta | middels | [link](https://en.wikipedia.org/wiki/Flood_fill) |
+| 41 | `mal-rammen` | Mal rammen | lett |  |
+| 42 | `speilvend-brettet` | Speilvend brettet | lett |  |
+| 43 | `bytt-rader-og-kolonner` | Bytt rader og kolonner | middels |  |
+| 44 | `kvart-omdreining` | En kvart omdreining | middels |  |
+| 45 | `spiralen` | Spiralen | middels |  |
+| 46 | `tell-oyene` | Tell øyene | middels | [link](https://en.wikipedia.org/wiki/Connected-component_labeling) |
+| 47 | `ut-av-labyrinten` | Ut av labyrinten | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
+| 48 | `livets-spill` | Ett steg i Livet | middels | [link](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) |
+| 49 | `minesveiper` | Minesveiper | middels | [link](https://en.wikipedia.org/wiki/Minesweeper_(video_game)) |
+| 50 | `langtons-maur` | Langtons maur | vanskelig | [link](https://en.wikipedia.org/wiki/Langton%27s_ant) |
+| 51 | `slukk-lysene` | Slukk lysene | vanskelig | [link](https://en.wikipedia.org/wiki/Lights_Out_(game)) |
 
 ### Objekter og klassen (12)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 30 | `si-hvem-du-er` | Si hvem du er | lett |  |
-| 31 | `er-den-stor` | Er den stor? | lett |  |
-| 32 | `mellom-1-og-99` | Mellom 1 og 99 | middels |  |
-| 33 | `ting-compare` | Ting.compare | lett |  |
-| 34 | `katter-og-spokelser` | Katter og spøkelser | middels |  |
-| 35 | `roboten-teller` | Roboten teller i det skjulte | middels |  |
-| 36 | `tekst-og-tall` | Tekst og tall | middels |  |
-| 37 | `fargetelling` | Fargetelling | lett |  |
-| 38 | `hvor-mange-farger` | Hvor mange farger? | lett |  |
-| 39 | `grupper-etter-farge` | Grupper etter farge | middels |  |
-| 40 | `en-liste-du-kan-ga-gjennom` | En liste du kan gå gjennom | middels |  |
-| 41 | `husk-de-tre-siste` | Husk de tre siste | vanskelig | [link](https://en.wikipedia.org/wiki/Cache_replacement_policies#LRU) |
+| 52 | `si-hvem-du-er` | Si hvem du er | lett |  |
+| 53 | `er-den-stor` | Er den stor? | lett |  |
+| 54 | `mellom-1-og-99` | Mellom 1 og 99 | middels |  |
+| 55 | `ting-compare` | Ting.compare | lett |  |
+| 56 | `katter-og-spokelser` | Katter og spøkelser | middels |  |
+| 57 | `roboten-teller` | Roboten teller i det skjulte | middels |  |
+| 58 | `tekst-og-tall` | Tekst og tall | middels |  |
+| 59 | `fargetelling` | Fargetelling | lett |  |
+| 60 | `hvor-mange-farger` | Hvor mange farger? | lett |  |
+| 61 | `grupper-etter-farge` | Grupper etter farge | middels |  |
+| 62 | `en-liste-du-kan-ga-gjennom` | En liste du kan gå gjennom | middels |  |
+| 63 | `husk-de-tre-siste` | Husk de tre siste | vanskelig | [link](https://en.wikipedia.org/wiki/Cache_replacement_policies#LRU) |
 
 ### Klassikere (13)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 42 | `binaersok` | Binærsøk | middels | [link](https://en.wikipedia.org/wiki/Binary_search) |
-| 43 | `to-som-blir-malet` | To som blir målet | lett | [link](https://leetcode.com/problems/two-sum/) |
-| 44 | `kjop-lavt-selg-hoyt` | Kjøp lavt, selg høyt | lett | [link](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) |
-| 45 | `den-som-mangler` | Den som mangler | lett |  |
-| 46 | `balansepunktet` | Balansepunktet | lett | [link](https://leetcode.com/problems/find-pivot-index/) |
-| 47 | `tre-pa-rad` | Tre på rad | lett |  |
-| 48 | `fizzbuzz-i-farger` | FizzBuzz i farger | lett | [link](https://en.wikipedia.org/wiki/Fizz_buzz) |
-| 49 | `josefus-ringen` | Josefus-ringen | middels | [link](https://en.wikipedia.org/wiki/Josephus_problem) |
-| 50 | `flertallet` | Flertallet | middels | [link](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_majority_vote_algorithm) |
-| 51 | `den-gladeste-strekningen` | Den gladeste strekningen | middels | [link](https://en.wikipedia.org/wiki/Maximum_subarray_problem) |
-| 52 | `rettferdig-stokking` | Rettferdig stokking | middels | [link](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle) |
-| 53 | `regnvann` | Regnvann | vanskelig | [link](https://leetcode.com/problems/trapping-rain-water/) |
-| 54 | `en-fra-strommen` | Én fra strømmen | vanskelig | [link](https://en.wikipedia.org/wiki/Reservoir_sampling) |
+| 64 | `binaersok` | Binærsøk | middels | [link](https://en.wikipedia.org/wiki/Binary_search) |
+| 65 | `to-som-blir-malet` | To som blir målet | lett | [link](https://leetcode.com/problems/two-sum/) |
+| 66 | `kjop-lavt-selg-hoyt` | Kjøp lavt, selg høyt | lett | [link](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) |
+| 67 | `den-som-mangler` | Den som mangler | lett |  |
+| 68 | `balansepunktet` | Balansepunktet | lett | [link](https://leetcode.com/problems/find-pivot-index/) |
+| 69 | `tre-pa-rad` | Tre på rad | lett |  |
+| 70 | `fizzbuzz-i-farger` | FizzBuzz i farger | lett | [link](https://en.wikipedia.org/wiki/Fizz_buzz) |
+| 71 | `josefus-ringen` | Josefus-ringen | middels | [link](https://en.wikipedia.org/wiki/Josephus_problem) |
+| 72 | `flertallet` | Flertallet | middels | [link](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_majority_vote_algorithm) |
+| 73 | `den-gladeste-strekningen` | Den gladeste strekningen | middels | [link](https://en.wikipedia.org/wiki/Maximum_subarray_problem) |
+| 74 | `rettferdig-stokking` | Rettferdig stokking | middels | [link](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle) |
+| 75 | `regnvann` | Regnvann | vanskelig | [link](https://leetcode.com/problems/trapping-rain-water/) |
+| 76 | `en-fra-strommen` | Én fra strømmen | vanskelig | [link](https://en.wikipedia.org/wiki/Reservoir_sampling) |
 
 <!-- tasks:end -->
