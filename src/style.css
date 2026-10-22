@@ -793,6 +793,8 @@ body.has-sheet { overflow: hidden; }
 }
 .chip:hover, .chip:focus-visible { outline: none; color: var(--hi); }
 .chip[aria-pressed='true'] { color: var(--bg); background: var(--cyan); box-shadow: none; }
+.chip-count { color: var(--dim); }
+.chip[aria-pressed='true'] .chip-count { color: var(--shade); }
 .toggle {
   display: inline-flex;
   align-items: center;

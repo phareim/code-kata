@@ -48,8 +48,8 @@ export class Bank {
     this.search = root.querySelector('#bank-search')!
     this.empty = root.querySelector('#bank-empty')!
 
-    this.chips(root.querySelector('#bank-levels')!, [['', 'Alle'], ...Object.entries(LEVELS)], (v) => { this.level = v as Level | '' })
-    this.chips(root.querySelector('#bank-topics')!, [['', 'Alle'], ...Object.entries(TOPICS)], (v) => { this.topic = v as Topic | '' })
+    this.chips(root.querySelector('#bank-levels')!, 'level', [['', 'Alle'], ...Object.entries(LEVELS)], (v) => { this.level = v as Level | '' })
+    this.chips(root.querySelector('#bank-topics')!, 'topic', [['', 'Alle'], ...Object.entries(TOPICS)], (v) => { this.topic = v as Topic | '' })
     const unsolved = root.querySelector<HTMLInputElement>('#bank-unsolved')!
     unsolved.addEventListener('change', () => { this.unsolved = unsolved.checked; this.render() })
     this.search.addEventListener('input', () => { this.query = this.search.value; this.render() })
@@ -88,11 +88,13 @@ export class Bank {
     this.returnFocus?.focus()
   }
 
-  private chips(box: HTMLElement, options: [string, string][], set: (value: string) => void): void {
+  private chips(box: HTMLElement, field: 'level' | 'topic', options: [string, string][], set: (value: string) => void): void {
     for (const [value, text] of options) {
-      const chip = el('button', 'chip px', text)
+      const chip = el('button', 'chip px')
       chip.type = 'button'
       chip.dataset.value = value
+      chip.dataset.field = field
+      chip.append(el('span', 'chip-name', text), el('span', 'chip-count'))
       chip.setAttribute('aria-pressed', String(value === ''))
       chip.addEventListener('click', () => {
         set(value)
@@ -118,6 +120,14 @@ export class Bank {
       return `${LEVELS[level]} ${all.filter((t) => isSolved(t.id)).length}/${all.length}`
     })
     this.stats.textContent = `Løst ${solved.length} av ${TASKS.length} · ${per.join(' · ')}`
+    // Each chip says how far along its level or topic is.
+    for (const chip of this.root.querySelectorAll<HTMLElement>('.chip[data-field]')) {
+      const value = chip.dataset.value
+      const count = chip.querySelector('.chip-count')!
+      if (!value) { count.textContent = ''; continue }
+      const all = TASKS.filter((t) => t[chip.dataset.field as 'level' | 'topic'] === value)
+      count.textContent = ` ${all.filter((t) => isSolved(t.id)).length}/${all.length}`
+    }
 
     const shown = this.filtered()
     const current = this.current()
