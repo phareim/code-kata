@@ -654,15 +654,19 @@ body.has-sheet { overflow: hidden; }
 .peg > .cell-index { position: absolute; bottom: -18px; }
 
 /* A grid: one square per value; a colour name fills it, '#' is a wall. */
+/* Cells as wide as fits, up to --cell, and square. */
 .grid {
   --cell: 26px;
   display: grid;
-  grid-template-columns: repeat(var(--cols), var(--cell));
-  grid-auto-rows: var(--cell);
+  grid-template-columns: repeat(var(--cols), minmax(0, var(--cell)));
   gap: 2px;
+  max-width: 100%;
 }
 .grid-cell {
   --c: transparent;
+  aspect-ratio: 1;
+  min-width: 0;
+  overflow: hidden;
   display: grid;
   place-items: center;
   font: 16px/1 var(--font-pixel);

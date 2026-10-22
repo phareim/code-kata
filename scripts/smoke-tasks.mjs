@@ -156,6 +156,15 @@ async function browser(name, launch) {
   await mobile.waitForTimeout(400)
   const overflow = await mobile.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
   check(`${name}: phone has no sideways scroll`, overflow <= 0, `overflow ${overflow}px`)
+  // Every view fits the phone's width, the widest grid too.
+  const wide = []
+  for (const id of [...Object.values(VIEWS), 'langtons-maur', 'livets-spill']) {
+    await goTask(mobile, id)
+    const over = await mobile.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+    if (over > 0) wide.push(`${id} ${over}px`)
+  }
+  check(`${name}: every view fits a phone`, wide.length === 0, wide.join(', '))
+  await mobile.screenshot({ path: join(shots, `${name}-phone-grid.png`), fullPage: true })
   await mobile.screenshot({ path: join(shots, `${name}-phone-task.png`), fullPage: true })
   await mobile.click('#open-bank')
   await mobile.screenshot({ path: join(shots, `${name}-phone-bank.png`) })
