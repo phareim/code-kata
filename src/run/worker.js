@@ -391,17 +391,22 @@ function errorLine(err, cal, compiling, lineCount) {
 const USER_ERROR = Symbol('kata user error')
 
 function checkContext({ Ting, slots, start, roots, out, exported, slotOf }) {
-  const userCall = (name, fn) => function (...args) {
-    let r
-    try {
-      r = new.target ? Reflect.construct(fn, args) : fn.apply(this, args)
-    } catch (err) {
-      throw { [USER_ERROR]: true, name, err }
+  const userCall = (name, fn) => {
+    const call = function (...args) {
+      let r
+      try {
+        r = new.target ? Reflect.construct(fn, args) : fn.apply(this, args)
+      } catch (err) {
+        throw { [USER_ERROR]: true, name, err }
+      }
+      if (r !== null && typeof r === 'object' && typeof r.then === 'function') {
+        return r.then(undefined, (err) => { throw { [USER_ERROR]: true, name, err } })
+      }
+      return r
     }
-    if (r !== null && typeof r === 'object' && typeof r.then === 'function') {
-      return r.then(undefined, (err) => { throw { [USER_ERROR]: true, name, err } })
-    }
-    return r
+    // So `x instanceof t.fn('Bot')` asks about the class itself.
+    if (fn.prototype) call.prototype = fn.prototype
+    return call
   }
   const make = userCall('Ting', (props) => {
     const o = typeof Ting === 'function' ? new Ting(props) : {}

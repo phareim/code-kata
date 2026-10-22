@@ -45,8 +45,8 @@ export interface Check {
   /** The lines the code printed. */
   out: string[]
   Ting: any
-  /** A function the code declared (listed in the task's exports); an error in it counts as the code's. */
-  fn(name: string): (...args: any[]) => any
+  /** A function or class the code declared (listed in the task's exports); an error in it counts as the code's. */
+  fn(name: string): any
   /** The live item a copy in t.start stands for. */
   live(copy: Node | null | undefined): Node | null
   /** The items in the order a root held them at the start (an array's elements, or a list along key). */

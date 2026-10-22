@@ -27,6 +27,9 @@ const VIEWS = {
   tree: 'speil-treet',
   graph: 'steg-fra-a',
   grid: 'malingsbotta',
+  pointers: 'skilpadda-og-haren',
+  double: 'snu-dobbel-liste',
+  shapes: 'katter-og-spokelser',
 }
 
 async function goTask(page, id) {
