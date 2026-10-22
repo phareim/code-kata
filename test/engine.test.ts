@@ -184,6 +184,40 @@ describe('task checks', () => {
     expect(run.verdict).toMatchObject({ ok: true })
   })
 
+  it('constructs a class the code exports, through t.fn with new', async () => {
+    const check = String((t: any) => {
+      const Counter = t.fn('Counter')
+      const c = new Counter(2)
+      c.add()
+      return c.n === 3 ? true : `n er ${c.n}`
+    })
+    const run = await runWorker({
+      code: 'class Counter {\n  constructor(n) { this.n = n }\n  add() { this.n++ }\n}',
+      classSource: TING,
+      world: randomWorld(),
+      task: { check, exports: ['Counter'] },
+    })
+    expect(run.verdict).toMatchObject({ ok: true })
+  })
+
+  it('draws a value from a getter in the class', async () => {
+    const run = await runWorker({
+      code: '',
+      classSource: `class Ting {
+  #v = 0
+  color = 'pink'
+  next = null
+  get value() { return this.#v }
+  set value(v) { this.#v = Math.min(99, Math.max(1, v)) }
+  constructor(props) { Object.assign(this, props) }
+}`,
+      world: randomWorld(),
+    })
+    expect(run.end.type).toBe('done')
+    const value = prop(run.world!.items[0], 'value')
+    expect(typeof value!.raw).toBe('number')
+  })
+
   it('prints nothing from the code while the check runs', async () => {
     const check = String((t: any) => (t.fn('shout')() === 1 ? true : 'nei'))
     const run = await runWorker({

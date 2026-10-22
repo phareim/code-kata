@@ -532,6 +532,21 @@ body.has-sheet { overflow: hidden; }
   transition: --c 0.45s;
 }
 .token-label { color: var(--muted); }
+/* Pointer roots (slow, fast …) as flags over the item they point at. */
+.token-flags {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--gold);
+  text-transform: none;
+  text-shadow: 1px 1px 0 #000, 0 0 6px rgba(255, 210, 63, 0.6);
+}
+.token-flags:empty { display: none; }
+.stage.has-flags .panel { margin-top: 12px; }
 .token-value {
   max-width: calc(14 * var(--px) + 16px);
   overflow: hidden;

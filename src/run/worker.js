@@ -218,6 +218,20 @@ function keysOf(o) {
   }
 }
 
+/** The fields the stage draws an item by; a getter in the class counts, though it isn't an own property. */
+const SHOWN = ['value', 'color', 'shape']
+
+function itemKeys(o) {
+  const keys = keysOf(o)
+  for (const key of SHOWN) {
+    if (keys.includes(key)) continue
+    for (let p = Object.getPrototypeOf(o); p && p !== Object.prototype; p = Object.getPrototypeOf(p)) {
+      if (Object.getOwnPropertyDescriptor(p, key)?.get) { keys.push(key); break }
+    }
+  }
+  return keys
+}
+
 /**
  * The world as the code left it. `known` holds the items so far in their slots; items found now are appended to it,
  * so an item keeps its slot from one vis() frame to the next and to the end. `roots` is [name, value] pairs;
@@ -284,7 +298,7 @@ function snapshotWorld(known, roots, fields = [], Ting = undefined, marked = [])
   }
   const items = known.map((o) => ({
     cls: constructorName(o),
-    props: keysOf(o).map((key) => {
+    props: itemKeys(o).map((key) => {
       let v
       try { v = o[key] } catch (err) { v = err }
       return encode(key, v)
@@ -362,7 +376,7 @@ function errorLine(err, cal, compiling, lineCount) {
  *   t.before(root, key)         the items in the order a root held them at the start: an array's elements, or a
  *                               list along key ('next')
  *   t.out                       the lines the code printed
- *   t.fn(name)                  a function the code declared (one of the task's exports)
+ *   t.fn(name)                  a function (or class, for `new`) the code declared, one of the task's exports
  *   t.Ting                      the class
  *   t.chain(node, key)          the nodes from node along key ('next'), or null when it loops or hits a non-object
  *   t.values(node, key)         their values
@@ -380,7 +394,7 @@ function checkContext({ Ting, slots, start, roots, out, exported, slotOf }) {
   const userCall = (name, fn) => function (...args) {
     let r
     try {
-      r = fn.apply(this, args)
+      r = new.target ? Reflect.construct(fn, args) : fn.apply(this, args)
     } catch (err) {
       throw { [USER_ERROR]: true, name, err }
     }

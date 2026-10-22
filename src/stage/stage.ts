@@ -7,6 +7,7 @@
  *   graph   an array of items whose `neighbors` are the edges, around a circle
  *   grid    an array of arrays of values: a colour name fills its cell, '#' is a wall
  *   value   anything else: name = value
+ *   pointer a root that names an item (slow, fast): a flag over that item, no panel of its own
  * Items no panel shows come last, dimmed when no root reaches them. An item appears once: a second panel that holds
  * it shows its letter. There is one token per item across the panels, so an item glides from one place to the next,
  * even from one panel to another (FLIP: measure, move in the DOM, animate the difference).
@@ -14,7 +15,7 @@
 import { creatureSvg } from './creatures'
 import { COLORS, itemColor, itemValue, label, prop, reachable, walk, type End, type Prop, type World } from '../world/world'
 
-export type ViewKind = 'list' | 'array' | 'stack' | 'queue' | 'pegs' | 'tree' | 'graph' | 'grid' | 'value'
+export type ViewKind = 'list' | 'array' | 'stack' | 'queue' | 'pegs' | 'tree' | 'graph' | 'grid' | 'value' | 'pointer'
 
 export interface RenderOptions {
   /** Glide from the last render; false starts over (a new set of items, another task). */
@@ -80,8 +81,13 @@ export class Stage {
     this.claimed = new Set()
     const used = new Map<string, Panel>()
     const layouts: Layout[] = []
+    const flags = new Map<string, string[]>()
     for (const p of world.roots) {
       const kind = opts.views?.[p.key] ?? kindOf(p)
+      if (kind === 'pointer') {
+        if (p.ref !== undefined) flags.set(label(p.ref), [...(flags.get(label(p.ref)) ?? []), p.key])
+        continue
+      }
       const panel = this.panel(used, `${p.key}:${kind}`, p.key, kind)
       const layout = DRAW[kind](this, panel.body, world, p)
       if (layout) layouts.push(layout)
@@ -96,6 +102,8 @@ export class Stage {
     this.panels = used
     this.el.replaceChildren(...[...used.values()].map((p) => p.node))
     for (const layout of layouts) layout()
+    for (const [name, node] of this.tokens) node.firstElementChild!.textContent = flags.get(name)?.join(' ') ?? ''
+    this.el.classList.toggle('has-flags', flags.size > 0)
 
     const marks = new Set((world.marks ?? []).map(label))
     for (const node of this.el.querySelectorAll<HTMLElement>('[data-label]')) {
@@ -133,14 +141,14 @@ export class Stage {
       node = el('span', 'token')
       node.dataset.label = name
       node.style.setProperty('--delay', `${-(slot % 4) * 0.45}s`)
-      node.append(el('span', 'token-label px', name), el('span', 'token-body'), el('span', 'token-value px'))
+      node.append(el('span', 'token-flags px'), el('span', 'token-label px', name), el('span', 'token-body'), el('span', 'token-value px'))
       this.tokens.set(name, node)
     }
     const shape = prop(item, 'shape')?.raw
     const shapeName = typeof shape === 'string' ? shape : 'blob'
     if (node.dataset.shape !== shapeName) {
       node.dataset.shape = shapeName
-      ;(node.children[1] as HTMLElement).innerHTML = creatureSvg(shapeName)
+      ;(node.children[2] as HTMLElement).innerHTML = creatureSvg(shapeName)
     }
     const color = itemColor(item)
     node.style.setProperty('--c', color ?? '#5a5285')
@@ -155,7 +163,7 @@ export class Stage {
     const raw = prop(item, 'value')?.raw
     node.style.setProperty('--w', String(typeof raw === 'number' && raw > 0 ? Math.min(raw, 12) : 3))
 
-    const valueNode = node.children[2] as HTMLElement
+    const valueNode = node.children[3] as HTMLElement
     valueNode.textContent = value
     valueNode.classList.toggle('is-long', value.length > 4)
     if (node.isConnected && node.dataset.value !== undefined && node.dataset.value !== value && !reducedMotion()) {
@@ -472,4 +480,5 @@ const DRAW: Record<ViewKind, Draw> = {
   graph: drawGraph,
   grid: drawGrid,
   value: drawValue,
+  pointer: () => {},
 }
