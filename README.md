@@ -3,7 +3,7 @@
 A small place for JavaScript katas: write a few lines, run them in the browser, read the console.
 Neon Coast's pixel look from phareim.no (the night palette, Neon Shrine's 5×7 font, notched boxes).
 
-Live: https://kata.phareim.no (public, no login).
+Live: https://kata.phareim.no (public, no login; verified in Chrome and WebKit 2026-10-22).
 
 ## What it does
 
