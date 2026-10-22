@@ -751,4 +751,65 @@ console.log(pickOne(() => items[i++] ?? null))
     },
     source: 'https://en.wikipedia.org/wiki/Reservoir_sampling',
   },
+  {
+    id: 'josefus-uten-a-telle',
+    title: 'Josefus uten å telle',
+    level: 'vanskelig',
+    topic: 'klassikere',
+    text: `I Josefus-ringen med \`n\` ting går annenhver ut: nummer 2 går først, så nummer 4, og så videre rundt og rundt til én står igjen. Skriv \`function survivor(n)\` som gir tilbake nummeret (fra 1) til den som står igjen.
+
+Sjekken spør om ringer med opptil en milliard ting, så du kan ikke telle deg gjennom. Prøv små ringer for hånd, og se etter mønsteret.`,
+    hints: [
+      'Skriv opp svaret for n = 1 til 16. Hva skjer hver gang n er en potens av 2?',
+      'Når n er en potens av 2, står nummer 1 igjen. Er n litt større, må `n - 2^m` ting ut først (der `2^m` er den største toerpotensen som ikke er større enn n), og da er det den neste i ringen som står for tur.',
+      'Svaret er `2 * (n - 2^m) + 1`. Den største toerpotensen finner du med en løkke som dobler, eller med `2 ** Math.floor(Math.log2(n))`.',
+    ],
+    world: (r) => {
+      const items = things(r, 7)
+      return makeWorld(items, { queue: items.map((_, i) => at(i)) })
+    },
+    ting: PLAIN_TING,
+    starter: `function survivor(n) {
+  // Hvem står igjen når annenhver går ut?
+  return 1
+}
+
+console.log(survivor(queue.length), survivor(41))
+`,
+    solution: `function survivor(n) {
+  let power = 1
+  while (power * 2 <= n) power *= 2
+  return 2 * (n - power) + 1
+}
+
+console.log(survivor(queue.length), survivor(41))
+`,
+    exports: ['survivor'],
+    check: (t) => {
+      const survivor = t.fn('survivor')
+      const simulate = (n: number) => {
+        const ring = Array.from({ length: n }, (_, i) => i + 1)
+        let i = 0
+        while (ring.length > 1) {
+          i = (i + 1) % ring.length
+          ring.splice(i, 1)
+          i %= ring.length
+        }
+        return ring[0]
+      }
+      for (let n = 1; n <= 64; n++) {
+        const got = survivor(n)
+        if (got !== simulate(n)) return `survivor(${n}) gav ${t.show(got)}, men nummer ${simulate(n)} står igjen.`
+      }
+      for (const n of [1000000, 123456789, 1000000000]) {
+        let power = 1
+        while (power * 2 <= n) power *= 2
+        const want = 2 * (n - power) + 1
+        const got = survivor(n)
+        if (got !== want) return `survivor(${n}) gav ${t.show(got)}, men svaret er ${want}.`
+      }
+      return true
+    },
+    source: 'https://en.wikipedia.org/wiki/Josephus_problem#k=2',
+  },
 ]

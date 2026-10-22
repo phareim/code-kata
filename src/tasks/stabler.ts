@@ -908,4 +908,75 @@ console.log(hanoiMoves(pegs[0].length))
     },
     source: 'https://en.wikipedia.org/wiki/Tower_of_Hanoi#Solution',
   },
+  {
+    id: 'bare-til-naboen',
+    title: 'Bare til naboen',
+    level: 'vanskelig',
+    topic: 'stabler',
+    text: `Hanois tårn med en ekstra regel: en skive får bare flyttes til pinnen ved siden av. Fra pinne 0 til 1, fra 1 til 0 eller 2, og fra 2 til 1, men aldri rett fra 0 til 2. Og som før: aldri en større skive oppå en mindre.
+
+Skriv \`function neighborHanoi(n, move)\` som flytter et tårn på \`n\` skiver fra pinne 0 til pinne 2 og kaller \`move(from, to)\` for hvert flytt. Det går på \`3^n - 1\` flytt, og sjekken godtar ikke flere. Koden nederst kjører den på tårnet på scenen.`,
+    hints: [
+      'Tenk rekursivt, som i det vanlige tårnet: hvordan får du den største skiva fra 0 til 2 når den må innom pinne 1?',
+      'Den største må gjøre to flytt: 0 → 1 og 1 → 2. Før hvert av dem må de `n - 1` andre ligge på pinnen den ikke skal til eller fra.',
+      'Flytt `n - 1` fra 0 til 2, den største 0 → 1, `n - 1` fra 2 til 0, den største 1 → 2, og `n - 1` fra 0 til 2. Skriv en hjelper `go(n, from, to)` for et tårn mellom to ytterpinner.',
+    ],
+    world: () => {
+      const items = [4, 3, 2, 1].map((value, i) => ({ value, color: PALETTE[i + 3] }))
+      return makeWorld(items, { pegs: [items.map((_, i) => at(i)), [], []] })
+    },
+    ting: PLAIN_TING,
+    starter: `function neighborHanoi(n, move) {
+  // Flytt n skiver fra 0 til 2, bare mellom naboer
+}
+
+neighborHanoi(pegs[0].length, (from, to) => {
+  pegs[to].push(pegs[from].pop())
+  vis()
+})
+`,
+    solution: `function neighborHanoi(n, move) {
+  // A tower between the two outer pegs, always by way of the middle one.
+  function go(k, from, to) {
+    if (k === 0) return
+    go(k - 1, from, to)
+    move(from, 1)
+    go(k - 1, to, from)
+    move(1, to)
+    go(k - 1, from, to)
+  }
+  go(n, 0, 2)
+}
+
+neighborHanoi(pegs[0].length, (from, to) => {
+  pegs[to].push(pegs[from].pop())
+  vis()
+})
+`,
+    exports: ['neighborHanoi'],
+    check: (t) => {
+      const neighborHanoi = t.fn('neighborHanoi')
+      for (const n of [1, 2, 3, 5]) {
+        const pegs: number[][] = [Array.from({ length: n }, (_, i) => n - i), [], []]
+        let moves = 0
+        let bad = ''
+        neighborHanoi(n, (from: number, to: number) => {
+          moves++
+          if (bad) return
+          if (Math.abs(from - to) !== 1) { bad = `et flytt fra pinne ${from} til ${to}, som ikke er naboer`; return }
+          if (!pegs[from]?.length) { bad = `et flytt fra den tomme pinnen ${from}`; return }
+          const disc = pegs[from][pegs[from].length - 1]
+          const top = pegs[to].at(-1)
+          if (top !== undefined && top < disc) { bad = `${disc} ble lagt oppå ${top}`; return }
+          pegs[to].push(pegs[from].pop()!)
+        })
+        if (bad) return `Med ${n} skiver: ${bad}.`
+        if (pegs[2].length !== n) return `Med ${n} skiver står bare ${pegs[2].length} på pinne 2 til slutt.`
+        if (moves !== 3 ** n - 1) return `Med ${n} skiver brukte du ${moves} flytt; det går på ${3 ** n - 1}.`
+      }
+      if (!Array.isArray(t.pegs?.[2]) || t.pegs[2].length !== t.slots.length) return 'Tårnet på scenen står ikke på `pegs[2]` ennå.'
+      return true
+    },
+    source: 'https://en.wikipedia.org/wiki/Tower_of_Hanoi#Variants',
+  },
 ]

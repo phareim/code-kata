@@ -1276,4 +1276,73 @@ vis('sortert etter farge')
     },
     source: 'https://en.wikipedia.org/wiki/Sorting_algorithm#Stability',
   },
+  {
+    id: 'hvor-mange-ma-flytte',
+    title: 'Hvor mange må flytte?',
+    level: 'vanskelig',
+    topic: 'sortering',
+    text: `Tingene i \`items\` vil stå sortert etter \`value\`, men så få som mulig vil reise seg. En ting som flytter seg, kan settes ned hvor som helst. De som blir sittende, må allerede stå i riktig rekkefølge seg imellom.
+
+Skriv \`function fewestMoves(items)\` som gir tilbake det minste antallet ting som må flytte seg. Funksjonen skal bare regne, ikke flytte noe. Sjekken prøver også en rad med flere tusen ting.`,
+    hints: [
+      'De som blir sittende, er en stigende rekke med hull i: verdiene øker fra venstre mot høyre, men står ikke nødvendigvis ved siden av hverandre. Jo lengre en slik rekke, jo færre må flytte.',
+      'Svaret er antall ting minus lengden av den lengste stigende rekka. For hver plass kan du regne ut den lengste stigende rekka som slutter der, ved å se på alle plassene til venstre. Det er raskt nok for 8, men ikke for flere tusen.',
+      'Raskere: hold en array `tails`, der `tails[k]` er den minste sluttverdien en stigende rekke med lengde `k + 1` kan ha. For hver verdi finner du med binærsøk den første i `tails` som er minst like stor, og bytter den ut, eller legger verdien til bakerst.',
+    ],
+    world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
+    ting: PLAIN_TING,
+    starter: `function fewestMoves(items) {
+  // Hvor lang er den lengste stigende rekka?
+  return items.length
+}
+
+console.log(fewestMoves(items))
+`,
+    solution: `function fewestMoves(items) {
+  const tails = []
+  for (const thing of items) {
+    let lo = 0
+    let hi = tails.length
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1
+      if (tails[mid] < thing.value) lo = mid + 1
+      else hi = mid
+    }
+    tails[lo] = thing.value
+  }
+  return items.length - tails.length
+}
+
+console.log(fewestMoves(items))
+`,
+    exports: ['fewestMoves'],
+    check: (t) => {
+      const fewestMoves = t.fn('fewestMoves')
+      const lis = (v: number[]) => {
+        const tails: number[] = []
+        for (const x of v) {
+          let lo = 0
+          let hi = tails.length
+          while (lo < hi) {
+            const mid = (lo + hi) >> 1
+            if (tails[mid] < x) lo = mid + 1
+            else hi = mid
+          }
+          tails[lo] = x
+        }
+        return tails.length
+      }
+      const rows = [[3, 1, 2], [1, 2, 3, 4], [4, 3, 2, 1], [], [7], [10, 9, 2, 5, 3, 7, 101, 18], [5, 1, 6, 2, 7, 3]]
+      for (const values of rows) {
+        const got = fewestMoves(values.map((value) => t.ting({ value })))
+        const want = values.length - lis(values)
+        if (got !== want) return `For ${t.show(values)} gav fewestMoves ${t.show(got)}, men det holder at ${want} flytter seg.`
+      }
+      const long = Array.from({ length: 4000 }, (_, i) => (i * 7919) % 4001)
+      const got = fewestMoves(long.map((value) => t.ting({ value })))
+      if (got !== long.length - lis(long)) return `For en lang rad på 4000 ting gav fewestMoves ${t.show(got)}, men svaret er ${long.length - lis(long)}.`
+      return true
+    },
+    source: 'https://en.wikipedia.org/wiki/Longest_increasing_subsequence',
+  },
 ]

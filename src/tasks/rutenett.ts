@@ -1011,4 +1011,112 @@ for (const [r, c] of solve(grid)) {
       return true
     },
   },
+  {
+    id: 'lysglimt',
+    title: 'Lysglimt',
+    level: 'vanskelig',
+    topic: 'rutenett',
+    text: `I \`grid\` sitter det små lysvesener med et tall fra 0 til 9: hvor mye energi de har. Hvert steg skjer dette:
+
+- alle får 1 mer energi
+- den som kommer over 9, blinker: alle de åtte naboene får 1 mer energi, og kanskje blinker de også, og så videre
+- hvert vesen blinker høyst én gang per steg
+- til slutt får alle som blinket, energi 0
+
+Skriv \`function flashes(grid, steps)\` som gjør \`steps\` steg og gir tilbake hvor mange blink det ble i alt. Du kan gjerne endre rutenettet den får. Koden nederst gjør 10 steg på rutenettet på scenen.`,
+    hints: [
+      'Del hvert steg i tre: øk alle, la blinkene spre seg, og sett de som blinket til 0.',
+      'Bruk en stabel med ruter som skal blinke. Når en rute kommer over 9 og ikke har blinket ennå, merk den og legg den på stabelen.',
+      'Når du tar en rute av stabelen, øker du de åtte naboene. En nabo som da kommer over 9 og ikke har blinket, legges på stabelen. Tell hver rute som blinker.',
+    ],
+    world: (r) => makeWorld([], { grid: Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => int(r, 0, 9))) }),
+    starter: `function flashes(grid, steps) {
+  let count = 0
+  for (let s = 0; s < steps; s++) {
+    // Øk alle, la blinkene spre seg, nullstill de som blinket
+  }
+  return count
+}
+
+console.log(flashes(grid, 10))
+`,
+    solution: `function flashes(grid, steps) {
+  let count = 0
+  const rows = grid.length
+  const cols = grid[0]?.length ?? 0
+  for (let s = 0; s < steps; s++) {
+    const flashed = new Set()
+    const todo = []
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        grid[r][c]++
+        if (grid[r][c] > 9) { flashed.add(r * cols + c); todo.push([r, c]) }
+      }
+    }
+    while (todo.length) {
+      const [r, c] = todo.pop()
+      count++
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const y = r + dr
+          const x = c + dc
+          if ((dr || dc) && y >= 0 && y < rows && x >= 0 && x < cols) {
+            grid[y][x]++
+            if (grid[y][x] > 9 && !flashed.has(y * cols + x)) { flashed.add(y * cols + x); todo.push([y, x]) }
+          }
+        }
+      }
+    }
+    for (const key of flashed) grid[Math.floor(key / cols)][key % cols] = 0
+    vis()
+  }
+  return count
+}
+
+console.log(flashes(grid, 10))
+`,
+    exports: ['flashes'],
+    check: (t) => {
+      const flashes = t.fn('flashes')
+      const reference = (start: number[][], steps: number) => {
+        const g = start.map((row) => [...row])
+        let count = 0
+        for (let s = 0; s < steps; s++) {
+          const done = g.map((row) => row.map(() => false))
+          const todo: [number, number][] = []
+          g.forEach((row, r) => row.forEach((_, c) => {
+            g[r][c]++
+            if (g[r][c] > 9) { done[r][c] = true; todo.push([r, c]) }
+          }))
+          while (todo.length) {
+            const [r, c] = todo.pop()!
+            count++
+            for (let dr = -1; dr <= 1; dr++) {
+              for (let dc = -1; dc <= 1; dc++) {
+                if (!dr && !dc) continue
+                const y = r + dr
+                const x = c + dc
+                if (y < 0 || y >= g.length || x < 0 || x >= g[y].length) continue
+                g[y][x]++
+                if (g[y][x] > 9 && !done[y][x]) { done[y][x] = true; todo.push([y, x]) }
+              }
+            }
+          }
+          g.forEach((row, r) => row.forEach((_, c) => { if (done[r][c]) g[r][c] = 0 }))
+        }
+        return count
+      }
+      const small = [[1, 1, 1, 1, 1], [1, 9, 9, 9, 1], [1, 9, 1, 9, 1], [1, 9, 9, 9, 1], [1, 1, 1, 1, 1]]
+      const boards = [small, [[9]], [[0, 0], [0, 0]], Array.from({ length: 10 }, (_, r) => Array.from({ length: 10 }, (_, c) => (r * 7 + c * 3 + r * c) % 10))]
+      for (const board of boards) {
+        for (const steps of [1, 2, 10, 100]) {
+          const want = reference(board, steps)
+          const got = flashes(board.map((row) => [...row]), steps)
+          if (got !== want) return `For et brett på ${board.length} × ${board[0].length} og ${steps} steg gav flashes ${t.show(got)}, men det blir ${want} blink.`
+        }
+      }
+      return true
+    },
+    source: 'https://adventofcode.com/2021/day/11',
+  },
 ]
