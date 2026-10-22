@@ -120,6 +120,8 @@ body::before {
   min-height: 0;
 }
 .col > .pane { flex: 1 1 0; }
+.col > .objects-pane { flex-grow: 3; }
+.col > .console-pane { flex-grow: 2; }
 
 /* Neon Shrine's dialog box: a one-pixel edge with notched corners and a faint rule inside the top edge. */
 .px-box {
@@ -215,6 +217,7 @@ body::before {
 .btn--pink { --edge: var(--pink); text-shadow: 0 0 8px rgba(255, 47, 160, 0.45); }
 .btn--pink:hover, .btn--pink:focus-visible { text-shadow: none; }
 .btn--quiet { --edge: var(--muted); }
+.btn--teal { --edge: var(--teal); }
 .btn.is-running { --edge: var(--gold); text-shadow: none; }
 @media (pointer: coarse) {
   .btn { min-height: 40px; padding: 10px 16px; }
@@ -226,9 +229,11 @@ body::before {
   min-height: 0;
 }
 .editor .cm-editor { height: 100%; }
-.editor .cm-scroller { font-size: var(--code-size); }
+.editor .cm-scroller,
+.class-editor .cm-scroller { font-size: var(--code-size); }
 /* No ligatures: `=>` and `>=` should look like what was typed. */
 .editor .cm-scroller,
+.class-editor .cm-scroller,
 .cm-tooltip-autocomplete,
 .output { font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'calt' 0; }
 
@@ -368,11 +373,17 @@ body::before {
   .token { transition: none; }
 }
 
-/* The objects pane: the items as code. */
-.objects {
+/* The objects pane: the Ting class (an editor) over the items as code; the two scroll together. */
+.objects-scroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
+}
+.class-editor {
+  padding-bottom: 4px;
+  border-bottom: 2px dashed color-mix(in srgb, var(--teal) 30%, transparent);
+}
+.objects {
   padding: 12px;
   font: var(--code-size) / 1.6 var(--font-code);
   font-variant-ligatures: none;
@@ -383,6 +394,7 @@ body::before {
 .o-line { margin: 0 -12px; padding: 0 12px; }
 .o-line.is-hot { background: rgba(47, 243, 255, 0.07); }
 .o-name { color: var(--hi); }
+.o-class { color: var(--violet); }
 .o-punct { color: var(--muted); }
 .o-key { color: var(--teal); }
 .o-num { color: var(--orange); }
@@ -401,7 +413,7 @@ body::before {
   .col { gap: 24px; }
   .col > .pane { flex: none; }
   .items { --px: 3px; }
-  .objects { overflow: visible; }
+  .objects-scroll { overflow: visible; }
   .editor .cm-editor { height: auto; }
   .editor .cm-content, .editor .cm-gutter { min-height: 45svh; }
   .desk .editor .cm-lineNumbers .cm-gutterElement { padding: 0 6px 0 8px; }

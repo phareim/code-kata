@@ -11,7 +11,10 @@ A JavaScript kata playground at kata.phareim.no. Read `README.md` first; it desc
   `src/run/worker.js`) and must agree (a test checks). The format is described at the top of the world section in
   `worker.js`; a change there goes in `world.ts` and `test/world.test.ts` too.
 - The page never mutates a `World`: every run returns a new one. `version` in `main.ts` drops a run's result when
-  «Nye» or «Nullstill» came in between.
+  a later run, «Nye» or «Nullstill» came in between.
+- A set always has eight items (`ITEM_COUNT`), Petter's call (2026-10-22: "gjør det enklere").
+- The Ting class and the code compile as one source (`worker.js`: class, `__kata_build__`, code); `place()` maps a
+  line back to its editor. Keep that order, or `Ting` in the code stops being the items' class.
 - The pixel font is for the chrome only, at whole multiples of 8 px, uppercase through `.px`. Code and console output
   stay in JetBrains Mono with ligatures off. Code is 16 px on touch screens, or iOS zooms in on focus.
 - `src/run/worker.js` is imported with `?raw` and started from a `data:` URL: it must stay one self-contained plain

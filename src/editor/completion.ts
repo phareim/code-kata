@@ -5,7 +5,7 @@
  *   - the globals the runner offers, with their members after a dot (Math.floor, JSON.stringify, console.log)
  *   - after a dot on anything else: the items' value/color/next, common array/string/number/promise members and the
  *     property names used in the code
- *   - the items' names: head and the letters A, B, C … of the world as it is now
+ *   - the items' names: head, the class Ting and the letters A, B, C … of the world as it is now
  */
 import {
   completeFromList,
@@ -144,14 +144,17 @@ export function memberSource(scope: Record<string, unknown>): CompletionSource {
   }
 }
 
-/** head and the items' letters, read from the current world on every call. */
+/** head, Ting and the items' letters, read from the current world on every call. */
 export function worldSource(names: () => string[]): CompletionSource {
   return (context) => {
     const path = completionPath(context)
     if (!path || path.path.length) return null
     return {
       from: context.pos - path.name.length,
-      options: names().map((label) => ({ label, type: 'variable', detail: label === 'head' ? 'første ting' : 'ting', boost: 2 })),
+      options: names().map((label) => (
+        label === 'Ting' ? { label, type: 'class', detail: 'klassen', boost: 2 }
+          : { label, type: 'variable', detail: label === 'head' ? 'første ting' : 'ting', boost: 2 }
+      )),
       validFor: Identifier,
     }
   }

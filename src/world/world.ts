@@ -12,10 +12,16 @@ export interface Prop {
   text: string
   lossy?: boolean
 }
-export interface Item { props: Prop[] }
+export interface Item {
+  /** The constructor's name: 'Ting' for the items the class builds, 'Object' for a plain {}. */
+  cls?: string | null
+  props: Prop[]
+}
 export interface World {
   items: Item[]
   head: Prop
+  /** The fields a new Ting had when these items were built; the next build drops the ones the class lost. */
+  fields?: string[]
   /** More items than the worker tracks; the rest are not shown. */
   truncated?: boolean
 }
@@ -44,9 +50,12 @@ export function prop(item: Item, key: string): Prop | undefined {
 const ref = (key: string, slot: number): Prop => ({ key, ref: slot, text: label(slot) })
 const NULL = (key: string): Prop => ({ key, raw: null, text: 'null' })
 
-/** 4 to 8 items with different values 1–99 and palette colours, linked in a shuffled order. */
+/** How many items a new set has: always eight, A to H. */
+export const ITEM_COUNT = 8
+
+/** Eight items with different values 1–99 and palette colours, linked in a shuffled order. */
 export function randomWorld(random: () => number = Math.random): World {
-  const n = 4 + Math.floor(random() * 5)
+  const n = ITEM_COUNT
   const values = new Set<number>()
   while (values.size < n) values.add(1 + Math.floor(random() * 99))
   const names = Object.keys(COLORS)
@@ -60,6 +69,7 @@ export function randomWorld(random: () => number = Math.random): World {
     const color = names[Math.floor(random() * names.length)]
     const next = nextOf.get(slot)
     return {
+      cls: 'Ting',
       props: [
         { key: 'value', raw: value, text: String(value) },
         { key: 'color', raw: color, text: `'${color}'` },
@@ -67,7 +77,7 @@ export function randomWorld(random: () => number = Math.random): World {
       ],
     }
   })
-  return { items, head: ref('head', order[0]) }
+  return { items, head: ref('head', order[0]), fields: ['value', 'color', 'next'] }
 }
 
 export type End =

@@ -11,6 +11,11 @@ const shots = process.argv[3] ?? 'shots'
 mkdirSync(shots, { recursive: true })
 
 const KEY = 'code-kata:code'
+const CLASS_KEY = 'code-kata:ting'
+const tingClass = (fields) => `class Ting {\n${fields.map((f) => `  ${f}\n`).join('')}\n  constructor(props) {\n    Object.assign(this, props)\n  }\n}\n`
+const WITH_SIZE = tingClass(['value = 0', "color = 'pink'", 'next = null', 'size = 1'])
+const WITHOUT_COLOR = tingClass(['value = 0', 'next = null', 'size = 1'])
+const BROKEN_CLASS = 'class Ting {\n  value = 0\n  next = null\n  constructor() { null.boom() }\n}\n'
 // A traversal with a named function, for the autocomplete check.
 const STARTER_LIKE = 'function walkAll(node) {\n  while (node) node = node.next\n}'
 // The starter kata.phareim.no had before the items (October 2026).
@@ -32,22 +37,24 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
-async function open(context, code) {
+async function open(context, code, cls = null) {
   const page = await context.newPage()
-  // Seeds the editor once per tab (null: a first visit), so a reload keeps what the test typed.
-  await page.addInitScript(([key, value]) => {
+  // Seeds the code and the class once per tab (null: as on a first visit), so a reload keeps what the test typed.
+  await page.addInitScript((seeds) => {
     if (sessionStorage.getItem('seeded')) return
     sessionStorage.setItem('seeded', '1')
-    if (value === null) localStorage.removeItem(key)
-    else localStorage.setItem(key, value)
-  }, [KEY, code])
+    for (const [key, value] of seeds) {
+      if (value === null) localStorage.removeItem(key)
+      else localStorage.setItem(key, value)
+    }
+  }, [[KEY, code], [CLASS_KEY, cls]])
   await page.goto(url)
   await page.waitForSelector('.cm-content')
   return page
 }
 
-async function runAndWait(page, until = /Ferdig|Feil|Stoppet/i, timeout = 15000) {
-  await page.click('#run')
+async function runAndWait(page, until = /Ferdig|Feil|Stoppet/i, timeout = 15000, button = '#run') {
+  await page.click(button)
   await page.waitForFunction((re) => new RegExp(re, 'i').test(document.getElementById('status').textContent),
     until.source, { timeout })
   return {
@@ -55,6 +62,14 @@ async function runAndWait(page, until = /Ferdig|Feil|Stoppet/i, timeout = 15000)
     output: await page.innerText('#output'),
   }
 }
+
+async function setClass(page, text) {
+  await page.click('#class-editor .cm-content')
+  await page.keyboard.press('ControlOrMeta+A')
+  await page.keyboard.press('Backspace')
+  await page.keyboard.insertText(text)
+}
+const countLines = (page, text) => page.$$eval('#objects .o-line', (els, t) => els.filter((e) => e.textContent.includes(t)).length, text)
 
 // The items row in list order, by letter, and the objects pane's head line.
 const rowLabels = (page) => page.$$eval('#items .link .token', (els) => els.map((e) => e.dataset.label))
@@ -78,14 +93,14 @@ async function suite(name, browser) {
   let r = await runAndWait(page)
   let order = await rowLabels(page)
   const objectLines = await page.$$eval('#objects .o-line', (els) => els.length)
-  check(`${name}: 4 to 8 items, all in the list`, order.length >= 4 && order.length <= 8 && objectLines === order.length + 1,
+  check(`${name}: eight items, all in the list`, order.length === 8 && objectLines === 9,
     `${order.join(' ')} · ${objectLines} lines`)
   check(`${name}: starter walks the list`, /Ferdig/i.test(r.status) && r.output.trim().split('\n').length === order.length,
     JSON.stringify(r))
   await page.screenshot({ path: join(shots, `${name}-desktop.png`) })
 
   // Changing pointers changes the row: reverse the list, then «Nullstill» brings the first order back.
-  await page.click('.cm-content')
+  await page.click('#editor .cm-content')
   await page.keyboard.press('ControlOrMeta+A')
   await page.keyboard.press('Backspace')
   await page.keyboard.insertText(REVERSE)
@@ -100,14 +115,14 @@ async function suite(name, browser) {
   check(`${name}: Nullstill restores the order`, (await rowLabels(page)).join() === order.join())
   await page.click('#fresh')
   const fresh = await rowLabels(page)
-  check(`${name}: Nye makes 4 to 8 new items`, fresh.length >= 4 && fresh.length <= 8, fresh.join(' '))
-  await page.click('.cm-content')
+  check(`${name}: Nye makes eight new items`, fresh.length === 8, fresh.join(' '))
+  await page.click('#editor .cm-content')
   await page.keyboard.press('ControlOrMeta+A')
   await page.keyboard.press('Backspace')
   await page.keyboard.insertText(STARTER_LIKE)
 
   // Autocomplete: a global's members, then the code's own function name; Tab accepts.
-  await page.click('.cm-content')
+  await page.click('#editor .cm-content')
   await page.keyboard.press('ControlOrMeta+End')
   await page.keyboard.type('\nMath.fl')
   await page.waitForSelector('.cm-tooltip-autocomplete')
@@ -129,7 +144,7 @@ async function suite(name, browser) {
   await page.screenshot({ path: join(shots, `${name}-complete.png`) })
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape')
-  const doc = await page.innerText('.cm-content')
+  const doc = await page.innerText('#editor .cm-content')
   check(`${name}: accepted completions land in the code`,
     doc.includes('\nMath.floor(2.5)') && doc.includes('\nwalkAll') && doc.includes('\nhead.next'),
     doc.split('\n').slice(-3).join(' | '))
@@ -138,7 +153,7 @@ async function suite(name, browser) {
   await page.waitForTimeout(500)
   await page.reload()
   await page.waitForSelector('.cm-content')
-  check(`${name}: code survives reload`, (await page.innerText('.cm-content')).includes('Math.floor(2.5)'))
+  check(`${name}: code survives reload`, (await page.innerText('#editor .cm-content')).includes('Math.floor(2.5)'))
   await page.close()
 
   const cases = [
@@ -160,7 +175,7 @@ async function suite(name, browser) {
           && (await page.locator('#objects .o-comment').count()) === 2
       }],
     ['an old starter gives way to the new one', OLD_STARTER,
-      async (r, page) => (await page.innerText('.cm-content')).includes('lenket liste')],
+      async (r, page) => (await page.innerText('#editor .cm-content')).includes('lenket liste')],
     ['console levels and inspect', "console.warn('w')\nconsole.error(new RangeError('r'))\nconsole.log([1, 'a', { b: null }])", (r) => r.output.includes("[ 1, 'a', { b: null } ]") && r.output.includes('RangeError: r')],
   ]
   for (const [label, code, ok] of cases) {
@@ -173,6 +188,30 @@ async function suite(name, browser) {
     }
     await page.close()
   }
+
+  // The Ting class: a new field reaches every item, a dropped one leaves them all, new Ting works in the code,
+  // and an error in the class points at the class.
+  page = await open(desktop, "head = new Ting({ value: 5, color: 'gold', next: head })")
+  await page.waitForFunction(() => document.querySelectorAll('#objects .o-class').length === 8)
+  await setClass(page, WITH_SIZE)
+  r = await runAndWait(page, undefined, undefined, '#apply')
+  check(`${name}: a new field reaches all eight`, (await countLines(page, 'size: 1')) === 8 && r.output.includes('alle 8'),
+    JSON.stringify(r))
+  await page.waitForTimeout(500)
+  await page.screenshot({ path: join(shots, `${name}-class.png`) })
+  await setClass(page, WITHOUT_COLOR)
+  r = await runAndWait(page, undefined, undefined, '#apply')
+  check(`${name}: a dropped field leaves all eight`,
+    (await countLines(page, 'color')) === 0 && (await page.locator('#items .token.no-color').count()) === 8, JSON.stringify(r))
+  r = await runAndWait(page)
+  const withNew = await rowLabels(page)
+  check(`${name}: new Ting in the code joins the list`, withNew.length === 9 && withNew[0] === 'I'
+    && (await countLines(page, 'I = Ting {')) === 1, withNew.join(' '))
+  await setClass(page, BROKEN_CLASS)
+  r = await runAndWait(page, undefined, undefined, '#apply')
+  check(`${name}: an error in the class points at the class`, /Feil · Ting linje 4/i.test(r.status)
+    && (await page.locator('#class-editor .cm-errorLine').count()) === 1, JSON.stringify(r))
+  await page.close()
 
   // A loop that never ends: Stop works, the page stays responsive, and the time limit catches it otherwise.
   page = await open(desktop, 'while (true) {}')
@@ -199,6 +238,9 @@ async function suite(name, browser) {
   check(`${name}: phone has no sideways scroll`, overflow <= 0, `overflow ${overflow}px`)
   await page.screenshot({ path: join(shots, `${name}-phone.png`) })
   await page.screenshot({ path: join(shots, `${name}-phone-full.png`), fullPage: true })
+  await page.$eval('#class-editor', (e) => e.scrollIntoView())
+  await page.waitForTimeout(400)
+  await page.screenshot({ path: join(shots, `${name}-phone-class.png`) })
   await phone.close()
 }
 

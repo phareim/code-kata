@@ -33,10 +33,14 @@
           <div class="pane-bar">
             <h2 id="objects-title" class="pane-title px">Objekter</h2>
             <span class="spacer"></span>
+            <button id="apply" class="btn btn--teal px" type="button" title="Bygg tingene på nytt fra klassen">Bruk</button>
             <button id="reset" class="btn btn--quiet px" type="button" title="Sett tingene tilbake slik de var">Nullstill</button>
-            <button id="fresh" class="btn btn--quiet px" type="button" title="Lag nye ting">Nye</button>
+            <button id="fresh" class="btn btn--quiet px" type="button" title="Lag åtte nye ting">Nye</button>
           </div>
-          <div id="objects" class="objects"></div>
+          <div class="objects-scroll">
+            <div id="class-editor" class="class-editor" aria-label="Klassen Ting"></div>
+            <div id="objects" class="objects"></div>
+          </div>
         </section>
         <section class="pane px-box console-pane" aria-labelledby="console-title">
           <div class="pane-bar">

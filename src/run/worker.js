@@ -4,14 +4,15 @@
  * kata.phareim.no's storage, and requests it makes carry none of the visitor's *.phareim.no cookies.
  * Keep it self-contained: no imports, plain JavaScript.
  *
- *   page → worker  { type: 'run', code, world }                once per worker
+ *   page → worker  { type: 'run', code, classSource, world }   once per worker
  *   worker → page  { type: 'console', entries: [{ level, text }] }
  *                  { type: 'clear' }
  *                  { type: 'world', world }                     the items after the run, sent before done/error
  *                  { type: 'done', ms }                         the code returned and no timer is left
- *                  { type: 'error', name, message, line, compile, ms }
- *                                                an uncaught error; line is 1-based or null, compile is true
- *                                                when the code didn't parse
+ *                  { type: 'error', name, message, line, where, compile, ms }
+ *                                                an uncaught error; line is 1-based in the editor `where` names
+ *                                                ('kode' or 'ting'), both null when the engine doesn't say;
+ *                                                compile is true when the code didn't parse
  *
  * `done` and `error` end the run; the page then terminates the worker.
  */
@@ -157,6 +158,8 @@ function errorText(e) {
  *   { key, text, lossy: true }   a value that doesn't (a function, a symbol); the next run gets the text
  * Slots are memory: the items the page sent keep their slot, items the code made are appended in the order they are
  * found from `head` along `next`. Slot i is named label(i) (A, B, … Z, A1 …) as a fixed global; `head` is a variable.
+ * Each item also carries `cls`, its constructor's name, and the world carries `fields`: the own properties a new Ting
+ * had when the items were last built, so the next build knows which fields the class has dropped since.
  */
 const WORLD_LIMIT = 64
 
@@ -164,18 +167,23 @@ function label(i) {
   return String.fromCharCode(65 + (i % 26)) + (i >= 26 ? String(Math.floor(i / 26)) : '')
 }
 
-/** The objects the page's world describes, linked to each other. */
-function buildWorld(world) {
-  const objs = world.items.map(() => ({}))
+/**
+ * The objects the page's world describes, linked to each other. With a class, every item is a new Ting: it starts
+ * with the class's fields and defaults, then gets its stored props back, except fields the class no longer has.
+ */
+function buildWorld(world, Ting) {
+  const objs = world.items.map(() => (Ting ? new Ting() : {}))
+  const fields = Ting ? Object.keys(objs[0] ?? new Ting()) : world.fields ?? []
+  const dropped = new Set(Ting ? (world.fields ?? []).filter((f) => !fields.includes(f)) : [])
   const decode = (p) => (p.ref !== undefined ? objs[p.ref] : 'raw' in p ? p.raw : p.text)
   world.items.forEach((item, i) => {
-    for (const p of item.props) objs[i][p.key] = decode(p)
+    for (const p of item.props) if (!dropped.has(p.key)) objs[i][p.key] = decode(p)
   })
-  return { objs, head: decode(world.head) }
+  return { objs, head: decode(world.head), fields }
 }
 
 /** The world as the code left it: the known items in their slots, then new ones reached from head along next. */
-function snapshotWorld(known, head) {
+function snapshotWorld(known, head, fields = []) {
   const slot = new Map()
   const objs = []
   let truncated = false
@@ -205,6 +213,7 @@ function snapshotWorld(known, head) {
     let keys = []
     try { keys = Object.keys(o) } catch { /* a proxy that refuses */ }
     return {
+      cls: constructorName(o),
       props: keys.map((key) => {
         let v
         try { v = o[key] } catch (err) { v = err }
@@ -212,7 +221,22 @@ function snapshotWorld(known, head) {
       }),
     }
   })
-  return { items, head: encode('head', head), truncated }
+  return { items, head: encode('head', head), fields, truncated }
+}
+
+/*
+ * The class and the code run as one source, so that `Ting` in the code is the class the items are made of:
+ *   <class source>
+ *   ;__kata_build__(Ting)      builds the items as Ting, then
+ *   <code>
+ * place() turns a line in that source into a line in the editor it came from.
+ */
+function place(line, classLines) {
+  if (line === null) return { line: null, where: null }
+  if (!classLines) return { line, where: 'kode' }
+  if (line <= classLines) return { line, where: 'ting' }
+  if (line === classLines + 1) return { line: null, where: 'ting' }
+  return { line: line - classLines - 1, where: 'kode' }
 }
 
 /*
@@ -257,7 +281,8 @@ function start() {
   const realClearTimeout = self.clearTimeout.bind(self)
 
   let startedAt = 0
-  let code = ''
+  let source = ''
+  let classLines = 0
   let cal = null
   let mainDone = false
   let finished = false
@@ -329,7 +354,7 @@ function start() {
   const sendWorld = () => {
     if (!world) return
     try {
-      send({ type: 'world', world: snapshotWorld(world.objs, self.head) })
+      send({ type: 'world', world: snapshotWorld(world.objs, self.head, world.fields) })
     } catch {
       // A value that passed the clone check but not postMessage: the page keeps the old items.
     }
@@ -341,11 +366,13 @@ function start() {
     if (!compiling) sendWorld()
     finished = true
     const isError = err instanceof Error
+    const at = place(errorLine(err, cal, compiling, source.split('\n').length), classLines)
     send({
       type: 'error',
       name: isError ? err.name || 'Error' : 'Uncaught',
       message: isError ? err.message : format(err, 0, new Set()),
-      line: errorLine(err, cal, compiling, code.split('\n').length),
+      line: at.line,
+      where: isError && err.kataWhere ? err.kataWhere : at.where,
       compile: compiling,
       ms: performance.now() - startedAt,
     })
@@ -392,19 +419,38 @@ function start() {
     const msg = event.data
     if (!msg || msg.type !== 'run' || startedAt) return
     startedAt = performance.now()
-    code = String(msg.code)
-    if (msg.world) {
-      world = buildWorld(msg.world)
+    const code = String(msg.code)
+    const install = (Ting) => {
+      if (!msg.world) return
+      world = buildWorld(msg.world, Ting)
       // The letters name slots, so they can't be reassigned (strict mode throws); head can.
       world.objs.forEach((obj, i) => {
         Object.defineProperty(self, label(i), { value: obj, writable: false, enumerable: true, configurable: true })
       })
       self.head = world.head
     }
+    if (typeof msg.classSource === 'string') {
+      Object.defineProperty(self, '__kata_build__', {
+        configurable: true,
+        value: (Ting) => {
+          if (typeof Ting !== 'function') {
+            const err = new ReferenceError('Fant ingen class Ting over tingene.')
+            err.kataWhere = 'ting'
+            throw err
+          }
+          install(Ting)
+        },
+      })
+      classLines = msg.classSource.split('\n').length
+      source = `${msg.classSource}\n;__kata_build__(typeof Ting === 'function' ? Ting : undefined)\n${code}`
+    } else {
+      install(undefined)
+      source = code
+    }
     cal = await calibrate()
     let main
     try {
-      main = compile(code)
+      main = compile(source)
     } catch (err) {
       return fail(err, true)
     }

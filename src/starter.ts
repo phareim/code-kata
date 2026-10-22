@@ -1,6 +1,6 @@
 /** What a first visit opens with; after that the editor keeps the visitor's own code. */
-export const STARTER = `// Tingene over koden er en lenket liste. Hver ting har value, color og next,
-// og next peker på neste ting. head peker på den første.
+export const STARTER = `// Tingene over koden er en lenket liste av Ting: klassen står over tingene.
+// Hver har value, color og next, og next peker på neste. head peker på den første.
 // Bokstavene A, B, C … er tingene selv; head kan du flytte.
 
 let node = head
@@ -9,8 +9,18 @@ while (node) {
   node = node.next
 }
 
-// Prøv: head = head.next, A.next = null eller A.color = 'gold'
+// Prøv: head = head.next, A.color = 'gold'
+// eller head = new Ting({ value: 5, color: 'lime', next: head })
 `
+
+/** The class every item is made of, until the visitor changes it. */
+export const TING_CLASS = `// Legg til eller ta bort et felt og trykk «Bruk».
+class Ting {
+  value = 0
+  color = 'pink'
+  next = null
+  constructor(props) { Object.assign(this, props) }
+}`
 
 /** Starters from earlier versions: a visitor whose saved code is still one of these gets the new one. */
 export const OLD_STARTERS = [
@@ -25,5 +35,17 @@ const words = ['kata', 'er', 'små', 'oppgaver']
 
 console.log(reverseWords(words.join(' ')))
 console.log({ antall: words.length, lengste: words.reduce((a, b) => (b.length > a.length ? b : a)) })
+`,
+  `// Tingene over koden er en lenket liste. Hver ting har value, color og next,
+// og next peker på neste ting. head peker på den første.
+// Bokstavene A, B, C … er tingene selv; head kan du flytte.
+
+let node = head
+while (node) {
+  console.log(node.value, node.color)
+  node = node.next
+}
+
+// Prøv: head = head.next, A.next = null eller A.color = 'gold'
 `,
 ]

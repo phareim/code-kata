@@ -1,7 +1,7 @@
 /*
  * The objects pane: the items in memory order (A, B, C …), written the way the code sees them.
  *   head = D
- *   A = { value: 7, color: 'pink', next: C }
+ *   A = Ting { value: 7, color: 'pink', next: C }
  * A pointer reads as the item's letter; an item outside the list gets `// løs`.
  */
 import { itemColor, label, walk, type Prop, type World } from './world'
@@ -51,7 +51,9 @@ export function renderObjects(pane: HTMLElement, world: World): void {
     const line = document.createElement('div')
     line.className = 'o-line'
     line.dataset.label = name
-    line.append(span('o-name', name), span('o-punct', ' = {'))
+    line.append(span('o-name', name), span('o-punct', ' = '))
+    if (item.cls && item.cls !== 'Object') line.append(span('o-class', `${item.cls} `))
+    line.append(span('o-punct', '{'))
     const color = itemColor(item)
     item.props.forEach((p, i) => {
       line.append(span('o-punct', i ? ', ' : ' '), span('o-key', p.key), span('o-punct', ': '), value(p, color))

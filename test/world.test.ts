@@ -3,10 +3,11 @@ import source from '../src/run/worker.js?raw'
 import { COLORS, itemValue, label, prop, randomWorld, walk, type World } from '../src/world/world'
 
 type Obj = Record<string, unknown> & { next?: unknown }
-const worker = new Function(`${source}\nreturn { buildWorld, snapshotWorld, label }`)() as {
-  buildWorld(world: World): { objs: Obj[]; head: unknown }
-  snapshotWorld(known: Obj[], head: unknown): World
+const worker = new Function(`${source}\nreturn { buildWorld, snapshotWorld, label, place }`)() as {
+  buildWorld(world: World, Ting?: new () => object): { objs: Obj[]; head: unknown; fields: string[] }
+  snapshotWorld(known: Obj[], head: unknown, fields?: string[]): World
   label(i: number): string
+  place(line: number | null, classLines: number): { line: number | null; where: string | null }
 }
 
 /** A repeatable Math.random stand-in. */
@@ -19,11 +20,12 @@ function seeded(seed: number): () => number {
 }
 
 describe('randomWorld', () => {
-  it('makes 4 to 8 items with different values, palette colours, all in one list', () => {
+  it('makes eight Ting with different values, palette colours, all in one list', () => {
     for (let seed = 1; seed < 200; seed++) {
       const world = randomWorld(seeded(seed))
-      expect(world.items.length).toBeGreaterThanOrEqual(4)
-      expect(world.items.length).toBeLessThanOrEqual(8)
+      expect(world.items.length).toBe(8)
+      expect(world.fields).toEqual(['value', 'color', 'next'])
+      expect(world.items.every((item) => item.cls === 'Ting')).toBe(true)
       const values = world.items.map((item) => prop(item, 'value')!.raw)
       expect(new Set(values).size).toBe(values.length)
       for (const item of world.items) {
@@ -35,11 +37,6 @@ describe('randomWorld', () => {
       expect(end.kind).toBe('null')
       expect(loose).toEqual([])
     }
-  })
-
-  it('makes every count from 4 to 8', () => {
-    const counts = new Set(Array.from({ length: 300 }, (_, seed) => randomWorld(seeded(seed)).items.length))
-    expect([...counts].sort()).toEqual([4, 5, 6, 7, 8])
   })
 })
 
@@ -143,5 +140,53 @@ describe('the world through the worker', () => {
     const world = worker.snapshotWorld([], head)
     expect(world.items.length).toBe(64)
     expect(world.truncated).toBe(true)
+  })
+})
+
+describe('the Ting class', () => {
+  const makeClass = (body: string) => new Function(`return class Ting { ${body} constructor(p) { Object.assign(this, p) } }`)()
+
+  it('builds every item as a Ting, with new fields at their defaults and the data kept', () => {
+    const start = randomWorld(seeded(13))
+    const Ting = makeClass("value = 0; color = 'pink'; next = null; size = 1;")
+    const { objs, head, fields } = worker.buildWorld(start, Ting)
+    expect(fields).toEqual(['value', 'color', 'next', 'size'])
+    objs.forEach((obj, i) => {
+      expect(obj).toBeInstanceOf(Ting)
+      expect(obj.size).toBe(1)
+      expect(obj.value).toBe(prop(start.items[i], 'value')!.raw)
+      expect(obj.color).toBe(prop(start.items[i], 'color')!.raw)
+    })
+    expect(head).toBe(objs[walk(start).chain[0]])
+  })
+
+  it('drops a field the class no longer has, and keeps what the code added', () => {
+    const start = randomWorld(seeded(17))
+    const first = worker.buildWorld(start, makeClass("value = 0; color = 'pink'; next = null;"))
+    first.objs[0].seen = true
+    const after = worker.snapshotWorld(first.objs, first.head, first.fields)
+    expect(after.fields).toEqual(['value', 'color', 'next'])
+    expect(after.items[0].cls).toBe('Ting')
+
+    const second = worker.buildWorld(after, makeClass('value = 0; next = null;'))
+    expect(second.fields).toEqual(['value', 'next'])
+    for (const obj of second.objs) expect('color' in obj).toBe(false)
+    expect(second.objs[0].seen).toBe(true)
+    expect(walk(worker.snapshotWorld(second.objs, second.head, second.fields)).chain).toEqual(walk(start).chain)
+  })
+
+  it('leaves plain objects plain without a class', () => {
+    const { objs, fields } = worker.buildWorld(randomWorld(seeded(19)))
+    expect(Object.getPrototypeOf(objs[0])).toBe(Object.prototype)
+    expect(fields).toEqual(['value', 'color', 'next'])
+  })
+
+  it('places a line in the class or in the code', () => {
+    // A class of 4 lines, then the build line (5), then the code from line 6.
+    expect(worker.place(3, 4)).toEqual({ line: 3, where: 'ting' })
+    expect(worker.place(5, 4)).toEqual({ line: null, where: 'ting' })
+    expect(worker.place(8, 4)).toEqual({ line: 3, where: 'kode' })
+    expect(worker.place(null, 4)).toEqual({ line: null, where: null })
+    expect(worker.place(2, 0)).toEqual({ line: 2, where: 'kode' })
   })
 })

@@ -8,11 +8,22 @@ const WORKER_URL = `data:text/javascript;charset=utf-8,${encodeURIComponent(work
 export const TIME_LIMIT_MS = 10_000
 
 export type Level = 'log' | 'info' | 'warn' | 'error'
+/** Which editor a line belongs to: the kata code or the Ting class. */
+export type Where = 'kode' | 'ting'
 export interface Entry { level: Level; text: string }
 
 export type Outcome =
   | { kind: 'done'; ms: number }
-  | { kind: 'error'; name: string; message: string; line: number | null; compile: boolean; ms: number }
+  | {
+    kind: 'error'
+    name: string
+    message: string
+    /** The line in the editor `where` names; both null when the engine doesn't say. */
+    line: number | null
+    where: Where | null
+    compile: boolean
+    ms: number
+  }
   | { kind: 'stopped'; reason: 'user' | 'timeout' }
 
 export interface RunHandlers {
@@ -30,7 +41,8 @@ export class Runner {
     return this.finish !== null
   }
 
-  run(code: string, world: World, handlers: RunHandlers): void {
+  /** Runs the Ting class, builds the items from it, then runs the code (empty: only rebuild the items). */
+  run(code: string, classSource: string, world: World, handlers: RunHandlers): void {
     this.stop()
     const worker = new Worker(WORKER_URL)
     const timer = window.setTimeout(() => finish({ kind: 'stopped', reason: 'timeout' }), TIME_LIMIT_MS)
@@ -51,14 +63,16 @@ export class Runner {
         case 'clear': handlers.clear(); break
         case 'world': handlers.world(msg.world); break
         case 'done': finish({ kind: 'done', ms: msg.ms }); break
-        case 'error': finish({ kind: 'error', name: msg.name, message: msg.message, line: msg.line, compile: msg.compile, ms: msg.ms }); break
+        case 'error':
+          finish({ kind: 'error', name: msg.name, message: msg.message, line: msg.line, where: msg.where, compile: msg.compile, ms: msg.ms })
+          break
       }
     }
     worker.onerror = (event) => {
       event.preventDefault()
-      finish({ kind: 'error', name: 'Error', message: event.message || 'Kjøringen stoppet uventet.', line: null, compile: false, ms: 0 })
+      finish({ kind: 'error', name: 'Error', message: event.message || 'Kjøringen stoppet uventet.', line: null, where: null, compile: false, ms: 0 })
     }
-    worker.postMessage({ type: 'run', code, world })
+    worker.postMessage({ type: 'run', code, classSource, world })
   }
 
   stop(): void {
