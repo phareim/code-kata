@@ -9,7 +9,8 @@ import { ALL_TASKS, TASKS } from '../src/tasks/index'
 import { LEVELS, TOPICS, type Task } from '../src/tasks/types'
 import { runWorker } from './harness'
 
-const SEEDS = [1, 2, 3]
+// Seeds far apart: neighbouring seeds give worlds that look alike.
+const SEEDS = [1, 77, 4242]
 
 function run(task: Task, code: string, ting: string, seed: number) {
   return runWorker({

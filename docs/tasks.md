@@ -84,7 +84,7 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 `UPDATE_DOCS=1 npx vitest run test/docs.test.ts` rewrites it.
 
 <!-- tasks:start -->
-105 tasks: 40 lett, 48 middels, 17 vanskelig.
+131 tasks: 49 lett, 59 middels, 23 vanskelig.
 
 ### Lister (20)
 
@@ -169,71 +169,97 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 | 62 | `hvor-mange-flytt` | Hvor mange flytt? | lett | [link](https://en.wikipedia.org/wiki/Tower_of_Hanoi#Solution) |
 | 63 | `bare-til-naboen` | Bare til naboen | vanskelig | [link](https://en.wikipedia.org/wiki/Tower_of_Hanoi#Variants) |
 
-### Trær (2)
+### Trær (17)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
 | 64 | `hvor-hoyt` | Hvor høyt er treet? | middels |  |
 | 65 | `speil-treet` | Speil treet | middels | [link](https://leetcode.com/problems/invert-binary-tree/) |
+| 66 | `tell-og-legg-sammen` | Tell og legg sammen | lett |  |
+| 67 | `gull-pa-bladene` | Gull på bladene | lett |  |
+| 68 | `i-orden` | I orden | lett | [link](https://en.wikipedia.org/wiki/Tree_traversal#In-order,_LNR) |
+| 69 | `for-og-etter` | Før og etter | middels | [link](https://en.wikipedia.org/wiki/Tree_traversal#Depth-first_search) |
+| 70 | `niva-for-niva` | Nivå for nivå | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
+| 71 | `finn-i-soketreet` | Finn i søketreet | lett | [link](https://en.wikipedia.org/wiki/Binary_search_tree#Searching) |
+| 72 | `minst-og-storst` | Minst og størst | lett | [link](https://en.wikipedia.org/wiki/Binary_search_tree) |
+| 73 | `inn-i-soketreet` | Inn i søketreet | middels | [link](https://en.wikipedia.org/wiki/Binary_search_tree#Insertion) |
+| 74 | `er-det-et-soketre` | Er det et søketre? | middels | [link](https://en.wikipedia.org/wiki/Binary_search_tree) |
+| 75 | `felles-forfar` | Nærmeste felles forfar | middels | [link](https://en.wikipedia.org/wiki/Lowest_common_ancestor) |
+| 76 | `lengste-sti` | Den lengste stien | vanskelig | [link](https://en.wikipedia.org/wiki/Distance_(graph_theory)) |
+| 77 | `ut-av-soketreet` | Ut av søketreet | vanskelig | [link](https://en.wikipedia.org/wiki/Binary_search_tree#Deletion) |
+| 78 | `balansert-tre` | Bygg et balansert tre | middels | [link](https://en.wikipedia.org/wiki/Binary_search_tree#Optimal_binary_search_trees) |
+| 79 | `treet-fra-to-turer` | Treet fra to turer | vanskelig | [link](https://en.wikipedia.org/wiki/Tree_traversal) |
+| 80 | `brann-i-treet` | Brann i treet | vanskelig |  |
 
-### Grafer (1)
+### Grafer (12)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 66 | `steg-fra-a` | Hvor mange steg unna? | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
+| 81 | `steg-fra-a` | Hvor mange steg unna? | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
+| 82 | `den-mest-populaere` | Den mest populære | lett |  |
+| 83 | `er-vi-venner` | Er vi venner? | lett |  |
+| 84 | `bli-kjent` | Bli kjent | lett |  |
+| 85 | `forlat-gjengen` | Forlat gjengen | lett |  |
+| 86 | `dybden-forst` | Dybden først | middels | [link](https://en.wikipedia.org/wiki/Depth-first_search) |
+| 87 | `korteste-vei` | Korteste vei | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
+| 88 | `hvor-mange-gjenger` | Hvor mange gjenger? | middels | [link](https://en.wikipedia.org/wiki/Component_(graph_theory)) |
+| 89 | `to-lag` | To lag | middels | [link](https://en.wikipedia.org/wiki/Bipartite_graph) |
+| 90 | `hva-forst` | Hva må gjøres først? | middels | [link](https://en.wikipedia.org/wiki/Topological_sorting) |
+| 91 | `billigste-vei` | Billigste vei | vanskelig | [link](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) |
+| 92 | `venter-i-ring` | Venter i ring? | vanskelig | [link](https://en.wikipedia.org/wiki/Cycle_(graph_theory)#Cycle_detection) |
 
 ### Rutenett (13)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 67 | `malingsbotta` | Malingsbøtta | middels | [link](https://en.wikipedia.org/wiki/Flood_fill) |
-| 68 | `mal-rammen` | Mal rammen | lett |  |
-| 69 | `speilvend-brettet` | Speilvend brettet | lett |  |
-| 70 | `bytt-rader-og-kolonner` | Bytt rader og kolonner | middels |  |
-| 71 | `kvart-omdreining` | En kvart omdreining | middels |  |
-| 72 | `spiralen` | Spiralen | middels |  |
-| 73 | `tell-oyene` | Tell øyene | middels | [link](https://en.wikipedia.org/wiki/Connected-component_labeling) |
-| 74 | `ut-av-labyrinten` | Ut av labyrinten | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
-| 75 | `livets-spill` | Ett steg i Livet | middels | [link](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) |
-| 76 | `minesveiper` | Minesveiper | middels | [link](https://en.wikipedia.org/wiki/Minesweeper_(video_game)) |
-| 77 | `langtons-maur` | Langtons maur | vanskelig | [link](https://en.wikipedia.org/wiki/Langton%27s_ant) |
-| 78 | `slukk-lysene` | Slukk lysene | vanskelig | [link](https://en.wikipedia.org/wiki/Lights_Out_(game)) |
-| 79 | `lysglimt` | Lysglimt | vanskelig | [link](https://adventofcode.com/2021/day/11) |
+| 93 | `malingsbotta` | Malingsbøtta | middels | [link](https://en.wikipedia.org/wiki/Flood_fill) |
+| 94 | `mal-rammen` | Mal rammen | lett |  |
+| 95 | `speilvend-brettet` | Speilvend brettet | lett |  |
+| 96 | `bytt-rader-og-kolonner` | Bytt rader og kolonner | middels |  |
+| 97 | `kvart-omdreining` | En kvart omdreining | middels |  |
+| 98 | `spiralen` | Spiralen | middels |  |
+| 99 | `tell-oyene` | Tell øyene | middels | [link](https://en.wikipedia.org/wiki/Connected-component_labeling) |
+| 100 | `ut-av-labyrinten` | Ut av labyrinten | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
+| 101 | `livets-spill` | Ett steg i Livet | middels | [link](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) |
+| 102 | `minesveiper` | Minesveiper | middels | [link](https://en.wikipedia.org/wiki/Minesweeper_(video_game)) |
+| 103 | `langtons-maur` | Langtons maur | vanskelig | [link](https://en.wikipedia.org/wiki/Langton%27s_ant) |
+| 104 | `slukk-lysene` | Slukk lysene | vanskelig | [link](https://en.wikipedia.org/wiki/Lights_Out_(game)) |
+| 105 | `lysglimt` | Lysglimt | vanskelig | [link](https://adventofcode.com/2021/day/11) |
 
 ### Objekter og klassen (12)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 80 | `si-hvem-du-er` | Si hvem du er | lett |  |
-| 81 | `er-den-stor` | Er den stor? | lett |  |
-| 82 | `mellom-1-og-99` | Mellom 1 og 99 | middels |  |
-| 83 | `ting-compare` | Ting.compare | lett |  |
-| 84 | `katter-og-spokelser` | Katter og spøkelser | middels |  |
-| 85 | `roboten-teller` | Roboten teller i det skjulte | middels |  |
-| 86 | `tekst-og-tall` | Tekst og tall | middels |  |
-| 87 | `fargetelling` | Fargetelling | lett |  |
-| 88 | `hvor-mange-farger` | Hvor mange farger? | lett |  |
-| 89 | `grupper-etter-farge` | Grupper etter farge | middels |  |
-| 90 | `en-liste-du-kan-ga-gjennom` | En liste du kan gå gjennom | middels |  |
-| 91 | `husk-de-tre-siste` | Husk de tre siste | vanskelig | [link](https://en.wikipedia.org/wiki/Cache_replacement_policies#LRU) |
+| 106 | `si-hvem-du-er` | Si hvem du er | lett |  |
+| 107 | `er-den-stor` | Er den stor? | lett |  |
+| 108 | `mellom-1-og-99` | Mellom 1 og 99 | middels |  |
+| 109 | `ting-compare` | Ting.compare | lett |  |
+| 110 | `katter-og-spokelser` | Katter og spøkelser | middels |  |
+| 111 | `roboten-teller` | Roboten teller i det skjulte | middels |  |
+| 112 | `tekst-og-tall` | Tekst og tall | middels |  |
+| 113 | `fargetelling` | Fargetelling | lett |  |
+| 114 | `hvor-mange-farger` | Hvor mange farger? | lett |  |
+| 115 | `grupper-etter-farge` | Grupper etter farge | middels |  |
+| 116 | `en-liste-du-kan-ga-gjennom` | En liste du kan gå gjennom | middels |  |
+| 117 | `husk-de-tre-siste` | Husk de tre siste | vanskelig | [link](https://en.wikipedia.org/wiki/Cache_replacement_policies#LRU) |
 
 ### Klassikere (14)
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 92 | `binaersok` | Binærsøk | middels | [link](https://en.wikipedia.org/wiki/Binary_search) |
-| 93 | `to-som-blir-malet` | To som blir målet | lett | [link](https://leetcode.com/problems/two-sum/) |
-| 94 | `kjop-lavt-selg-hoyt` | Kjøp lavt, selg høyt | lett | [link](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) |
-| 95 | `den-som-mangler` | Den som mangler | lett |  |
-| 96 | `balansepunktet` | Balansepunktet | lett | [link](https://leetcode.com/problems/find-pivot-index/) |
-| 97 | `tre-pa-rad` | Tre på rad | lett |  |
-| 98 | `fizzbuzz-i-farger` | FizzBuzz i farger | lett | [link](https://en.wikipedia.org/wiki/Fizz_buzz) |
-| 99 | `josefus-ringen` | Josefus-ringen | middels | [link](https://en.wikipedia.org/wiki/Josephus_problem) |
-| 100 | `flertallet` | Flertallet | middels | [link](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_majority_vote_algorithm) |
-| 101 | `den-gladeste-strekningen` | Den gladeste strekningen | middels | [link](https://en.wikipedia.org/wiki/Maximum_subarray_problem) |
-| 102 | `rettferdig-stokking` | Rettferdig stokking | middels | [link](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle) |
-| 103 | `regnvann` | Regnvann | vanskelig | [link](https://leetcode.com/problems/trapping-rain-water/) |
-| 104 | `en-fra-strommen` | Én fra strømmen | vanskelig | [link](https://en.wikipedia.org/wiki/Reservoir_sampling) |
-| 105 | `josefus-uten-a-telle` | Josefus uten å telle | vanskelig | [link](https://en.wikipedia.org/wiki/Josephus_problem#k=2) |
+| 118 | `binaersok` | Binærsøk | middels | [link](https://en.wikipedia.org/wiki/Binary_search) |
+| 119 | `to-som-blir-malet` | To som blir målet | lett | [link](https://leetcode.com/problems/two-sum/) |
+| 120 | `kjop-lavt-selg-hoyt` | Kjøp lavt, selg høyt | lett | [link](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) |
+| 121 | `den-som-mangler` | Den som mangler | lett |  |
+| 122 | `balansepunktet` | Balansepunktet | lett | [link](https://leetcode.com/problems/find-pivot-index/) |
+| 123 | `tre-pa-rad` | Tre på rad | lett |  |
+| 124 | `fizzbuzz-i-farger` | FizzBuzz i farger | lett | [link](https://en.wikipedia.org/wiki/Fizz_buzz) |
+| 125 | `josefus-ringen` | Josefus-ringen | middels | [link](https://en.wikipedia.org/wiki/Josephus_problem) |
+| 126 | `flertallet` | Flertallet | middels | [link](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_majority_vote_algorithm) |
+| 127 | `den-gladeste-strekningen` | Den gladeste strekningen | middels | [link](https://en.wikipedia.org/wiki/Maximum_subarray_problem) |
+| 128 | `rettferdig-stokking` | Rettferdig stokking | middels | [link](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle) |
+| 129 | `regnvann` | Regnvann | vanskelig | [link](https://leetcode.com/problems/trapping-rain-water/) |
+| 130 | `en-fra-strommen` | Én fra strømmen | vanskelig | [link](https://en.wikipedia.org/wiki/Reservoir_sampling) |
+| 131 | `josefus-uten-a-telle` | Josefus uten å telle | vanskelig | [link](https://en.wikipedia.org/wiki/Josephus_problem#k=2) |
 
 <!-- tasks:end -->

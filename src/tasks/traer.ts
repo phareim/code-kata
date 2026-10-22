@@ -1199,4 +1199,194 @@ root = build(0, items.length)
     },
     source: 'https://en.wikipedia.org/wiki/Binary_search_tree#Optimal_binary_search_trees',
   },
+  {
+    id: 'treet-fra-to-turer',
+    title: 'Treet fra to turer',
+    level: 'vanskelig',
+    topic: 'trær',
+    text: `Treet har falt fra hverandre: tingene står løse, uten \`left\` og \`right\`. Men noen husket to turer gjennom det. \`pre\` er tingene i pre-orden (seg selv, så venstre, så høyre), og \`ino\` er de samme tingene i in-orden (venstre, seg selv, så høyre).
+
+Bygg treet opp igjen: sett \`left\` og \`right\` på tingene, og la \`root\` peke på roten. To turer er nok til å finne fram, så lenge ingen ting står to ganger.`,
+    hints: [
+      'Den første i `pre` er roten. Finn den i `ino`: alt til venstre for den der er venstre deltre, alt til høyre er høyre deltre.',
+      'Venstre deltre har like mange ting som det står til venstre for roten i `ino`. De kommer rett etter roten i `pre`, og høyre deltre kommer etter dem.',
+      'Skriv en funksjon `build(preStart, inStart, size)` som gir tilbake roten for et deltre, og kaller seg selv for venstre og høyre del. Et deltre med størrelse 0 er `null`.',
+    ],
+    world: (r) => {
+      // A random tree, written down as two walks, with every link taken away.
+      const items = things(r, 8)
+      const left: (number | null)[] = items.map(() => null)
+      const right: (number | null)[] = items.map(() => null)
+      for (let i = 1; i < items.length; i++) {
+        const free: [number, 'l' | 'r'][] = []
+        for (let j = 0; j < i; j++) {
+          if (left[j] === null) free.push([j, 'l'])
+          if (right[j] === null) free.push([j, 'r'])
+        }
+        const [parent, side] = pick(r, free)
+        if (side === 'l') left[parent] = i
+        else right[parent] = i
+      }
+      const pre: number[] = []
+      const ino: number[] = []
+      const walk = (i: number | null) => {
+        if (i === null) return
+        pre.push(i)
+        walk(left[i])
+        ino.push(i)
+        walk(right[i])
+      }
+      walk(0)
+      // The ting fields are null; the roots hold the two walks.
+      return makeWorld(items.map((s) => ({ ...s, left: null, right: null })), { pre: pre.map(at), ino: ino.map(at), root: null })
+    },
+    ting: TREE_TING,
+    starter: `function build(preStart, inStart, size) {
+  if (size === 0) return null
+  const node = pre[preStart]
+  // Hvor står node i ino? Hvor mange ting er til venstre for den?
+  return node
+}
+
+root = build(0, 0, pre.length)
+`,
+    solution: `function build(preStart, inStart, size) {
+  if (size === 0) return null
+  const node = pre[preStart]
+  const at = ino.indexOf(node, inStart)
+  const leftSize = at - inStart
+  node.left = build(preStart + 1, inStart, leftSize)
+  node.right = build(preStart + 1 + leftSize, at + 1, size - 1 - leftSize)
+  vis(node)
+  return node
+}
+
+root = build(0, 0, pre.length)
+`,
+    check: (t) => {
+      const pre = t.before('pre')
+      const ino = t.before('ino')
+      const gotPre: unknown[] = []
+      const gotIno: unknown[] = []
+      const seen = new Set()
+      let loop = false
+      const walk = (node: any) => {
+        if (!node || loop) return
+        if (seen.has(node)) { loop = true; return }
+        seen.add(node)
+        gotPre.push(node)
+        walk(node.left)
+        gotIno.push(node)
+        walk(node.right)
+      }
+      walk(t.root)
+      if (loop) return 'Treet går i ring: en ting kan ikke være under seg selv.'
+      if (gotPre.length !== pre.length) return `Treet fra root har ${gotPre.length} ting, men skal ha alle ${pre.length}.`
+      for (let i = 0; i < pre.length; i++) {
+        if (gotPre[i] !== pre[i]) return `I pre-orden skal plass ${i + 1} være ${t.show(pre[i])}, men treet ditt gir ${t.show(gotPre[i])}.`
+      }
+      for (let i = 0; i < ino.length; i++) {
+        if (gotIno[i] !== ino[i]) return `I in-orden skal plass ${i + 1} være ${t.show(ino[i])}, men treet ditt gir ${t.show(gotIno[i])}.`
+      }
+      return true
+    },
+    source: 'https://en.wikipedia.org/wiki/Tree_traversal',
+  },
+  {
+    id: 'brann-i-treet',
+    title: 'Brann i treet',
+    level: 'vanskelig',
+    topic: 'trær',
+    text: `Det tar fyr i en ting i treet. Hvert minutt sprer brannen seg til alle naboene til de som brenner: barna (\`left\` og \`right\`) og forelderen. Skriv \`function burnTime(root, start)\` som gir tilbake hvor mange minutter det tar før hele treet brenner, når det tar fyr i \`start\`.
+
+Tingene vet ikke hvem som er forelderen deres. Det må du finne ut selv.`,
+    hints: [
+      'Gå gjennom treet én gang og husk forelderen til hver ting i en `Map`.',
+      'Nå er treet en graf der hver ting har opptil tre naboer: `left`, `right` og forelderen.',
+      'Spre brannen bredden først fra `start`, lag for lag. Antall lag etter det første er svaret. Merk hvem som brenner, så ingen tar fyr to ganger.',
+    ],
+    world: (r) => treeWorld(r, things(r, 9)),
+    ting: TREE_TING,
+    starter: `function burnTime(root, start) {
+  // Finn foreldrene, og spre brannen lag for lag
+  return 0
+}
+
+console.log(burnTime(root, E))
+`,
+    solution: `function burnTime(root, start) {
+  const parent = new Map()
+  const stack = [root]
+  while (stack.length) {
+    const node = stack.pop()
+    for (const child of [node.left, node.right]) {
+      if (child) {
+        parent.set(child, node)
+        stack.push(child)
+      }
+    }
+  }
+  const burning = new Set([start])
+  let front = [start]
+  let minutes = 0
+  while (true) {
+    const next = []
+    for (const node of front) {
+      for (const n of [node.left, node.right, parent.get(node)]) {
+        if (n && !burning.has(n)) {
+          burning.add(n)
+          next.push(n)
+        }
+      }
+    }
+    if (!next.length) return minutes
+    for (const n of next) n.color = 'red'
+    vis(...next)
+    minutes++
+    front = next
+  }
+}
+
+console.log(burnTime(root, E))
+`,
+    exports: ['burnTime'],
+    check: (t) => {
+      const burnTime = t.fn('burnTime')
+      const reference = (root: any, start: any) => {
+        const parent = new Map()
+        const all: any[] = []
+        const stack = [root]
+        while (stack.length) {
+          const node = stack.pop()
+          all.push(node)
+          for (const c of [node.left, node.right]) if (c) { parent.set(c, node); stack.push(c) }
+        }
+        const dist = new Map([[start, 0]])
+        const queue = [start]
+        let most = 0
+        while (queue.length) {
+          const node = queue.shift()
+          for (const n of [node.left, node.right, parent.get(node)]) {
+            if (n && !dist.has(n)) {
+              dist.set(n, dist.get(node)! + 1)
+              most = Math.max(most, dist.get(n)!)
+              queue.push(n)
+            }
+          }
+        }
+        return { most, all }
+      }
+      const trees = [[1, [2, [4, 8, null], 5], [3, null, [6, 9, 7]]], 1, [1, 2, null], [1, [2, [3, [4, 5, null], null], null], null]]
+      for (const spec of trees) {
+        const root = t.tree(spec)
+        const { all } = reference(root, root)
+        for (const start of all) {
+          const want = reference(root, start).most
+          const got = burnTime(root, start)
+          if (got !== want) return `Når det tar fyr i tingen med verdien ${start.value}, gav burnTime ${t.show(got)}, men det tar ${want} minutter.`
+        }
+      }
+      return true
+    },
+  },
 ]
