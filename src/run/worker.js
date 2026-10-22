@@ -4,9 +4,10 @@
  * kata.phareim.no's storage, and requests it makes carry none of the visitor's *.phareim.no cookies.
  * Keep it self-contained: no imports, plain JavaScript.
  *
- *   page → worker  { type: 'run', code }                       once per worker
+ *   page → worker  { type: 'run', code, world }                once per worker
  *   worker → page  { type: 'console', entries: [{ level, text }] }
  *                  { type: 'clear' }
+ *                  { type: 'world', world }                     the items after the run, sent before done/error
  *                  { type: 'done', ms }                         the code returned and no timer is left
  *                  { type: 'error', name, message, line, compile, ms }
  *                                                an uncaught error; line is 1-based or null, compile is true
@@ -149,6 +150,72 @@ function errorText(e) {
 }
 
 /*
+ * The world: the items above the editor, a linked list the code can change. On the way in and out every item is a
+ * list of props, and a prop is one of
+ *   { key, ref, text }           another item, by its slot
+ *   { key, raw, text }           a value that survives a structured clone
+ *   { key, text, lossy: true }   a value that doesn't (a function, a symbol); the next run gets the text
+ * Slots are memory: the items the page sent keep their slot, items the code made are appended in the order they are
+ * found from `head` along `next`. Slot i is named label(i) (A, B, … Z, A1 …) as a fixed global; `head` is a variable.
+ */
+const WORLD_LIMIT = 64
+
+function label(i) {
+  return String.fromCharCode(65 + (i % 26)) + (i >= 26 ? String(Math.floor(i / 26)) : '')
+}
+
+/** The objects the page's world describes, linked to each other. */
+function buildWorld(world) {
+  const objs = world.items.map(() => ({}))
+  const decode = (p) => (p.ref !== undefined ? objs[p.ref] : 'raw' in p ? p.raw : p.text)
+  world.items.forEach((item, i) => {
+    for (const p of item.props) objs[i][p.key] = decode(p)
+  })
+  return { objs, head: decode(world.head) }
+}
+
+/** The world as the code left it: the known items in their slots, then new ones reached from head along next. */
+function snapshotWorld(known, head) {
+  const slot = new Map()
+  const objs = []
+  let truncated = false
+  const add = (o) => {
+    if (o === null || typeof o !== 'object' || slot.has(o)) return
+    if (objs.length >= WORLD_LIMIT) { truncated = true; return }
+    slot.set(o, objs.length)
+    objs.push(o)
+  }
+  known.forEach(add)
+  add(head)
+  for (let i = 0; i < objs.length; i++) {
+    try { add(objs[i].next) } catch { /* a getter that throws: no next */ }
+  }
+  const encode = (key, v) => {
+    if (slot.has(v)) return { key, ref: slot.get(v), text: label(slot.get(v)) }
+    const text = format(v, 1, new Set())
+    if (v === null || (typeof v !== 'object' && typeof v !== 'function' && typeof v !== 'symbol')) return { key, raw: v, text }
+    try {
+      structuredClone(v)
+      return { key, raw: v, text }
+    } catch {
+      return { key, text, lossy: true }
+    }
+  }
+  const items = objs.map((o) => {
+    let keys = []
+    try { keys = Object.keys(o) } catch { /* a proxy that refuses */ }
+    return {
+      props: keys.map((key) => {
+        let v
+        try { v = o[key] } catch (err) { v = err }
+        return encode(key, v)
+      }),
+    }
+  })
+  return { items, head: encode('head', head), truncated }
+}
+
+/*
  * The code runs as the body of an async function, so `await` works at the top. The sourceURL names it kata.js in
  * Chrome's and Firefox's stacks; WebKit ignores it but sets `line` on the error instead. How many lines the engine's
  * wrapper adds differs, so calibrate() measures it once with a probe compiled the same way.
@@ -257,9 +324,21 @@ function start() {
     clear: () => { queue = []; send({ type: 'clear' }) },
   }
 
+  // The items, sent back as the code left them; not after a compile error, when no code ran.
+  let world = null
+  const sendWorld = () => {
+    if (!world) return
+    try {
+      send({ type: 'world', world: snapshotWorld(world.objs, self.head) })
+    } catch {
+      // A value that passed the clone check but not postMessage: the page keeps the old items.
+    }
+  }
+
   const fail = (err, compiling) => {
     if (finished) return
     flush()
+    if (!compiling) sendWorld()
     finished = true
     const isError = err instanceof Error
     send({
@@ -280,6 +359,7 @@ function start() {
     realSetTimeout(() => {
       if (!mainDone || pending.size || finished) return
       flush()
+      sendWorld()
       finished = true
       send({ type: 'done', ms: performance.now() - startedAt })
     }, 0)
@@ -313,6 +393,14 @@ function start() {
     if (!msg || msg.type !== 'run' || startedAt) return
     startedAt = performance.now()
     code = String(msg.code)
+    if (msg.world) {
+      world = buildWorld(msg.world)
+      // The letters name slots, so they can't be reassigned (strict mode throws); head can.
+      world.objs.forEach((obj, i) => {
+        Object.defineProperty(self, label(i), { value: obj, writable: false, enumerable: true, configurable: true })
+      })
+      self.head = world.head
+    }
     cal = await calibrate()
     let main
     try {

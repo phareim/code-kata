@@ -2,7 +2,10 @@ import '@fontsource/jetbrains-mono/400.css'
 import './style.css'
 import { createEditor, firstSyntaxErrorLine, goToLine, markErrorLine } from './editor/editor'
 import { Runner, TIME_LIMIT_MS, type Entry, type Outcome } from './run/runner'
-import { STARTER } from './starter'
+import { OLD_STARTERS, STARTER } from './starter'
+import { renderObjects } from './world/objects'
+import { renderRow } from './world/row'
+import { label, randomWorld, type World } from './world/world'
 
 const STORAGE_KEY = 'code-kata:code'
 
@@ -12,10 +15,14 @@ const clearButton = $<HTMLButtonElement>('clear')
 const statusEl = $('status')
 const output = $('output')
 const hint = $('hint')
+const itemsRow = $('items')
+const objectsPane = $('objects')
 
+// A visitor who never changed an earlier starter gets the current one.
 function loadCode(): string {
   try {
-    return localStorage.getItem(STORAGE_KEY) ?? STARTER
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved === null || OLD_STARTERS.includes(saved) ? STARTER : saved
   } catch {
     return STARTER
   }
@@ -29,6 +36,41 @@ function storeCode(code: string): void {
   }
 }
 
+// The items: a new random set on every visit. Each run starts from `world` and its result becomes the new one;
+// «Nullstill» goes back to `initial`. `version` keeps a run that was overtaken by «Nye»/«Nullstill» from landing.
+let initial = randomWorld()
+let world = initial
+let version = 0
+
+function showWorld(next: World, animate: boolean): void {
+  world = next
+  renderRow(itemsRow, world, animate)
+  renderObjects(objectsPane, world)
+}
+showWorld(world, false)
+
+$('fresh').addEventListener('click', () => {
+  version++
+  initial = randomWorld()
+  showWorld(initial, false)
+})
+$('reset').addEventListener('click', () => {
+  version++
+  showWorld(initial, true)
+})
+
+// Pointing at an item lights it up everywhere: in the row, in the objects pane and where other items point at it.
+function lightUp(name: string | undefined, on: boolean): void {
+  if (!name) return
+  for (const node of document.querySelectorAll(`[data-label="${name}"]`)) node.classList.toggle('is-hot', on)
+}
+for (const type of ['pointerover', 'pointerout'] as const) {
+  document.addEventListener(type, (event) => {
+    const target = (event.target as Element | null)?.closest<HTMLElement>('[data-label]')
+    lightUp(target?.dataset.label, type === 'pointerover')
+  })
+}
+
 let saveTimer = 0
 const view = createEditor($('editor'), {
   doc: loadCode(),
@@ -37,6 +79,7 @@ const view = createEditor($('editor'), {
     window.clearTimeout(saveTimer)
     saveTimer = window.setTimeout(() => storeCode(code), 300)
   },
+  itemNames: () => ['head', ...world.items.map((_, i) => label(i))],
 })
 window.addEventListener('pagehide', () => storeCode(view.state.doc.toString()))
 
@@ -101,10 +144,11 @@ function finished(outcome: Outcome): void {
     }
     case 'stopped':
       if (outcome.reason === 'timeout') {
-        appendLines([line('warn', `Stoppet etter ${TIME_LIMIT_MS / 1000} sekunder. Går en løkke uten slutt?`)])
+        appendLines([line('warn', `Stoppet etter ${TIME_LIMIT_MS / 1000} sekunder. Går en løkke uten slutt, `
+          + 'eller i ring rundt tingene? Tingene er som før.')])
         setStatus('Stoppet', 'stopped')
       } else {
-        appendLines([line('note', 'Stoppet.')])
+        appendLines([line('note', 'Stoppet. Tingene er som før.')])
         setStatus('Stoppet', 'stopped')
       }
       break
@@ -116,9 +160,11 @@ function run(): void {
   output.replaceChildren()
   setRunning(true)
   setStatus('Kjører', 'running')
-  runner.run(view.state.doc.toString(), {
+  const started = version
+  runner.run(view.state.doc.toString(), world, {
     output: (entries) => appendLines(entries.map((e) => line(e.level, e.text))),
     clear: () => output.replaceChildren(),
+    world: (next) => { if (version === started) showWorld(next, true) },
     end: finished,
   })
 }

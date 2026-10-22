@@ -9,7 +9,7 @@ import { firstSyntaxErrorLine } from '../src/editor/editor'
 async function labels(text: string, explicit = false): Promise<string[]> {
   const pos = text.indexOf('|')
   const doc = text.replace('|', '')
-  const state = EditorState.create({ doc, selection: { anchor: pos }, extensions: [kataJavascript()] })
+  const state = EditorState.create({ doc, selection: { anchor: pos }, extensions: [kataJavascript(() => ['head', 'A', 'B'])] })
   ensureSyntaxTree(state, doc.length, 1000)
   const sources = state.languageDataAt<CompletionSource>('autocomplete', pos)
   const context = new CompletionContext(state, pos, explicit)
@@ -48,6 +48,18 @@ describe('completion', () => {
     const got = await labels('const player = { score: 0 }\nconst list = [1, 2]\nlist.|')
     expect(got).toEqual(expect.arrayContaining(['map', 'filter', 'reduce', 'length', 'split', 'score']))
     expect(await labels('"kata".toUp|')).toContain('toUpperCase')
+  })
+
+  it('offers head and the items by letter', async () => {
+    expect(await labels('he|')).toContain('head')
+    expect(await labels('A|')).toEqual(expect.arrayContaining(['A', 'B', 'head']))
+  })
+
+  it('offers value, color and next after a dot on an item or a plain variable', async () => {
+    expect(await labels('head.next.|')).toEqual(expect.arrayContaining(['value', 'color', 'next']))
+    expect(await labels('let node = head\nnode.ne|')).toContain('next')
+    const got = await labels('const after = x.next\nnode.|')
+    expect(got.filter((l) => l === 'next').length).toBe(1)
   })
 
   it('stays quiet inside strings and comments', async () => {

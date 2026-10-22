@@ -25,6 +25,8 @@ export interface EditorOptions {
   /** Mod-Enter. */
   onRun(): void
   onChange(doc: string): void
+  /** head and the items' letters, for autocomplete. */
+  itemNames(): string[]
 }
 
 // The line the last run failed on. It belongs to the code that ran, so any edit clears it.
@@ -69,7 +71,7 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
         highlightActiveLine(),
         highlightSelectionMatches(),
         EditorView.lineWrapping,
-        kataJavascript(),
+        kataJavascript(options.itemNames),
         errorLine,
         neonTheme,
         // Mod-Enter is insertBlankLine in the default keymap; Tab takes an open completion before it indents.

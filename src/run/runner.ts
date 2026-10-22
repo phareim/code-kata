@@ -1,3 +1,4 @@
+import type { World } from '../world/world'
 import workerSource from './worker.js?raw'
 
 // A data: URL gives the worker an opaque origin (see worker.js). Built once; every run gets a fresh worker.
@@ -17,6 +18,8 @@ export type Outcome =
 export interface RunHandlers {
   output(entries: Entry[]): void
   clear(): void
+  /** The items as the code left them; comes before end() unless the run was stopped or didn't compile. */
+  world(world: World): void
   end(outcome: Outcome): void
 }
 
@@ -27,7 +30,7 @@ export class Runner {
     return this.finish !== null
   }
 
-  run(code: string, handlers: RunHandlers): void {
+  run(code: string, world: World, handlers: RunHandlers): void {
     this.stop()
     const worker = new Worker(WORKER_URL)
     const timer = window.setTimeout(() => finish({ kind: 'stopped', reason: 'timeout' }), TIME_LIMIT_MS)
@@ -46,6 +49,7 @@ export class Runner {
       switch (msg?.type) {
         case 'console': handlers.output(msg.entries); break
         case 'clear': handlers.clear(); break
+        case 'world': handlers.world(msg.world); break
         case 'done': finish({ kind: 'done', ms: msg.ms }); break
         case 'error': finish({ kind: 'error', name: msg.name, message: msg.message, line: msg.line, compile: msg.compile, ms: msg.ms }); break
       }
@@ -54,7 +58,7 @@ export class Runner {
       event.preventDefault()
       finish({ kind: 'error', name: 'Error', message: event.message || 'Kjøringen stoppet uventet.', line: null, compile: false, ms: 0 })
     }
-    worker.postMessage({ type: 'run', code })
+    worker.postMessage({ type: 'run', code, world })
   }
 
   stop(): void {

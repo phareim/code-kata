@@ -24,6 +24,8 @@
   --gold: #ffd23f;
   --red: #ff3b5c;
   --lime: #b6ff4a;
+  --orange: #ff8a3d;
+  --teal: #3fd8b0;
   --font-pixel: 'Neon Pixel', ui-monospace, monospace;
   --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --code-size: 14px;
@@ -109,6 +111,15 @@ body::before {
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: 20px;
 }
+/* Left: the items over the code. Right: objects over console, half each. */
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  min-height: 0;
+}
+.col > .pane { flex: 1 1 0; }
 
 /* Neon Shrine's dialog box: a one-pixel edge with notched corners and a faint rule inside the top edge. */
 .px-box {
@@ -140,6 +151,7 @@ body::before {
   min-height: 0;
 }
 .console-pane { --edge: var(--violet); }
+.objects-pane { --edge: var(--teal); }
 
 .pane-bar {
   display: flex;
@@ -256,10 +268,140 @@ body::before {
 }
 .goto:hover, .goto:focus-visible { outline: none; color: var(--hi); }
 
+/*
+ * The items: HEAD → creatures in list order → NULL, then the loose ones. Each creature is 14×9 pixels at --px CSS px
+ * per pixel, in its item's colour (--c); @property lets the colour fade when the code changes it.
+ */
+@property --c {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #5a5285;
+}
+.items {
+  --px: 4px;
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 0;
+  min-height: calc(9 * var(--px) + 40px);
+  padding: 0 4px;
+}
+.link,
+.loose {
+  display: inline-flex;
+  align-items: center;
+}
+.head-tag,
+.arrow,
+.end,
+.loose-tag,
+.token-label,
+.token-value {
+  font-size: 16px;
+  line-height: 1;
+  text-shadow: 2px 2px 0 #000;
+}
+.head-tag { color: var(--cyan); text-shadow: 2px 2px 0 #000, 0 0 10px rgba(47, 243, 255, 0.5); }
+.arrow { color: var(--muted); margin: 0 8px; }
+.end { color: var(--muted); }
+.end--loop {
+  color: var(--pink);
+  padding: 4px 6px;
+  box-shadow: 0 -2px 0 var(--pink), 0 2px 0 var(--pink), -2px 0 0 var(--pink), 2px 0 0 var(--pink);
+}
+.end--bad { color: var(--red); }
+.loose {
+  gap: 12px;
+  margin-left: 20px;
+  padding-left: 16px;
+  border-left: 2px dashed var(--dusk);
+}
+.loose-tag { color: var(--dim); }
+
+.token {
+  --c: #5a5285;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: calc(14 * var(--px));
+  transition: --c 0.45s;
+}
+.token-label { color: var(--muted); }
+.token-value {
+  max-width: calc(14 * var(--px) + 16px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--hi);
+  text-shadow: 2px 2px 0 #000, 0 0 8px color-mix(in srgb, var(--c) 70%, transparent);
+}
+.token-value.is-long { font-size: 8px; }
+.blob {
+  display: block;
+  width: calc(14 * var(--px));
+  height: calc(9 * var(--px));
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 50%, transparent));
+  animation: bob 1.8s steps(1, end) infinite;
+  animation-delay: var(--delay, 0s);
+}
+.blob .b { fill: var(--c); }
+.blob .s { fill: color-mix(in srgb, var(--c) 55%, #0b0616); }
+.blob .h { fill: color-mix(in srgb, var(--c) 45%, #fff4ff); }
+.blob .w { fill: #fff4ff; }
+.blob .k { fill: #0b0616; }
+.blob .look-down { display: none; }
+.is-loose { opacity: 0.55; }
+.is-loose .blob { animation: none; }
+.is-loose .blob .look-right { display: none; }
+.is-loose .blob .look-down { display: inline; }
+.no-color .token-value::after { content: '?'; color: var(--red); }
+.token.is-hot .token-label { color: var(--cyan); }
+.token.is-hot .blob { filter: drop-shadow(0 0 10px var(--c)) brightness(1.15); }
+.end--loop.is-hot { color: var(--hi); }
+@keyframes bob {
+  50% { transform: translateY(calc(var(--px) / -2)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .blob { animation: none; }
+  .token { transition: none; }
+}
+
+/* The objects pane: the items as code. */
+.objects {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  font: var(--code-size) / 1.6 var(--font-code);
+  font-variant-ligatures: none;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.o-line { margin: 0 -12px; padding: 0 12px; }
+.o-line.is-hot { background: rgba(47, 243, 255, 0.07); }
+.o-name { color: var(--hi); }
+.o-punct { color: var(--muted); }
+.o-key { color: var(--teal); }
+.o-num { color: var(--orange); }
+.o-str { color: var(--gold); }
+.o-nil { color: var(--muted); }
+.o-obj { color: var(--ink); }
+.o-ref { color: var(--cyan); }
+.o-ref.is-hot { background: rgba(47, 243, 255, 0.22); }
+.o-lossy { color: var(--red); text-decoration: underline dotted; text-underline-offset: 3px; }
+.o-comment { color: var(--dim); }
+
 /* Phones and narrow windows: editor over console, and the page scrolls instead of the panes. */
 @media (max-width: 899px) {
   .app { height: auto; min-height: 100dvh; }
   .desk { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .col { gap: 24px; }
+  .col > .pane { flex: none; }
+  .items { --px: 3px; }
+  .objects { overflow: visible; }
   .editor .cm-editor { height: auto; }
   .editor .cm-content, .editor .cm-gutter { min-height: 45svh; }
   .desk .editor .cm-lineNumbers .cm-gutterElement { padding: 0 6px 0 8px; }

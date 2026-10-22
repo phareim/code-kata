@@ -3,7 +3,9 @@
  *   - the names the code itself declares, in scope at the cursor (variables, functions, parameters, classes)
  *   - keywords and snippets
  *   - the globals the runner offers, with their members after a dot (Math.floor, JSON.stringify, console.log)
- *   - after a dot on anything else: common array/string/number/promise members and the property names used in the code
+ *   - after a dot on anything else: the items' value/color/next, common array/string/number/promise members and the
+ *     property names used in the code
+ *   - the items' names: head and the letters A, B, C … of the world as it is now
  */
 import {
   completeFromList,
@@ -84,6 +86,7 @@ const prop = (detail: string) => (label: string): Completion => ({ label, type: 
 
 /** Members most kata code reaches for, offered after a dot when the receiver's type is unknown. */
 export const COMMON_MEMBERS: Completion[] = merge([
+  ...['value', 'color', 'next'].map((label): Completion => ({ label, type: 'property', detail: 'ting', boost: 1 })),
   ...['length'].map(prop('array · string')),
   ...['at', 'concat', 'includes', 'indexOf', 'lastIndexOf', 'slice'].map(method('array · string')),
   ...[
@@ -137,7 +140,20 @@ export function memberSource(scope: Record<string, unknown>): CompletionSource {
     }
     const path = completionPath(context)
     if (path && path.path.length && path.path[0] in scope) return null
-    return { from, options: [...codeProperties(context, typing), ...COMMON_MEMBERS], validFor: Identifier }
+    return { from, options: merge([...COMMON_MEMBERS, ...codeProperties(context, typing)]), validFor: Identifier }
+  }
+}
+
+/** head and the items' letters, read from the current world on every call. */
+export function worldSource(names: () => string[]): CompletionSource {
+  return (context) => {
+    const path = completionPath(context)
+    if (!path || path.path.length) return null
+    return {
+      from: context.pos - path.name.length,
+      options: names().map((label) => ({ label, type: 'variable', detail: label === 'head' ? 'første ting' : 'ting', boost: 2 })),
+      validFor: Identifier,
+    }
   }
 }
 
@@ -148,12 +164,13 @@ const localNames: CompletionSource = (context) => {
 }
 
 /** JavaScript with kata completions, in place of lang-javascript's `javascript()`. */
-export function kataJavascript(): LanguageSupport {
+export function kataJavascript(itemNames: () => string[] = () => []): LanguageSupport {
   const scope = kataScope()
   return new LanguageSupport(javascriptLanguage, [
     javascriptLanguage.data.of({ autocomplete: ifNotIn(dontComplete, completeFromList([...SNIPPETS, ...KEYWORDS])) }),
     javascriptLanguage.data.of({ autocomplete: localNames }),
     javascriptLanguage.data.of({ autocomplete: scopeCompletionSource(scope) }),
     javascriptLanguage.data.of({ autocomplete: memberSource(scope) }),
+    javascriptLanguage.data.of({ autocomplete: worldSource(itemNames) }),
   ])
 }
