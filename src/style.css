@@ -1,0 +1,273 @@
+/*
+ * Neon Coast's HTML look (phareim.no themes/base/pixel/pixel.css): the 5×7 pixel font at whole multiples of its
+ * 8 px em, hard drop shadows, boxes with notched corners and no radii. The pixel font is for the chrome only (.px);
+ * code and console output are set in JetBrains Mono.
+ * Cyan is you (cursor, focus, the editor's edge), pink is the call to action, gold a warning, red an error.
+ */
+@font-face {
+  font-family: 'Neon Pixel';
+  src: url('/fonts/neon-pixel.woff') format('woff');
+  font-display: block;
+}
+
+:root {
+  --bg: #0b0616;
+  --shade: #1c1030;
+  --dusk: #2a1f4a;
+  --ink: #cfc6ff;
+  --hi: #fff4ff;
+  --muted: #8f86b8;
+  --dim: #5a5285;
+  --cyan: #2ff3ff;
+  --pink: #ff2fa0;
+  --violet: #9a4ff0;
+  --gold: #ffd23f;
+  --red: #ff3b5c;
+  --lime: #b6ff4a;
+  --font-pixel: 'Neon Pixel', ui-monospace, monospace;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --code-size: 14px;
+  color-scheme: dark;
+}
+/* iOS zooms into anything editable set below 16 px. */
+@media (pointer: coarse) {
+  :root { --code-size: 16px; }
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+  min-height: 100dvh;
+  color: var(--ink);
+  font-family: var(--font-code);
+  background:
+    radial-gradient(110% 55% at 50% 115%, rgba(255, 47, 160, 0.18), transparent 70%),
+    radial-gradient(90% 45% at 50% -10%, rgba(47, 243, 255, 0.07), transparent 70%),
+    var(--bg);
+  background-attachment: fixed;
+  scrollbar-color: var(--dusk) transparent;
+}
+/* Scanlines on the night behind the panes; the panes themselves stay clean for reading. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.28) 0 2px, transparent 2px 4px);
+}
+
+.px {
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100dvh;
+  padding:
+    max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 24px;
+  padding: 0 4px;
+}
+.title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--pink);
+  text-shadow: 4px 4px 0 #000, 0 0 20px rgba(255, 47, 160, 0.55);
+}
+.tagline {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--cyan);
+  text-shadow: 2px 2px 0 #000, 0 0 10px rgba(47, 243, 255, 0.5);
+}
+
+.desk {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 20px;
+}
+
+/* Neon Shrine's dialog box: a one-pixel edge with notched corners and a faint rule inside the top edge. */
+.px-box {
+  --u: 2px;
+  --edge: var(--cyan);
+  position: relative;
+  background: rgba(11, 6, 22, 0.92);
+  box-shadow:
+    0 calc(-1 * var(--u)) 0 0 var(--edge),
+    0 var(--u) 0 0 var(--edge),
+    calc(-1 * var(--u)) 0 0 0 var(--edge),
+    var(--u) 0 0 0 var(--edge);
+}
+.px-box::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--u) * 2);
+  right: calc(var(--u) * 2);
+  top: calc(var(--u) * 2);
+  height: var(--u);
+  background: color-mix(in srgb, var(--edge) 35%, transparent);
+  pointer-events: none;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.console-pane { --edge: var(--violet); }
+
+.pane-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-height: 52px;
+  padding: 10px 12px 8px;
+  border-bottom: 2px solid color-mix(in srgb, var(--edge) 22%, transparent);
+}
+.pane-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--hi);
+  text-shadow: 2px 2px 0 #000;
+}
+.spacer { flex: 1; }
+.hint {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.status {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--muted);
+}
+.status.is-running { color: var(--cyan); animation: blink 1.1s steps(1) infinite; }
+.status.is-done { color: var(--lime); }
+.status.is-error { color: var(--red); }
+.status.is-stopped { color: var(--gold); }
+@keyframes blink { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) {
+  .status.is-running { animation: none; }
+}
+
+.btn {
+  --u: 2px;
+  --edge: var(--cyan);
+  font-size: 16px;
+  line-height: 1;
+  min-height: 32px;
+  padding: 8px 12px;
+  color: var(--edge);
+  background: rgba(11, 6, 22, 0.88);
+  border: 0;
+  border-radius: 0;
+  box-shadow:
+    0 calc(-1 * var(--u)) 0 0 var(--edge),
+    0 var(--u) 0 0 var(--edge),
+    calc(-1 * var(--u)) 0 0 0 var(--edge),
+    var(--u) 0 0 0 var(--edge);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:hover,
+.btn:focus-visible { outline: none; color: var(--bg); background: var(--edge); }
+.btn:active { transform: translateY(1px); }
+.btn--pink { --edge: var(--pink); text-shadow: 0 0 8px rgba(255, 47, 160, 0.45); }
+.btn--pink:hover, .btn--pink:focus-visible { text-shadow: none; }
+.btn--quiet { --edge: var(--muted); }
+.btn.is-running { --edge: var(--gold); text-shadow: none; }
+@media (pointer: coarse) {
+  .btn { min-height: 40px; padding: 10px 16px; }
+  .hint { display: none; }
+}
+
+.editor {
+  flex: 1;
+  min-height: 0;
+}
+.editor .cm-editor { height: 100%; }
+.editor .cm-scroller { font-size: var(--code-size); }
+/* No ligatures: `=>` and `>=` should look like what was typed. */
+.editor .cm-scroller,
+.cm-tooltip-autocomplete,
+.output { font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'calt' 0; }
+
+.output {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 12px 16px;
+  font: var(--code-size) / 1.6 var(--font-code);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.output:empty::before {
+  content: 'Trykk «Kjør» for å kjøre koden. console.log(…) skriver hit.';
+  color: var(--muted);
+  white-space: normal;
+}
+.line {
+  padding: 1px 0 1px 10px;
+  margin: 0 0 2px -12px;
+  border-left: 2px solid transparent;
+}
+.line.info { color: var(--cyan); }
+.line.warn { color: var(--gold); border-left-color: var(--gold); background: rgba(255, 210, 63, 0.06); }
+.line.error { color: var(--red); border-left-color: var(--red); background: rgba(255, 59, 92, 0.08); }
+.line.note { color: var(--muted); }
+.goto {
+  font: inherit;
+  color: var(--cyan);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.goto:hover, .goto:focus-visible { outline: none; color: var(--hi); }
+
+/* Phones and narrow windows: editor over console, and the page scrolls instead of the panes. */
+@media (max-width: 899px) {
+  .app { height: auto; min-height: 100dvh; }
+  .desk { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .editor .cm-editor { height: auto; }
+  .editor .cm-content, .editor .cm-gutter { min-height: 45svh; }
+  .desk .editor .cm-lineNumbers .cm-gutterElement { padding: 0 6px 0 8px; }
+  .editor-pane .pane-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+  }
+  .output { min-height: 28svh; max-height: 70svh; }
+}

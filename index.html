@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0616" />
+  <meta name="description" content="Kodekata: små oppgaver i JavaScript, skrevet og kjørt rett i nettleseren." />
+  <title>Kodekata · JavaScript i nettleseren</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="/fonts/neon-pixel.woff" as="font" type="font/woff" crossorigin />
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <h1 class="title px">Kodekata</h1>
+      <p class="tagline px">JavaScript i nettleseren</p>
+    </header>
+    <main class="desk">
+      <section class="pane px-box editor-pane" aria-labelledby="code-title">
+        <div class="pane-bar">
+          <h2 id="code-title" class="pane-title px">Kode</h2>
+          <span class="spacer"></span>
+          <span id="hint" class="hint px" aria-hidden="true"></span>
+          <button id="run" class="btn btn--pink px" type="button">Kjør</button>
+        </div>
+        <div id="editor" class="editor"></div>
+      </section>
+      <section class="pane px-box console-pane" aria-labelledby="console-title">
+        <div class="pane-bar">
+          <h2 id="console-title" class="pane-title px">Konsoll</h2>
+          <span id="status" class="status px" role="status">Klar</span>
+          <span class="spacer"></span>
+          <button id="clear" class="btn btn--quiet px" type="button" title="Tøm konsollen">Tøm</button>
+        </div>
+        <div id="output" class="output" role="log" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
