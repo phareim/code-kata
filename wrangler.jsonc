@@ -1,0 +1,9 @@
+// kata.phareim.no: the built site (dist/) served as static assets by a Cloudflare Worker.
+// No server code. The custom-domain route creates the DNS record itself.
+{
+  "name": "code-kata",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "kata.phareim.no", "custom_domain": true }],
+  "workers_dev": false
+}
