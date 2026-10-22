@@ -47,9 +47,11 @@ shape:
   far) from where it was to where it is, even from one panel to another.
 - An item's `shape` picks its creature: `blob` (the default), `ghost`, `cat` or `bot`. `color` is a palette name
   (`pink`, `cyan`, `gold`, `lime`, `violet`, `orange`, `red`, `teal`) or any CSS colour.
-- **`vis()`** takes a snapshot. After the run the stage plays the snapshots, then the end; «Hopp over» skips to the
-  end. Strings and numbers in the call make the snapshot's caption, items (or arrays of them) light up gold:
+- **`vis()`** takes a snapshot. After the run the stage plays the snapshots, then the end, with a frame counter;
+  «Hopp over» skips to the end and the speed button plays at 1x, 2x, 4x or 0,5x (remembered per browser). Strings
+  and numbers in the call make the snapshot's caption, items (or arrays of them) light up gold:
   `vis('bytter', items[i], items[i + 1])`. At most 240 per run; a long run plays faster.
+- A root with the `pointer` view (`slow`, `fast`, `guest` …) is a flag over the item it names, not a panel of its own.
 - The objects pane writes the roots and the items as code, in slot order: `head = D`,
   `A = Ting { value: 7, color: 'pink', next: C }`. Pointing at an item lights it up everywhere.
 - Letters are memory slots: A is the first item made, B the second. Items the code makes and links in (from a root,
@@ -76,7 +78,9 @@ class Ting {
 
 Add a field and press «Bruk» (or Cmd/Ctrl + Enter in the class): every item gets it at its default. In the
 playground, taking a field out takes it off every item. Methods in the class work on every item, and
-`new Ting({ value: 5, color: 'gold', next: head })` makes a new one in the code.
+`new Ting({ value: 5, color: 'gold', next: head })` makes a new one in the code. A `value`, `color` or `shape` that
+comes from a getter is drawn like a field. In a task the class folds to a one-line summary
+(`class Ting { value, color, next }`) unless the task is about the class or the visitor has changed it.
 
 ## How code runs
 
@@ -120,8 +124,11 @@ A task is an object in one of the topic files in `src/tasks/` (`types.ts` has th
 - `views`: a view for a root its shape doesn't give away, such as `{ nodes: 'graph' }`.
 
 `npm test` runs every task through the real worker in Node: its solution must pass on three seeds, its starter must
-not, and the check must not break. `scripts/smoke-tasks.mjs` then solves every task in the built site in Chrome and
-WebKit, which also covers the checks as minified source.
+not, and the check must not break. It also keeps the table in `docs/tasks.md` in step with the bank
+(`UPDATE_DOCS=1 npx vitest run test/docs.test.ts` rewrites it). `scripts/smoke-tasks.mjs` then solves every task in
+the built site in Chrome and WebKit, which also covers the checks as minified source.
+
+`docs/tasks.md` has how the bank was made, the sources its ideas came from, and the table of every task.
 
 ## Files
 
@@ -139,7 +146,8 @@ WebKit, which also covers the checks as minified source.
   `vis()`, the check.
 - `src/starter.ts`: the playground's code and class (and the earlier starters it replaces).
 - `test/harness.ts`: runs `worker.js` in a Node vm the way the page runs it; `test/tasks.test.ts` uses it for every
-  task.
+  task, `test/docs.test.ts` keeps `docs/tasks.md` current.
+- `docs/tasks.md`: the bank's overview, sources and table.
 - `scripts/smoke.mjs` (the playground) and `scripts/smoke-tasks.mjs` (the tasks): browser checks in Chrome and
   WebKit, with screenshots.
 

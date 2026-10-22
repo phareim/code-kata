@@ -17,6 +17,10 @@ how code runs and where things live.
 - Every task has a solution that passes and a starter that doesn't (`test/tasks.test.ts`, three seeds). A world must
   look the same for the same seed. A check message says what is wrong in a sentence, naming items by letter
   (`t.show`). Don't let a check loop on data the code controls without a bound (the code can change anything).
+- A root may not share a name with `t`'s own fields (`out`, `slots`, `start`, `fn` …): the check would read `t`'s.
+  A plain object held by a root becomes an item on the stage; give it `color`/`shape` or prefer a Ting.
+- After adding or renaming tasks: `UPDATE_DOCS=1 npx vitest run test/docs.test.ts` regenerates the table in
+  `docs/tasks.md` (`npm test` fails until it matches).
 - Items are memory slots, not variables: slot order is kept by both sides, new items are appended, and `label()`
   exists twice (`src/world/world.ts`, `src/run/worker.js`) and must agree (a test checks). The format is described at
   the top of the world section in `worker.js`; a change there goes in `world.ts` and `test/world.test.ts` too.
