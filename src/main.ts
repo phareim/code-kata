@@ -31,6 +31,9 @@ const hintButton = $<HTMLButtonElement>('hint-btn')
 const solutionButton = $<HTMLButtonElement>('solution-btn')
 const hintsEl = $('hints')
 const solutionEl = $('solution')
+const speedButton = $<HTMLButtonElement>('speed')
+const classToggle = $<HTMLButtonElement>('class-toggle')
+const classSummary = $<HTMLButtonElement>('class-summary')
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -152,9 +155,35 @@ function formatMs(ms: number): string {
   return `${(ms / 1000).toFixed(1).replace('.', ',')} s`
 }
 
+/*
+ * The class editor folds to a one-line summary (`class Ting { value, color, next }`): open in the playground, in
+ * tasks about the class, and when the visitor has changed the class; folded otherwise, to leave room for the items.
+ */
+function classSummaryText(source: string): string {
+  const fields = [...source.matchAll(/^\s*(#?[A-Za-z_$][\w$]*)\s*=/gm)].map((m) => m[1])
+  const methods = [...source.matchAll(/^\s*(?:static\s+|get\s+|set\s+|async\s+)?\*?\s*([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{/gm)]
+    .map((m) => m[1]).filter((name) => name !== 'constructor')
+  const name = /class\s+([A-Za-z_$][\w$]*)/.exec(source)?.[1] ?? 'Ting'
+  return `class ${name} { ${[...fields, ...methods.map((n) => `${n}()`)].join(', ')} }`
+}
+
+function setClassOpen(open: boolean): void {
+  $('class-editor').hidden = !open
+  classSummary.hidden = open
+  classToggle.setAttribute('aria-expanded', String(open))
+  classToggle.textContent = open ? 'Skjul klassen' : 'Vis klassen'
+  if (!open) classSummary.textContent = classSummaryText(classView.state.doc.toString())
+}
+classToggle.addEventListener('click', () => setClassOpen(!classSummary.hidden))
+classSummary.addEventListener('click', () => {
+  setClassOpen(true)
+  classView.focus()
+})
+
 /** A button that jumps to a line in an editor, and the line marked there. */
 function lineLink(where: Where, at: number): HTMLButtonElement {
   const view = views[where]
+  if (where === 'ting') setClassOpen(true)
   const go = document.createElement('button')
   go.type = 'button'
   go.className = 'goto'
@@ -211,6 +240,18 @@ function finished(outcome: Outcome, kind: 'code' | 'class'): void {
  */
 let playback: { timer: number; final: World; then: () => void } | null = null
 
+// The playback speed, a per-viewer choice kept in localStorage.
+const SPEEDS = [1, 2, 4, 0.5]
+let speed = Number(load('code-kata:speed', '1'))
+if (!SPEEDS.includes(speed)) speed = 1
+const showSpeed = () => { speedButton.textContent = `${String(speed).replace('.', ',')}x` }
+showSpeed()
+speedButton.addEventListener('click', () => {
+  speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]
+  store('code-kata:speed', String(speed))
+  showSpeed()
+})
+
 function play(frames: World[], final: World, dropped: number, then: () => void): void {
   if (!frames.length) {
     showWorld(final, true)
@@ -218,14 +259,18 @@ function play(frames: World[], final: World, dropped: number, then: () => void):
     return
   }
   if (dropped) appendLines([line('note', `vis() ble kalt ${frames.length + dropped} ganger; bare de ${frames.length} første spilles av.`)])
-  const step = Math.max(110, Math.min(650, 5200 / frames.length))
+  const base = Math.max(110, Math.min(650, 5200 / frames.length))
   let i = 0
   playback = { timer: 0, final, then }
   skipButton.hidden = false
+  speedButton.hidden = false
   const tick = () => {
     if (!playback) return
     if (i >= frames.length) return endPlayback(true)
-    showWorld(frames[i++], true, Math.min(520, step * 0.85))
+    const step = base / speed
+    const frame = frames[i++]
+    showWorld(frame, true, Math.min(520, step * 0.85))
+    stageNote.textContent = `${i}/${frames.length}${frame.note ? ` · ${frame.note}` : ''}`
     playback.timer = window.setTimeout(tick, step)
   }
   tick()
@@ -238,6 +283,7 @@ function endPlayback(runThen: boolean): void {
   playback = null
   window.clearTimeout(timer)
   skipButton.hidden = true
+  speedButton.hidden = true
   showWorld(final, true)
   if (runThen) then()
 }
@@ -435,6 +481,7 @@ function openTask(task: Task): void {
   replaceDoc(codeView, state.code ?? task.starter)
   replaceDoc(classView, state.ting ?? task.ting ?? TING_CLASS)
   renderTask(task)
+  setClassOpen(task.topic === 'objekter' || state.ting !== undefined)
   showWorld(start, false)
   build()
 }
@@ -447,6 +494,7 @@ function openPlay(): void {
   replaceDoc(codeView, load(PLAY_CODE, STARTER, OLD_STARTERS))
   replaceDoc(classView, load(PLAY_CLASS, TING_CLASS))
   renderPlay()
+  setClassOpen(true)
   showWorld(start, false)
   build()
 }
@@ -494,7 +542,10 @@ $('use-solution').addEventListener('click', () => {
   const task = currentTask()
   if (!task) return
   setText(codeView, task.solution)
-  if (task.solutionTing) setText(classView, task.solutionTing)
+  if (task.solutionTing) {
+    setText(classView, task.solutionTing)
+    setClassOpen(true)
+  }
   codeView.focus()
 })
 $('restart-btn').addEventListener('click', () => {

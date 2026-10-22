@@ -122,6 +122,11 @@ async function browser(name, launch) {
       })
       check(`${name}: the stamp shows over the stage`, !stamp.hidden && stamp.w > 50, JSON.stringify(stamp))
     }
+    if (Object.values(VIEWS).includes(id)) {
+      // The solved state, once the confetti has cleared.
+      await page.waitForTimeout(2700)
+      await page.screenshot({ path: join(shots, `${name}-solved-${id}.png`) })
+    }
   }
   check(`${name}: solutions solve their tasks`, solved === todo.length, `${solved}/${todo.length}`)
   const count = await page.textContent('#progress-count')

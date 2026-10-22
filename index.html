@@ -31,7 +31,7 @@
           <div class="task-head">
             <span id="task-meta" class="task-meta px"></span>
             <span id="task-level"></span>
-            <span id="task-solved" class="task-solved px" hidden>✓ Løst</span>
+            <span id="task-solved" class="task-solved px" title="Løst" hidden>✓</span>
             <span class="spacer"></span>
             <button id="prev-task" class="btn btn--quiet btn--small px" type="button" aria-label="Forrige oppgave" title="Forrige oppgave">&lt;</button>
             <button id="next-task" class="btn btn--quiet btn--small px" type="button" aria-label="Neste oppgave" title="Neste oppgave">&gt;</button>
@@ -56,9 +56,11 @@
           <div class="pane-bar">
             <h2 id="objects-title" class="pane-title px">Objekter</h2>
             <span class="spacer"></span>
+            <button id="class-toggle" class="btn btn--quiet btn--small px" type="button" aria-controls="class-editor" aria-expanded="true">Skjul klassen</button>
             <button id="apply" class="btn btn--teal px" type="button" title="Bygg tingene på nytt fra klassen">Bruk</button>
           </div>
           <div class="objects-scroll">
+            <button id="class-summary" class="class-summary" type="button" title="Vis klassen" hidden></button>
             <div id="class-editor" class="class-editor" aria-label="Klassen Ting"></div>
             <div id="objects" class="objects"></div>
           </div>
@@ -79,6 +81,7 @@
             <h2 id="stage-title" class="pane-title px">Tingene</h2>
             <span id="stage-note" class="stage-note px" aria-live="polite"></span>
             <span class="spacer"></span>
+            <button id="speed" class="btn btn--quiet btn--small px" type="button" title="Fart på avspillingen" hidden>1x</button>
             <button id="skip" class="btn btn--gold px" type="button" hidden>Hopp over</button>
             <button id="reset" class="btn btn--quiet px" type="button" title="Sett tingene tilbake slik de startet">Nullstill</button>
             <button id="fresh" class="btn btn--quiet px" type="button" title="Nye ting å starte fra">Nye</button>
