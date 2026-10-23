@@ -23,6 +23,9 @@ how code runs and where things live.
   (`t.show`). Don't let a check loop on data the code controls without a bound (the code can change anything).
 - A root may not share a name with `t`'s own fields (`out`, `slots`, `start`, `fn` …): the check would read `t`'s.
   A plain object held by a root becomes an item on the stage; give it `color`/`shape` or prefer a Monster.
+- An export or a root may not be named like a top-level function or constant in `worker.js` (`read`, `format`, `label`,
+  `place`, `limit`, `quote` …): the code compiles in the worker's global scope, so the worker's own function would
+  count as the task's export and «Fant ikke funksjonen» never shows. The Språk tasks say `readWord`, not `read`.
 - After adding or renaming tasks: `UPDATE_DOCS=1 npx vitest run test/docs.test.ts` regenerates the table in
   `docs/tasks.md` (`npm test` fails until it matches).
 - Items are memory slots, not variables: slot order is kept by both sides, new items are appended, and `label()`

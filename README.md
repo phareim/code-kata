@@ -1,17 +1,18 @@
 # Kodekata
 
 Small JavaScript tasks where pixel monsters («monstre») ask you to sort, tidy and move them: reverse a list, bubble-sort a row,
-build a Tower of Hanoi, mirror a tree, find the way through a graph, flood-fill a grid. Write a few lines, run them in
+build a Tower of Hanoi, mirror a tree, find the way through a graph, flood-fill a grid, read a word off a row of
+letters. Write a few lines, run them in
 the browser, and watch the monsters do what the code says. Neon Coast's pixel look from phareim.no (the night
 palette, Neon Shrine's 5×7 font, notched boxes).
 
-Live: https://kata.phareim.no (public; signing in is optional and only carries the progress along; 131 tasks, every one solved in Chrome and WebKit against the built site 2026-10-23).
+Live: https://kata.phareim.no (public; signing in is optional and only carries the progress along; 144 tasks, every one solved in Chrome against the built site 2026-10-24; the first 131 also in WebKit 2026-10-23).
 
 ## What it does
 
 - **Tasks** (`#/<id>`): a bank of tasks, each with a text, hints one at a time, a level (lett, middels, vanskelig) and
   a topic (lister, sortering, rydding og flytting, stabler og køer, trær, grafer, rutenett, objekter og klassen,
-  klassikere). «Kjør» runs the code and checks it: «Løst!» with confetti, a stamp and the monsters jumping, or
+  klassikere, språk). «Kjør» runs the code and checks it: «Løst!» with confetti, a stamp and the monsters jumping, or
   «Ikke ennå» with what is still wrong. The editor opens with a comment that names the variables (`head`, `items` …)
   and, when the task asks for functions, the code below that runs them on the stage, but no skeleton of the answer:
   hint 1 has a button that puts one in («Sett inn et skjelett», asking first over the visitor's own code). The
@@ -107,6 +108,11 @@ A task has `value` only when it has use for a number. Reversing a list, moving t
 needs none, so there the class and the items leave it out: the monsters are told apart by their letter and colour,
 and the stage shows no number under them. The discs on the pegs keep theirs, as their width. A task with no monsters
 at all (the grids) doesn't show the class, unless the visitor has written one there.
+
+The Språk tasks put a letter or a word in `value` as a string (`TEXT_MONSTER` and `TEXT_LIST_MONSTER` in `classes.ts`,
+`value = ''`; `letters` and `worded` in `build.ts`), and the stage writes it under the monster; a value over four
+characters gets a smaller font. Tasks about plain text (vowels, Caesar) have no monsters: a string is the root, and the
+stage draws it as `text = '…'`.
 
 Until 2026-10-23 the class was `Ting` (and the creatures «ting»), and visitors have code and classes saved from then.
 The worker builds the items from the class the class editor declares, `Monster`, or else `Ting`, and gives the other
