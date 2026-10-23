@@ -5,7 +5,7 @@ build a Tower of Hanoi, mirror a tree, find the way through a graph, flood-fill 
 the browser, and watch the creatures do what the code says. Neon Coast's pixel look from phareim.no (the night
 palette, Neon Shrine's 5×7 font, notched boxes).
 
-Live: https://kata.phareim.no (public, no login; 131 tasks, every one solved in Chrome and WebKit against the built site 2026-10-23).
+Live: https://kata.phareim.no (public; signing in is optional and only carries the progress along; 131 tasks, every one solved in Chrome and WebKit against the built site 2026-10-23).
 
 ## What it does
 
@@ -21,6 +21,8 @@ Live: https://kata.phareim.no (public, no login; 131 tasks, every one solved in 
   filters show.
 - **Progress**: solved tasks, opened hints, the code and the class per task, and the seed of each task's items are
   kept in localStorage (`code-kata:progress`). The header counts what is solved.
+- **On your account**: signed in at auth.phareim.no (the «Logg inn» link in the header, which becomes your name),
+  the progress is kept on your account too and follows you to another browser (below).
 - **Lekeplass** (`#/lekeplass`): the free playground, eight creatures in a list and no task (below).
 - **Editor**: CodeMirror 6 with JavaScript highlighting, bracket matching, search and undo, and autocomplete as you
   type (Tab or Enter): the code's own names, the roots (`head`, `items`, `root` …), `Ting`, `vis` and the items'
@@ -110,6 +112,31 @@ comes from a getter is drawn like a field. In a task the class folds to a one-li
   worker measures the engine's line offset once with a probe. Chrome reports a SyntaxError without a line, so the page
   takes the line where CodeMirror's parser fails. Firefox is untested; the worker reads its `lineNumber` too.
 
+## Progress on the account
+
+The page works from localStorage, signed in or not. A visitor signed in at auth.phareim.no (the `session_token`
+cookie on `.phareim.no`) also has their progress on their account:
+
+- When the page loads it asks `GET /api/progress`. A 401 shows «Logg inn» (a link to auth.phareim.no that comes back
+  to the task); no API at all (`npm run dev`, an outage) hides the link and the page carries on from localStorage.
+- Signed in, the account's tasks are merged into localStorage, and what the account lacks or has older goes up.
+  Every change after that goes up about two seconds later (solving, a hint or the solution at once), in one
+  `POST /api/progress` with the changed tasks; what is left when the tab is hidden or closed goes as a keepalive
+  request. A failed request is tried again, and anything still not sent is found again on the next visit.
+- The merge (`src/app/merge.ts`, the same on both sides): a solve keeps its first time, hints the most opened, a
+  peek at the solution sticks, and the code and the class come together from whichever browser edited them last
+  (`at`, set when either changes). The open task's editor takes the account's code when it is newer.
+- Signing in on a browser that has progress from before adds that progress to the account. Signing out (on
+  auth.phareim.no) leaves the browser's copy as it is.
+
+The Worker (`worker/index.ts`) runs only for `/api/*`; everything else is static assets. It looks the session up
+read-only in Reader's database (auth.phareim.no's accounts) and keeps each account's progress in its own SQLite
+Durable Object (`ProgressStore`, one key per task, at most 500). There is no allowlist: an account only ever reaches
+its own store. The visitor's code can't reach the API: it runs on an opaque origin whose requests carry no cookies,
+and a write must come from the site's own origin as JSON. The store has no backup; a lost store costs the progress
+on other browsers, not the copy in each browser. It becomes redundant if the phareim.no accounts get a shared
+per-app store of their own.
+
 ## Writing a task
 
 A task is an object in one of the topic files in `src/tasks/` (`types.ts` has the type, with comments):
@@ -141,8 +168,8 @@ the built site in Chrome and WebKit, which also covers the checks as minified so
 ## Files
 
 - `src/main.ts`: the page: what is open (a task or the playground), routing, runs, playback, verdicts, saving.
-- `src/app/`: the bank (`bank.ts`), progress (`progress.ts`), the success effect (`celebrate.ts`), task text
-  (`text.ts`).
+- `src/app/`: the bank (`bank.ts`), progress and its sync with the account (`progress.ts`), the merge the page and
+  the Worker share (`merge.ts`), the success effect (`celebrate.ts`), task text (`text.ts`).
 - `src/tasks/`: the task bank: one file per topic, `index.ts` (the order they are numbered in), `build.ts`
   (start worlds), `classes.ts` (the Ting classes), `opening.ts` (what the editor opens with), `types.ts`.
 - `src/stage/`: the stage (`stage.ts`: panels, views, tokens, glides) and the creatures (`creatures.ts`).
@@ -153,8 +180,10 @@ the built site in Chrome and WebKit, which also covers the checks as minified so
 - `src/run/worker.js`: the worker: console capture, value formatting, timers, error lines, the items in and out,
   `vis()`, the check.
 - `src/starter.ts`: the playground's code and class (and the earlier starters it replaces).
+- `worker/index.ts`: the Worker behind `/api/progress` and the account's store (`ProgressStore`).
 - `test/harness.ts`: runs `worker.js` in a Node vm the way the page runs it; `test/tasks.test.ts` uses it for every
-  task, `test/docs.test.ts` keeps `docs/tasks.md` current.
+  task, `test/docs.test.ts` keeps `docs/tasks.md` current, `test/sync.test.ts` covers the merge,
+  the Worker and the page's sync.
 - `docs/tasks.md`: the bank's overview, sources and table.
 - `scripts/smoke.mjs` (the playground) and `scripts/smoke-tasks.mjs` (the tasks): browser checks in Chrome and
   WebKit, with screenshots.
@@ -173,5 +202,7 @@ PLAYWRIGHT=/path/to/playwright-core/index.mjs CHROME_BIN=/path/to/chrome node sc
 ## Deploy
 
 `dist/` is served as static assets by the Cloudflare Worker `code-kata` (`wrangler.jsonc`), with the custom domain
-kata.phareim.no. A push to `main` builds, tests and deploys it from Petter's server; there is no GitHub Actions
+kata.phareim.no. The same Worker runs `worker/index.ts` for `/api/*`, with Reader's `reader-service` D1 (read only)
+and the `ProgressStore` Durable Object; `wrangler deploy` applies the Durable Object's migrations itself.
+`npx wrangler dev` runs both locally on the built `dist/`, with an empty local D1. A push to `main` builds, tests and deploys it from Petter's server; there is no GitHub Actions
 workflow. By hand: `npm run build && npx wrangler deploy`.

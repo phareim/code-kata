@@ -1,9 +1,19 @@
-// kata.phareim.no: the built site (dist/) served as static assets by a Cloudflare Worker.
-// No server code. The custom-domain route creates the DNS record itself.
+// kata.phareim.no: the built site (dist/) served as static assets by a Cloudflare Worker. The Worker code
+// (worker/index.ts) runs only for /api/*: a signed-in visitor's progress on their auth.phareim.no account.
+// The custom-domain route creates the DNS record itself.
 {
   "name": "code-kata",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./dist" },
+  "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
   "routes": [{ "pattern": "kata.phareim.no", "custom_domain": true }],
-  "workers_dev": false
+  "workers_dev": false,
+  "preview_urls": false,
+  // Reader's database: a read-only session lookup in its "session"/"User" tables. Reader owns the schema.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "reader-service", "database_id": "2ccea3e6-cd78-45f5-9395-1094f964b273" }
+  ],
+  // One SQLite Durable Object per account holds its progress.
+  "durable_objects": { "bindings": [{ "name": "PROGRESS", "class_name": "ProgressStore" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ProgressStore"] }]
 }

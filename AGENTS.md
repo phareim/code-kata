@@ -46,4 +46,9 @@ how code runs and where things live.
   WebKit) against the built site, and look at the screenshots in `shots/`.
 - A new playground starter goes in `src/starter.ts` with the old one moved to `OLD_STARTERS`, byte for byte as it
   shipped, so visitors who never edited it get the new one.
+- Progress lives in localStorage and, for a visitor signed in at auth.phareim.no, on their account (`worker/index.ts`,
+  one SQLite Durable Object per account; README → Progress on the account). A new `TaskState` field goes in
+  `src/app/merge.ts` too (`mergeTask`, `sameTask`, `cleanTask`), or the Worker drops it. The Worker reads Reader's
+  `reader-service` D1 and never writes to it; writes must come from the site's own origin, which the opaque-origin
+  runner never is.
 - A push to `main` deploys.

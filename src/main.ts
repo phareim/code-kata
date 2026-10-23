@@ -3,7 +3,7 @@ import './style.css'
 import type { EditorView } from '@codemirror/view'
 import { Bank, levelBadge, randomTask } from './app/bank'
 import { confetti, stamp } from './app/celebrate'
-import { isSolved, lastTask, markSolved, rememberLast, taskState, updateTask } from './app/progress'
+import { flushProgress, isSolved, lastTask, markSolved, rememberLast, startSync, taskState, updateTask, type Account } from './app/progress'
 import { inlineText, richText } from './app/text'
 import { createEditor, firstSyntaxErrorLine, goToLine, markErrorLine, replaceDoc } from './editor/editor'
 import { Runner, TIME_LIMIT_MS, type Entry, type Outcome, type Verdict, type Where } from './run/runner'
@@ -117,7 +117,12 @@ const saveSoon = () => {
 const codeView = createEditor($('editor'), { doc: '', onRun: () => run('code'), onChange: saveSoon, itemNames })
 const classView = createEditor($('class-editor'), { doc: '', onRun: () => run('class'), onChange: saveSoon, itemNames })
 const views: Record<Where, EditorView> = { kode: codeView, ting: classView }
-window.addEventListener('pagehide', saveNow)
+const leaving = () => {
+  saveNow()
+  flushProgress()
+}
+window.addEventListener('pagehide', leaving)
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') leaving() })
 
 const runner = new Runner()
 const builder = new Runner()
@@ -552,7 +557,7 @@ window.addEventListener('hashchange', route)
 hintButton.addEventListener('click', () => {
   const task = currentTask()
   if (!task) return
-  updateTask(task.id, { hints: Math.min((taskState(task.id).hints ?? 0) + 1, task.hints.length) })
+  updateTask(task.id, { hints: Math.min((taskState(task.id).hints ?? 0) + 1, task.hints.length) }, true)
   renderHints(task)
   hintsEl.lastElementChild?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' })
 })
@@ -565,7 +570,7 @@ solutionButton.addEventListener('click', () => {
     solutionArmed = window.setTimeout(() => renderSolution(task, false), 4000)
     return
   }
-  updateTask(task.id, { peeked: true })
+  updateTask(task.id, { peeked: true }, true)
   renderSolution(task, true)
 })
 /** Replaces an editor's text as an edit, so Cmd+Z brings the old text back. */
@@ -635,6 +640,41 @@ $('apply').addEventListener('click', () => run('class'))
 runButton.addEventListener('click', () => (runner.running ? runner.stop() : run('code')))
 $('clear').addEventListener('click', () => output.replaceChildren())
 
+/* The account at auth.phareim.no: signed in, the progress follows the visitor (src/app/progress.ts). */
+const accountLink = $<HTMLAnchorElement>('account')
+function showAccount(account: Account | null, available: boolean): void {
+  accountLink.hidden = !available
+  accountLink.href = `https://auth.phareim.no/?redirect=${encodeURIComponent(location.href)}&theme=neon`
+  accountLink.textContent = account ? account.name || 'Konto' : 'Logg inn'
+  accountLink.classList.toggle('is-in', !!account)
+  accountLink.title = account
+    ? `Logget inn${account.name ? ` som ${account.name}` : ''}. Fremdriften lagres på kontoen.`
+    : 'Logg inn for å ha fremdriften med deg på andre maskiner'
+}
+// The way back is where the visitor is when they click, not where they were when the page asked.
+accountLink.addEventListener('click', () => {
+  accountLink.href = `https://auth.phareim.no/?redirect=${encodeURIComponent(location.href)}&theme=neon`
+})
+
+/** The account changed tasks: redraw what shows them, and the open task's code when the account's is newer. */
+function merged(ids: string[]): void {
+  updateProgress()
+  if (bank.isOpen) bank.render()
+  const task = currentTask()
+  if (!task || !ids.includes(task.id)) return
+  const state = taskState(task.id)
+  $('task-solved').hidden = !isSolved(task.id)
+  renderHints(task)
+  const code = state.code ?? opening(task)
+  if (code !== codeView.state.doc.toString()) replaceDoc(codeView, code)
+  const ting = state.ting ?? task.ting ?? TING_CLASS
+  if (ting !== classView.state.doc.toString()) {
+    replaceDoc(classView, ting)
+    build()
+  }
+}
+
 updateProgress()
 route()
 codeView.focus()
+void startSync({ beforeMerge: saveNow, merged, account: showAccount })

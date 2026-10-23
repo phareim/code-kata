@@ -896,3 +896,24 @@ body.has-sheet { overflow: hidden; }
   .bank-topic { display: none; }
   .grid { --cell: 22px; }
 }
+
+/* The account at auth.phareim.no, after the progress: «Logg inn», or the name when signed in. */
+.account {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 4px 0;
+}
+.account:hover { color: var(--cyan); }
+.account:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; }
+.account.is-in { color: var(--cyan); }
+.account.is-in::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  vertical-align: 2px;
+  background: var(--lime);
+}
