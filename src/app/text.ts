@@ -15,20 +15,33 @@ function inline(text: string): Node[] {
 export function richText(text: string): DocumentFragment {
   const out = document.createDocumentFragment()
   for (const block of text.trim().split(/\n\s*\n/)) {
-    const lines = block.split('\n')
-    if (lines.every((line) => line.startsWith('- '))) {
-      const list = document.createElement('ul')
-      for (const line of lines) {
-        const li = document.createElement('li')
-        li.append(...inline(line.slice(2)))
-        list.append(li)
+    // A run of "- " lines is a list, even straight after a sentence; the lines around it are paragraphs.
+    let run: string[] = []
+    let listed = false
+    const end = () => {
+      if (!run.length) return
+      if (listed) {
+        const list = document.createElement('ul')
+        for (const line of run) {
+          const li = document.createElement('li')
+          li.append(...inline(line.slice(2)))
+          list.append(li)
+        }
+        out.append(list)
+      } else {
+        const p = document.createElement('p')
+        p.append(...inline(run.join(' ')))
+        out.append(p)
       }
-      out.append(list)
-    } else {
-      const p = document.createElement('p')
-      p.append(...inline(lines.join(' ')))
-      out.append(p)
+      run = []
     }
+    for (const line of block.split('\n')) {
+      const item = line.startsWith('- ')
+      if (item !== listed) end()
+      listed = item
+      run.push(line)
+    }
+    end()
   }
   return out
 }
