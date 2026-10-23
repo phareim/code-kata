@@ -45,6 +45,7 @@
               <button id="hint-btn" class="btn btn--gold px" type="button">Hint</button>
               <button id="solution-btn" class="btn btn--quiet px" type="button">Løsning</button>
               <button id="restart-btn" class="btn btn--quiet px" type="button" title="Sett koden og klassen tilbake til starten">Start på nytt</button>
+              <button id="talk-btn" class="btn btn--lime px" type="button" title="Snakk med Claude om løsningen din" hidden>Snakk om det</button>
             </div>
             <ol id="hints" class="hints"></ol>
             <div id="solution" class="solution" hidden>
@@ -119,6 +120,23 @@
       </div>
       <ol id="bank-list" class="bank-list"></ol>
       <p id="bank-empty" class="bank-empty" hidden>Ingen oppgaver passer. Prøv et annet ord, eller ta bort et filter.</p>
+    </div>
+  </div>
+  <div id="talk" class="bank talk" role="dialog" aria-modal="true" aria-labelledby="talk-title" hidden>
+    <div class="bank-box talk-box px-box">
+      <div class="bank-head">
+        <h2 id="talk-title" class="pane-title px">Snakk om det</h2>
+        <span class="spacer"></span>
+        <button id="talk-new" class="btn btn--quiet px" type="button" title="Glem samtalen og begynn på nytt">Ny samtale</button>
+        <button id="talk-close" class="btn btn--quiet px" type="button" aria-label="Lukk">Lukk</button>
+      </div>
+      <p id="talk-task" class="talk-task px"></p>
+      <ol id="talk-log" class="talk-log" aria-live="polite"></ol>
+      <p id="talk-note" class="talk-note" hidden></p>
+      <form id="talk-form" class="talk-form">
+        <textarea id="talk-input" class="talk-input" rows="2" placeholder="Spør om noe: hvorfor, hva om, hvordan ellers …" aria-label="Det du vil spørre om" spellcheck="true"></textarea>
+        <button id="talk-send" class="btn btn--lime px" type="submit">Send</button>
+      </form>
     </div>
   </div>
   <canvas id="confetti" class="confetti" aria-hidden="true" hidden></canvas>

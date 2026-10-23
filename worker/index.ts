@@ -5,6 +5,10 @@
  *   GET  /api/progress   { user: { name }, tasks: { <task id>: TaskState } }, or 401 { user: null }
  *   POST /api/progress   { tasks: { <task id>: TaskState } } merged into the account (src/app/merge.ts);
  *                        answers with the merged state of those tasks
+ *   GET  /api/talk?task  the account's conversation about a task ({ view, turnsLeft, full })
+ *   POST /api/talk       { task, code, ting, text } one turn with Claude about a solved task (worker/talk.ts),
+ *                        streamed as lines of JSON: { text } … then { done } or { error }
+ *   DELETE /api/talk?task  starts that conversation over
  *
  * The account is auth.phareim.no's (Reader): the `session_token` cookie on .phareim.no, looked up READ-ONLY in
  * Reader's `reader-service` D1. Reader owns the tables and the cookie; this Worker never writes to either. Every
@@ -16,15 +20,25 @@
  */
 import { cleanTask, isTaskId, mergeTask, sameTask } from '../src/app/merge'
 import type { TaskState } from '../src/app/progress'
+import {
+  ask, costOf, MAX_MESSAGES, OPENER, talkRequest, taskFor, textOf, today, TURNS_PER_DAY, USD_PER_DAY, userMessage,
+  type Conversation,
+} from './talk'
 
 // The few Cloudflare types this uses, so the repo needs no type package.
 interface D1 {
   prepare(sql: string): { bind(...values: unknown[]): { first<T>(): Promise<T | null> } }
 }
 interface Storage {
+  get<T>(key: string): Promise<T | undefined>
   get<T>(keys: string[]): Promise<Map<string, T>>
+  put<T>(key: string, value: T): Promise<void>
   put<T>(entries: Record<string, T>): Promise<void>
+  delete(key: string): Promise<boolean>
   list<T>(options: { prefix: string }): Promise<Map<string, T>>
+}
+interface Context {
+  waitUntil(promise: Promise<unknown>): void
 }
 interface StoreNamespace {
   idFromName(name: string): unknown
@@ -34,6 +48,10 @@ export interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> }
   DB: D1
   PROGRESS: StoreNamespace
+  /** One instance, `global`: what the talks have cost today. */
+  BUDGET: StoreNamespace
+  /** Anthropic API key, a Worker secret. Without it the talk answers 503. */
+  KATA_ANTHROPIC_KEY?: string
 }
 
 const COOKIE = 'session_token'
@@ -76,16 +94,18 @@ export async function readerUser(env: Env, token: string | null, now = Date.now(
 const NO_STORE = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' }
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: NO_STORE })
 
-export async function handleApi(request: Request, env: Env): Promise<Response> {
+export async function handleApi(request: Request, env: Env, ctx?: Context): Promise<Response> {
   const url = new URL(request.url)
-  if (url.pathname !== '/api/progress') return json({ error: 'Not found' }, 404)
-  if (request.method !== 'GET' && request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405, headers: { ...NO_STORE, Allow: 'GET, POST' } })
+  const methods = url.pathname === '/api/progress' ? ['GET', 'POST'] : url.pathname === '/api/talk' ? ['GET', 'POST', 'DELETE'] : null
+  if (!methods) return json({ error: 'Not found' }, 404)
+  if (!methods.includes(request.method)) {
+    return Response.json({ error: 'Method not allowed' }, { status: 405, headers: { ...NO_STORE, Allow: methods.join(', ') } })
   }
-  if (request.method === 'POST') {
+  if (request.method !== 'GET') {
     // Only the page itself writes: the visitor's code runs on an opaque origin (Origin: null).
     if (request.headers.get('Origin') !== url.origin) return json({ error: 'Wrong origin' }, 403)
-    if (!(request.headers.get('Content-Type') ?? '').startsWith('application/json')) return json({ error: 'JSON only' }, 415)
+    const body = request.method === 'POST'
+    if (body && !(request.headers.get('Content-Type') ?? '').startsWith('application/json')) return json({ error: 'JSON only' }, 415)
   }
   let user: User | null
   try {
@@ -96,6 +116,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
   if (!user) return json({ user: null }, 401)
   const store = env.PROGRESS.get(env.PROGRESS.idFromName(String(user.id)))
   const name = user.name || (user.email ?? '').split('@')[0]
+  if (url.pathname === '/api/talk') return handleTalk(request, env, ctx, store)
 
   if (request.method === 'GET') {
     const res = await store.fetch(new Request('https://store/tasks'))
@@ -116,6 +137,82 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
   return json({ tasks: await res.json() })
 }
 
+type Store = ReturnType<StoreNamespace['get']>
+const call = (store: Store, path: string, body?: unknown, method = body === undefined ? 'GET' : 'POST') =>
+  store.fetch(new Request(`https://store${path}`, { method, body: body === undefined ? undefined : JSON.stringify(body) }))
+
+/** «Snakk om det» (worker/talk.ts): the conversation, a new turn streamed from Claude, or a fresh start. */
+async function handleTalk(request: Request, env: Env, ctx: Context | undefined, store: Store): Promise<Response> {
+  const url = new URL(request.url)
+  if (request.method !== 'POST') {
+    const task = taskFor(url.searchParams.get('task'))
+    if (!task) return json({ error: 'No such task' }, 404)
+    const res = await call(store, `/talk?task=${task.id}`, undefined, request.method)
+    return json(await res.json(), res.status)
+  }
+  if (!env.KATA_ANTHROPIC_KEY) return json({ error: 'off' }, 503)
+  const text = await request.text()
+  if (text.length > MAX_BODY) return json({ error: 'Too large' }, 413)
+  let req: ReturnType<typeof talkRequest>
+  try {
+    req = talkRequest(JSON.parse(text))
+  } catch {
+    req = null
+  }
+  if (!req) return json({ error: 'Bad request' }, 400)
+  const { task, code, ting } = req
+
+  const budget = env.BUDGET.get(env.BUDGET.idFromName('global'))
+  const spent = await (await call(budget, '/')).json() as { usd: number }
+  if (spent.usd >= USD_PER_DAY) return json({ error: 'budget' }, 429)
+  const begin = await call(store, '/talk/begin', { task: task.id })
+  const started = await begin.json() as { error?: string; conversation?: Conversation | null }
+  if (!begin.ok) return json(started, begin.status)
+  const before = started.conversation ?? null
+  const words = req.text || (before ? '' : OPENER)
+  if (!words) return json({ error: 'Empty' }, 400)
+
+  const content = userMessage(task, words, code, ting, before)
+  const messages = [...(before?.api ?? []), { role: 'user' as const, content }]
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>()
+  const writer = writable.getWriter()
+  const encoder = new TextEncoder()
+  // A visitor who closes the sheet mid-answer stops reading, not the turn: it is still kept on the account.
+  const send = async (line: unknown) => {
+    try {
+      await writer.write(encoder.encode(`${JSON.stringify(line)}\n`))
+    } catch {
+      // The page has gone.
+    }
+  }
+  const turn = (async () => {
+    try {
+      const out = await ask(env.KATA_ANTHROPIC_KEY!, task, messages, (piece) => send({ text: piece }))
+      await call(budget, '/', { usd: costOf(out.usage) })
+      const answer = textOf(out.content)
+      if (out.refused || !answer) return send({ error: 'refused' })
+      await call(store, '/talk/append', {
+        task: task.id,
+        api: [messages[messages.length - 1], { role: 'assistant', content: out.content }],
+        view: [{ role: 'user', text: words }, { role: 'assistant', text: answer }],
+        code,
+        ting,
+      })
+      await send({ done: true })
+    } catch {
+      await send({ error: 'failed' })
+    } finally {
+      try {
+        await writer.close()
+      } catch {
+        // Already closed.
+      }
+    }
+  })()
+  ctx?.waitUntil(turn)
+  return new Response(readable, { headers: { ...NO_STORE, 'Content-Type': 'application/x-ndjson; charset=utf-8' } })
+}
+
 /** The tasks in a body, with their ids and fields checked; anything else is left out. */
 export function cleanTasks(raw: unknown): Record<string, TaskState> {
   const out: Record<string, TaskState> = {}
@@ -133,6 +230,8 @@ export class ProgressStore {
 
   async fetch(request: Request): Promise<Response> {
     const storage = this.ctx.storage
+    const path = new URL(request.url).pathname
+    if (path.startsWith('/talk')) return this.talk(request, path)
     if (request.method === 'GET') {
       const all = await storage.list<TaskState>({ prefix: 't:' })
       return Response.json(Object.fromEntries([...all].map(([key, state]) => [key.slice(2), state])))
@@ -158,11 +257,65 @@ export class ProgressStore {
     for (let i = 0; i < entries.length; i += 128) await storage.put(Object.fromEntries(entries.slice(i, i + 128)))
     return Response.json(merged)
   }
+
+  /** The talks: a conversation per task (`c:<id>`), and the turns taken today (`talk-day`). */
+  private async talk(request: Request, path: string): Promise<Response> {
+    const storage = this.ctx.storage
+    const day = today()
+    const used = await storage.get<{ day: string; turns: number }>('talk-day')
+    const turns = used?.day === day ? used.turns : 0
+    if (path === '/talk/begin') {
+      const { task } = await request.json() as { task: string }
+      const state = await storage.get<TaskState>(`t:${task}`)
+      if (!state?.solved) return Response.json({ error: 'unsolved' }, { status: 403 })
+      if (turns >= TURNS_PER_DAY) return Response.json({ error: 'turns' }, { status: 429 })
+      const conversation = await storage.get<Conversation>(`c:${task}`)
+      if (conversation && conversation.api.length >= MAX_MESSAGES) return Response.json({ error: 'full' }, { status: 409 })
+      await storage.put('talk-day', { day, turns: turns + 1 })
+      return Response.json({ conversation: conversation ?? null })
+    }
+    if (path === '/talk/append') {
+      const turn = await request.json() as Pick<Conversation, 'api' | 'view' | 'code' | 'ting'> & { task: string }
+      const old = await storage.get<Conversation>(`c:${turn.task}`)
+      await storage.put<Conversation>(`c:${turn.task}`, {
+        api: [...(old?.api ?? []), ...turn.api],
+        view: [...(old?.view ?? []), ...turn.view],
+        code: turn.code,
+        ting: turn.ting,
+      })
+      return Response.json({ ok: true })
+    }
+    const task = new URL(request.url).searchParams.get('task') ?? ''
+    if (request.method === 'DELETE') {
+      await storage.delete(`c:${task}`)
+      return Response.json({ ok: true })
+    }
+    const conversation = await storage.get<Conversation>(`c:${task}`)
+    return Response.json({
+      view: conversation?.view ?? [],
+      turnsLeft: Math.max(0, TURNS_PER_DAY - turns),
+      full: (conversation?.api.length ?? 0) >= MAX_MESSAGES,
+    })
+  }
+}
+
+/** What the talks have cost, per day (one instance for the whole site): GET reads today, POST { usd } adds. */
+export class TalkBudget {
+  constructor(private readonly ctx: { storage: Storage }) {}
+
+  async fetch(request: Request): Promise<Response> {
+    const key = `usd:${today()}`
+    const usd = (await this.ctx.storage.get<number>(key)) ?? 0
+    if (request.method !== 'POST') return Response.json({ usd })
+    const { usd: add } = await request.json() as { usd: number }
+    await this.ctx.storage.put(key, usd + (Number.isFinite(add) && add > 0 ? add : 0))
+    return Response.json({ usd: usd + add })
+  }
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    if (new URL(request.url).pathname.startsWith('/api/')) return handleApi(request, env)
+  async fetch(request: Request, env: Env, ctx?: Context): Promise<Response> {
+    if (new URL(request.url).pathname.startsWith('/api/')) return handleApi(request, env, ctx)
     return env.ASSETS.fetch(request)
   },
 }

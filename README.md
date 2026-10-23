@@ -23,6 +23,8 @@ Live: https://kata.phareim.no (public; signing in is optional and only carries t
   kept in localStorage (`code-kata:progress`). The header counts what is solved.
 - **On your account**: signed in at auth.phareim.no (the «Logg inn» link in the header, which becomes your name),
   the progress is kept on your account too and follows you to another browser (below).
+- **Snakk om det**: signed in, a solved task offers a talk with Claude about your solution: what it does, what the
+  alternatives are, and whether it is elegant or clunky, then whatever you ask (below).
 - **Lekeplass** (`#/lekeplass`): the free playground, eight monsters in a list and no task (below).
 - **Editor**: CodeMirror 6 with JavaScript highlighting, bracket matching, search and undo, and autocomplete as you
   type (Tab or Enter): the code's own names, the roots (`head`, `items`, `root` …), `Monster`, `vis` and the items'
@@ -149,6 +151,26 @@ and a write must come from the site's own origin as JSON. The store has no backu
 on other browsers, not the copy in each browser. It becomes redundant if the phareim.no accounts get a shared
 per-app store of their own.
 
+## Talking about a solution
+
+«Snakk om det» sits in the «Løst!» verdict and, for a task already solved, in the task card, for a signed-in visitor.
+It opens a sheet that asks Claude the opening questions («Snakk med meg om løsningen min. Hva kunne alternativene
+vært? Var dette en elegant eller en krøkkete løsning?») and streams the answer; after that the visitor asks what they
+like. «Ny samtale» starts over.
+
+- The page sends `POST /api/talk` with the task id, the code and the class in the editors, and the visitor's words.
+  The Worker (`worker/talk.ts`) takes the task's text, hints, class and reference solution from the bank itself,
+  so none of it comes from the page, and asks Claude Opus 5.5 (effort low, `fallbacks: "default"` for a declined
+  request, the system prompt cached per task). The answer comes back as lines of JSON (`{ text }` … `{ done }`).
+- Claude is asked only about a task the account has solved (the prompt carries the reference solution, so this is
+  the gate that keeps it from giving answers away); the page sends its progress up first.
+- The conversation is kept on the account (`c:<task id>` in `ProgressStore`), append-only with Claude's whole
+  answers, and shown again when the sheet reopens. The code goes along only when it changed since Claude saw it.
+- Limits: 20 answers per account per day, 24 messages per conversation, and $2 a day for the whole site
+  (`TalkBudget`, counted from each answer's usage at Opus 5 prices, the dearest a fallback can land on). The numbers
+  are at the top of `worker/talk.ts`.
+- The key is the Worker secret `KATA_ANTHROPIC_KEY`; without it the talk answers 503 and the sheet says it is off.
+
 ## Writing a task
 
 A task is an object in one of the topic files in `src/tasks/` (`types.ts` has the type, with comments):
@@ -192,10 +214,12 @@ the built site in Chrome and WebKit, which also covers the checks as minified so
 - `src/run/worker.js`: the worker: console capture, value formatting, timers, error lines, the items in and out,
   `vis()`, the check.
 - `src/starter.ts`: the playground's code and class (and the earlier starters it replaces).
-- `worker/index.ts`: the Worker behind `/api/progress` and the account's store (`ProgressStore`).
+- `worker/index.ts`: the Worker behind `/api/progress` and `/api/talk`, the account's store (`ProgressStore`) and
+  the talks' daily budget (`TalkBudget`); `worker/talk.ts`: the prompt, the limits and the call to Claude.
+- `src/app/talk.ts`: the «Snakk om det» sheet; `src/app/text.ts` renders task texts and Claude's replies.
 - `test/harness.ts`: runs `worker.js` in a Node vm the way the page runs it; `test/tasks.test.ts` uses it for every
   task, `test/docs.test.ts` keeps `docs/tasks.md` current, `test/sync.test.ts` covers the merge,
-  the Worker and the page's sync.
+  the Worker and the page's sync, `test/talk.test.ts` the talk (with a fake Messages API).
 - `docs/tasks.md`: the bank's overview, sources and table.
 - `scripts/smoke.mjs` (the playground) and `scripts/smoke-tasks.mjs` (the tasks): browser checks in Chrome and
   WebKit, with screenshots.
@@ -215,6 +239,7 @@ PLAYWRIGHT=/path/to/playwright-core/index.mjs CHROME_BIN=/path/to/chrome node sc
 
 `dist/` is served as static assets by the Cloudflare Worker `code-kata` (`wrangler.jsonc`), with the custom domain
 kata.phareim.no. The same Worker runs `worker/index.ts` for `/api/*`, with Reader's `reader-service` D1 (read only)
-and the `ProgressStore` Durable Object; `wrangler deploy` applies the Durable Object's migrations itself.
+and the `ProgressStore` and `TalkBudget` Durable Objects; `wrangler deploy` applies their migrations itself. The talk
+needs the secret: `npx wrangler secret put KATA_ANTHROPIC_KEY`.
 `npx wrangler dev` runs both locally on the built `dist/`, with an empty local D1. A push to `main` builds, tests and deploys it from Petter's server; there is no GitHub Actions
 workflow. By hand: `npm run build && npx wrangler deploy`.

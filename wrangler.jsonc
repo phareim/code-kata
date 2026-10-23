@@ -1,5 +1,6 @@
 // kata.phareim.no: the built site (dist/) served as static assets by a Cloudflare Worker. The Worker code
-// (worker/index.ts) runs only for /api/*: a signed-in visitor's progress on their auth.phareim.no account.
+// (worker/index.ts) runs only for /api/*: a signed-in visitor's progress on their auth.phareim.no account, and
+// «Snakk om det», a talk with Claude about a solved task.
 // The custom-domain route creates the DNS record itself.
 {
   "name": "code-kata",
@@ -13,7 +14,16 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "reader-service", "database_id": "2ccea3e6-cd78-45f5-9395-1094f964b273" }
   ],
-  // One SQLite Durable Object per account holds its progress.
-  "durable_objects": { "bindings": [{ "name": "PROGRESS", "class_name": "ProgressStore" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ProgressStore"] }]
+  // One SQLite Durable Object per account holds its progress and its talks; one more counts what the talks cost.
+  "durable_objects": {
+    "bindings": [
+      { "name": "PROGRESS", "class_name": "ProgressStore" },
+      { "name": "BUDGET", "class_name": "TalkBudget" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ProgressStore"] },
+    { "tag": "v2", "new_sqlite_classes": ["TalkBudget"] }
+  ]
+  // Secret (wrangler secret put): KATA_ANTHROPIC_KEY, for «Snakk om det».
 }

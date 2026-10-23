@@ -229,6 +229,16 @@ export async function startSync(h: SyncHooks): Promise<void> {
   if (dirty.size) schedule(0)
 }
 
+/** Sends what is waiting and resolves when the account has it (or can't be reached): before a talk, which needs
+ * the account to know the task is solved. */
+export async function syncNow(): Promise<void> {
+  for (let i = 0; i < 50 && account && (busy || dirty.size); i++) {
+    if (busy) await new Promise((resolve) => window.setTimeout(resolve, 100))
+    else await flush()
+    if (failures) return
+  }
+}
+
 /** Sends what is left before the page goes away (pagehide, or the tab hidden). */
 export function flushProgress(): void {
   void flush(true)

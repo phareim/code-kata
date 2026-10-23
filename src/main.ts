@@ -3,7 +3,8 @@ import './style.css'
 import type { EditorView } from '@codemirror/view'
 import { Bank, levelBadge, randomTask } from './app/bank'
 import { confetti, stamp } from './app/celebrate'
-import { flushProgress, isSolved, lastTask, markSolved, rememberLast, startSync, taskState, updateTask, type Account } from './app/progress'
+import { flushProgress, isSolved, lastTask, markSolved, rememberLast, startSync, syncNow, taskState, updateTask, type Account } from './app/progress'
+import { Talk } from './app/talk'
 import { inlineText, richText } from './app/text'
 import { createEditor, firstSyntaxErrorLine, goToLine, markErrorLine, replaceDoc } from './editor/editor'
 import { Runner, TIME_LIMIT_MS, type Entry, type Outcome, type Verdict, type Where } from './run/runner'
@@ -385,7 +386,16 @@ function showVerdict(task: Task, v: Verdict): void {
       link.textContent = 'Neste oppgave'
       verdictEl.append(link)
     }
+    if (signedIn) {
+      const talk = document.createElement('button')
+      talk.type = 'button'
+      talk.className = 'btn btn--lime btn--small px verdict-talk'
+      talk.textContent = 'Snakk om det'
+      talk.addEventListener('click', () => void openTalk())
+      verdictEl.append(' ', talk)
+    }
     $('task-solved').hidden = false
+    showTalkButton()
     updateProgress()
     setStatus('Løst!', 'done')
     stage.cheer()
@@ -402,6 +412,29 @@ function showVerdict(task: Task, v: Verdict): void {
     stage.shake()
   }
 }
+
+/*
+ * «Snakk om det» (src/app/talk.ts): for a signed-in visitor, a talk with Claude about a solved task, from the verdict
+ * and from the task card.
+ */
+let signedIn = false
+const talkButton = $<HTMLButtonElement>('talk-btn')
+const talk = new Talk($('talk'), {
+  code: () => ({ code: codeView.state.doc.toString(), ting: classView.state.doc.toString() }),
+  synced: async () => {
+    saveNow()
+    await syncNow()
+  },
+})
+function showTalkButton(): void {
+  const task = currentTask()
+  talkButton.hidden = !(signedIn && task && isSolved(task.id))
+}
+async function openTalk(): Promise<void> {
+  const task = currentTask()
+  if (task && signedIn) await talk.open(task)
+}
+talkButton.addEventListener('click', () => void openTalk())
 
 // The task card.
 let scaffoldArmed = 0
@@ -461,6 +494,7 @@ function renderTask(task: Task): void {
   $('task-meta').textContent = `#${taskNumber(task)} · ${TOPICS[task.topic]}`
   $('task-level').replaceChildren(levelBadge(task.level))
   $('task-solved').hidden = !isSolved(task.id)
+  showTalkButton()
   $('task-title').textContent = task.title
   $('task-text').replaceChildren(richText(task.text))
   $('task-actions').hidden = false
@@ -484,6 +518,7 @@ function renderPlay(): void {
 Vil du ha noe å bryne deg på, trykk «Oppgaver» eller «Tilfeldig» øverst.`))
   $('task-actions').hidden = true
   verdictEl.hidden = true
+  showTalkButton()
   hintsEl.replaceChildren()
   solutionEl.hidden = true
   $<HTMLButtonElement>('prev-task').hidden = true
@@ -543,6 +578,7 @@ const bank = new Bank($('bank'), () => currentTask()?.id ?? null)
 /** #/<task id>, #/lekeplass, or nothing: the last task, else the first. */
 function route(): void {
   bank.close()
+  talk.close()
   const id = decodeURIComponent(location.hash.replace(/^#\/?/, ''))
   if (id === 'lekeplass') {
     if (mode?.kind !== 'play') openPlay()
@@ -608,7 +644,7 @@ $('random-task').addEventListener('click', () => {
   if (task) location.hash = `#/${task.id}`
 })
 document.addEventListener('keydown', (event) => {
-  if (event.key !== '/' || bank.isOpen || event.metaKey || event.ctrlKey || event.altKey) return
+  if (event.key !== '/' || bank.isOpen || talk.isOpen || event.metaKey || event.ctrlKey || event.altKey) return
   const target = event.target as HTMLElement | null
   if (target?.closest('input, textarea, .cm-editor')) return
   event.preventDefault()
@@ -643,6 +679,8 @@ $('clear').addEventListener('click', () => output.replaceChildren())
 /* The account at auth.phareim.no: signed in, the progress follows the visitor (src/app/progress.ts). */
 const accountLink = $<HTMLAnchorElement>('account')
 function showAccount(account: Account | null, available: boolean): void {
+  signedIn = !!account
+  showTalkButton()
   accountLink.hidden = !available
   accountLink.href = `https://auth.phareim.no/?redirect=${encodeURIComponent(location.href)}&theme=neon`
   accountLink.textContent = account ? account.name || 'Konto' : 'Logg inn'
@@ -664,6 +702,7 @@ function merged(ids: string[]): void {
   if (!task || !ids.includes(task.id)) return
   const state = taskState(task.id)
   $('task-solved').hidden = !isSolved(task.id)
+  showTalkButton()
   renderHints(task)
   const code = state.code ?? opening(task)
   if (code !== codeView.state.doc.toString()) replaceDoc(codeView, code)

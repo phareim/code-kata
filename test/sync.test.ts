@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanTask, mergeTask } from '../src/app/merge'
 import type { TaskState } from '../src/app/progress'
-import worker, { ProgressStore, sessionToken, type Env } from '../worker/index'
+import worker, { sessionToken } from '../worker/index'
+import { fakeEnv } from './fake-env'
 
 describe('mergeTask', () => {
   it('keeps the first solve, the most hints and a peek from either side', () => {
@@ -40,47 +41,6 @@ describe('cleanTask', () => {
     expect(cleanTask('x')).toBeNull()
   })
 })
-
-// A Durable Object storage in memory, and Reader's D1 with one session.
-function memoryStorage() {
-  const data = new Map<string, unknown>()
-  return {
-    data,
-    async get<T>(keys: string[]) { return new Map(keys.filter((k) => data.has(k)).map((k) => [k, data.get(k) as T])) },
-    async put<T>(entries: Record<string, T>) { for (const [k, v] of Object.entries(entries)) data.set(k, structuredClone(v)) },
-    async list<T>({ prefix }: { prefix: string }) {
-      return new Map([...data].filter(([k]) => k.startsWith(prefix)).map(([k, v]) => [k, v as T]))
-    },
-  }
-}
-
-function fakeEnv() {
-  const stores = new Map<string, ProgressStore>()
-  const storages = new Map<string, ReturnType<typeof memoryStorage>>()
-  const users: Record<string, { id: string; name: string; email: string }> = {
-    tok1: { id: 'u1', name: 'Petter', email: 'p@example.com' },
-    tok2: { id: 'u2', name: '', email: 'kari@example.com' },
-  }
-  const env: Env = {
-    ASSETS: { fetch: async () => new Response('asset') },
-    DB: {
-      prepare: () => ({ bind: (token: unknown) => ({ first: async <T>() => (users[String(token)] ?? null) as T | null }) }),
-    },
-    PROGRESS: {
-      idFromName: (name: string) => name,
-      get: (id: unknown) => {
-        const key = String(id)
-        if (!stores.has(key)) {
-          const storage = memoryStorage()
-          storages.set(key, storage)
-          stores.set(key, new ProgressStore({ storage }))
-        }
-        return stores.get(key)!
-      },
-    },
-  }
-  return { env, storages }
-}
 
 const ORIGIN = 'https://kata.phareim.no'
 const get = (token?: string) => new Request(`${ORIGIN}/api/progress`, {

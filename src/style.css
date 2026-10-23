@@ -253,6 +253,7 @@ body.has-sheet { overflow: hidden; }
 .btn--quiet { --edge: var(--muted); }
 .btn--teal { --edge: var(--teal); }
 .btn--gold { --edge: var(--gold); }
+.btn--lime { --edge: var(--lime); }
 .btn--small { min-height: 28px; padding: 6px 8px; }
 .btn.is-running { --edge: var(--gold); text-shadow: none; }
 .btn[hidden] { display: none; }
@@ -919,4 +920,90 @@ body.has-sheet { overflow: hidden; }
   margin-right: 8px;
   vertical-align: 2px;
   background: var(--lime);
+}
+
+/* «Snakk om det»: the talk with Claude about a solved task. Lime like «Løst!», the visitor cyan like the cursor. */
+.talk-box { --edge: var(--lime); width: min(760px, 100%); height: min(860px, 100%); }
+.talk-task {
+  margin: 8px 14px 0;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+.talk-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 14px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 2px solid color-mix(in srgb, var(--lime) 22%, transparent);
+  margin-top: 12px;
+}
+.talk-line { display: grid; gap: 6px; min-width: 0; }
+.talk-who { font-size: 16px; line-height: 1; color: var(--lime); }
+.talk-line.is-user .talk-who { color: var(--cyan); }
+.talk-text {
+  min-width: 0;
+  font-size: var(--code-size);
+  line-height: 1.6;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.talk-line.is-user .talk-text { color: var(--hi); white-space: pre-wrap; border-left: 2px solid var(--cyan); padding-left: 10px; }
+.talk-text p { margin: 0 0 10px; }
+.talk-text ul, .talk-text ol { margin: 0 0 10px; padding-left: 22px; }
+.talk-text li { margin: 2px 0; }
+.talk-text code { color: var(--hi); background: var(--shade); padding: 0 3px; font-variant-ligatures: none; }
+.talk-text strong { color: var(--hi); }
+.talk-text em { font-style: normal; color: var(--hi); }
+.talk-text pre {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  background: var(--shade);
+  border-left: 2px solid var(--lime);
+}
+.talk-text pre code { padding: 0; background: none; color: var(--ink); }
+.talk-line.is-writing .talk-text:empty::after,
+.talk-line.is-writing .talk-text > :last-child::after {
+  content: '▍';
+  color: var(--lime);
+  animation: talk-caret 1s steps(2) infinite;
+}
+@keyframes talk-caret { 50% { opacity: 0; } }
+/* On a phone the title takes its own row, and the two buttons share the next. */
+@media (max-width: 560px) {
+  .talk .pane-title { flex-basis: 100%; }
+  .talk .bank-head .spacer { display: none; }
+}
+.talk-note { margin: 0 14px; font-size: var(--code-size); line-height: 1.4; color: var(--muted); }
+.talk-note.is-error { color: var(--gold); }
+.talk-note[hidden] { display: none; }
+.talk-form {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 14px;
+}
+.talk-input {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  padding: 10px 12px;
+  font: var(--code-size) / 1.4 var(--font-code);
+  color: var(--hi);
+  background: var(--shade);
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 -2px 0 var(--cyan), 0 2px 0 var(--cyan), -2px 0 0 var(--cyan), 2px 0 0 var(--cyan);
+}
+.talk-input:focus-visible { outline: none; box-shadow: 0 -2px 0 var(--hi), 0 2px 0 var(--hi), -2px 0 0 var(--hi), 2px 0 0 var(--hi), 0 0 14px rgba(47, 243, 255, 0.45); }
+.talk-input:disabled { opacity: 0.6; }
+@media (prefers-reduced-motion: reduce) {
+  .talk-line.is-writing .talk-text:empty::after,
+  .talk-line.is-writing .talk-text > :last-child::after { animation: none; }
 }

@@ -7,8 +7,8 @@ how code runs and where things live.
   the like; `source` links where an idea came from). Code, comments and docs are English.
 - The look is Neon Coast (phareim.no's pixel look). Palette colours only (`src/editor/theme.ts` `PAL`, `src/style.css`
   `:root`). Cyan is you (cursor, focus, the editor's edge), pink the call to action («Kjør») and the task card, gold a
-  hint, a warning and the stage, violet the console, teal the objects pane, red an error, lime solved. Levels: lett
-  lime, middels gold, vanskelig pink.
+  hint, a warning and the stage, violet the console, teal the objects pane, red an error, lime solved and the talk
+  about a solution («Snakk om det»). Levels: lett lime, middels gold, vanskelig pink.
 - **Task ids are forever**: progress in visitors' browsers is stored by id. Retire a task with `hidden: true`; never
   rename or reuse an id.
 - **A check is an arrow function that uses only `t` and JavaScript's globals.** It is sent to the worker as
@@ -58,4 +58,8 @@ how code runs and where things live.
   `src/app/merge.ts` too (`mergeTask`, `sameTask`, `cleanTask`), or the Worker drops it. The Worker reads Reader's
   `reader-service` D1 and never writes to it; writes must come from the site's own origin, which the opaque-origin
   runner never is.
+- «Snakk om det» (`worker/talk.ts`) puts the reference solution in Claude's prompt: keep the server-side check that
+  the account has solved the task (`/talk/begin` in `ProgressStore`), and keep task text and solution read from the
+  bank in the Worker, never from the request. The conversation is append-only (Claude's whole answers, thinking blocks
+  included); don't edit or trim stored turns.
 - A push to `main` deploys.
