@@ -17,7 +17,10 @@ export function variables(task: Task): string {
   const world = task.world(seeded(1))
   const roots = world.roots.map((p) => p.key)
   const n = world.items.length
-  const letters = n ? `${label(0)}–${label(n - 1)}` : ''
+  // Items that vary in number from seed to seed (the letters of a word, a list of 7 or 8) get no last letter. The
+  // visitor's seed is random, so look at a few dozen.
+  const varies = Array.from({ length: 31 }, (_, i) => i + 2).some((seed) => task.world(seeded(seed)).items.length !== n)
+  const letters = !n ? '' : varies ? `${label(0)}, ${label(1)}, ${label(2)} …` : `${label(0)}–${label(n - 1)}`
   if (!roots.length) line = `// Monstrene heter ${letters}.`
   else {
     line = roots.length === 1 ? `// Variabelen ${roots[0]} er klar til bruk` : `// Variablene ${and(roots)} er klare til bruk`

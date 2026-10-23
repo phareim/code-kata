@@ -71,6 +71,15 @@ describe('the bank', () => {
     }
   })
 
+  it('names the monsters A–H only when every seed has that many; a word of letters gets A, B, C …', () => {
+    for (const task of TASKS) {
+      const counts = new Set(SEEDS.map((seed) => task.world(seeded(seed)).items.length))
+      const range = /heter A–([A-Z]+)\./.exec(variables(task))
+      if (range) expect(counts.size, task.id).toBe(1)
+    }
+    expect(variables(TASKS.find((t) => t.id === 'les-beskjeden')!)).toContain('monstrene heter A, B, C …')
+  })
+
   it('opens without the skeletons of the exports, which the scaffold has', () => {
     for (const task of TASKS) {
       for (const name of task.exports ?? []) {
