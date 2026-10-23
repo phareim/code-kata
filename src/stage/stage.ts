@@ -70,8 +70,19 @@ export class Stage {
   private panels = new Map<string, Panel>()
   private claimed = new Set<number>()
   private world: World | null = null
+  /** The last render's tree and graph layouts, run again when the stage's width changes. */
+  private layouts: Layout[] = []
+  private width = 0
 
-  constructor(private readonly el: HTMLElement) {}
+  constructor(private readonly el: HTMLElement) {
+    // A resized column, a window or a stage unfolded from its bar (laid out at width 0 while folded).
+    new ResizeObserver(() => {
+      const width = el.clientWidth
+      if (!width || width === this.width) return
+      this.width = width
+      for (const layout of this.layouts) layout()
+    }).observe(el)
+  }
 
   render(world: World, opts: RenderOptions): void {
     if (!opts.animate) {
@@ -108,6 +119,8 @@ export class Stage {
     this.panels = used
     this.el.replaceChildren(...[...used.values()].map((p) => p.node))
     for (const layout of layouts) layout()
+    this.layouts = layouts
+    this.width = this.el.clientWidth
     for (const [name, node] of this.tokens) node.firstElementChild!.textContent = flags.get(name)?.join(' ') ?? ''
     this.el.classList.toggle('has-flags', flags.size > 0)
 

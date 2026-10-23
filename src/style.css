@@ -128,18 +128,20 @@ body.has-sheet { overflow: hidden; }
   transition: width 0.6s steps(12);
 }
 
+/*
+ * The gaps between the columns and between the panes are handles (src/app/layout.ts): --side and --work are the
+ * columns' widths once the visitor has dragged them, as fr; the least widths are MIN_SIDE and MIN_WORK there.
+ */
 .desk {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  gap: 20px;
+  grid-template-columns: minmax(260px, var(--side, 2fr)) 20px minmax(360px, var(--work, 3fr));
 }
 /* Left: the task, the objects and the console. Right: the items over the code. */
 .col {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   min-width: 0;
   min-height: 0;
 }
@@ -149,6 +151,84 @@ body.has-sheet { overflow: hidden; }
 .col > .console-pane { flex-grow: 2; min-height: 120px; }
 .col > .stage-pane { flex: 0 1 auto; max-height: 58%; }
 .col > .editor-pane { flex: 1 1 0; min-height: 220px; }
+/* A column the visitor has resized shares its height by each pane's --grow (its height when last dragged). */
+@media (min-width: 900px) {
+  .col.is-sized > .pane { flex: var(--grow, 1) 1 0px; max-height: none; }
+  /* The stage's bar and a row of monsters; past that the stage scrolls (when the bar takes two rows). */
+  .col.is-sized > .stage-pane { min-height: calc(9 * 4px + 72px + 52px); }
+  .col.is-sized > .stage-pane .stage { min-height: 0; }
+}
+/*
+ * A folded pane is only its bar, without the bar's buttons (after .is-sized, which it beats). A folded task card
+ * keeps its title, the verdict and the way to the next task.
+ */
+.col > .pane.is-folded { flex: none; min-height: 0; max-height: none; }
+.pane.is-folded > :not(.pane-bar, .task-head, .task-scroll) { display: none; }
+.pane.is-folded > .pane-bar { border-bottom-color: transparent; }
+.pane.is-folded > .pane-bar > .btn { display: none; }
+.task-pane.is-folded .task-scroll > :not(.task-title, .verdict) { display: none; }
+.task-pane.is-folded .task-title { margin: 0; }
+
+/* The handles: a short grip in the middle of each gap that runs the whole edge in cyan (you) under the pointer. */
+.split {
+  position: relative;
+  flex: none;
+  touch-action: none;
+}
+.split--row { height: 20px; cursor: row-resize; }
+.split--col { cursor: col-resize; }
+.split::after {
+  content: '';
+  position: absolute;
+  background: var(--dusk);
+}
+.split--row::after { top: 9px; left: calc(50% - 16px); width: 32px; height: 2px; }
+.split--col::after { left: 9px; top: calc(50% - 16px); height: 32px; width: 2px; }
+.split--row:hover::after, .split--row.is-dragging::after { left: 0; width: 100%; background: var(--cyan); }
+.split--col:hover::after, .split--col.is-dragging::after { top: 0; height: 100%; background: var(--cyan); }
+.split.is-inert { cursor: default; }
+.split.is-inert::after { display: none; }
+body.is-resizing { user-select: none; -webkit-user-select: none; }
+
+/* A pane's title folds it: the chevron points down while it is open and right when it is folded to its bar. */
+.fold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-shadow: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.fold .chev { flex: none; fill: var(--muted); shape-rendering: crispEdges; }
+.fold[aria-expanded='false'] .chev { transform: rotate(-90deg); }
+.fold:hover .chev, .fold:focus-visible .chev { fill: var(--cyan); }
+.fold:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; }
+/*
+ * The task card's topic line is its fold, and gives way first when the head is short of room (a phone with a long
+ * level), down to the chevron. On a touch screen the padding widens what a finger hits, and the margins take it back.
+ */
+.task-head > .task-fold { flex: 0 1 auto; min-width: 10px; }
+@media (pointer: coarse) {
+  .fold { padding-block: 10px; margin-block: -10px; }
+  .task-head > .task-fold { min-width: 26px; padding-inline: 8px; margin-inline: -8px; }
+}
+
+/* The code fills the desk for a while (the button by «Kjør»); the run's status shows in its bar meanwhile. */
+.max svg { display: block; fill: currentColor; shape-rendering: crispEdges; }
+.max .max-shrink, .max[aria-pressed='true'] .max-grow { display: none; }
+.max[aria-pressed='true'] .max-shrink { display: inline; }
+.max[aria-pressed='true'] { --edge: var(--cyan); }
+.run-status { display: none; }
+.desk.is-max { grid-template-columns: minmax(0, 1fr); }
+.desk.is-max > :not(.col--work),
+.desk.is-max .col > :not(.editor-pane) { display: none; }
+.desk.is-max .run-status { display: inline; }
 
 /* Neon Shrine's dialog box: a one-pixel edge with notched corners and a faint rule inside the top edge. */
 .px-box {
@@ -877,6 +957,7 @@ body.has-sheet { overflow: hidden; }
   .app { height: auto; min-height: 100dvh; }
   .desk { display: flex; flex-direction: column; gap: 24px; }
   .col { display: contents; }
+  .split { display: none; }
   .col > .pane { flex: none; max-height: none; min-height: 0; }
   .task-pane { order: 1; }
   .stage-pane { order: 2; }
@@ -884,12 +965,13 @@ body.has-sheet { overflow: hidden; }
   .console-pane { order: 4; }
   .objects-pane { order: 5; }
   .stage { --px: 3px; overflow: visible; }
-  /* «Monstre», «Nullstill» and «Nye» on one row at 390 px. */
-  .stage-pane .pane-bar { column-gap: 8px; }
+  /* «Monstre» with its chevron, «Nullstill» and «Nye» on one row at 390 px. */
+  .stage-pane .pane-bar { column-gap: 6px; }
   .objects-scroll { overflow: visible; }
   .task-scroll { overflow: visible; }
   .editor .cm-editor { height: auto; }
   .editor .cm-content, .editor .cm-gutter { min-height: 45svh; }
+  .desk.is-max .editor .cm-content, .desk.is-max .editor .cm-gutter { min-height: 70svh; }
   .desk .editor .cm-lineNumbers .cm-gutterElement { padding: 0 6px 0 8px; }
   .editor-pane .pane-bar {
     position: sticky;

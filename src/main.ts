@@ -3,6 +3,7 @@ import './style.css'
 import type { EditorView } from '@codemirror/view'
 import { Bank, levelBadge, randomTask } from './app/bank'
 import { confetti, stamp } from './app/celebrate'
+import { initLayout } from './app/layout'
 import { flushProgress, isSolved, lastTask, markSolved, rememberLast, startSync, syncNow, taskState, updateTask, type Account, type Vote } from './app/progress'
 import { Talk } from './app/talk'
 import { inlineText, richText } from './app/text'
@@ -24,6 +25,7 @@ const PLAY_CLASS = 'code-kata:ting'
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 const runButton = $<HTMLButtonElement>('run')
 const statusEl = $('status')
+const runStatus = $('run-status')
 const output = $('output')
 const objectsPane = $('objects')
 const stageNote = $('stage-note')
@@ -119,6 +121,15 @@ const saveSoon = () => {
 const codeView = createEditor($('editor'), { doc: '', onRun: () => run('code'), onChange: saveSoon, itemNames })
 const classView = createEditor($('class-editor'), { doc: '', onRun: () => run('class'), onChange: saveSoon, itemNames })
 const views: Record<Where, EditorView> = { kode: codeView, klasse: classView }
+
+// Folding, the handles and the code filling the desk (src/app/layout.ts). Esc gives the desk back unless CodeMirror
+// used the key (a completion, the search) or it closed a sheet.
+const layout = initLayout(document.querySelector('.desk')!, () => codeView.focus())
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || !layout.isMax || event.defaultPrevented) return
+  if ((event.target as Element | null)?.closest('[role="dialog"]')) return
+  layout.setMax(false)
+})
 const leaving = () => {
   saveNow()
   flushProgress()
@@ -134,6 +145,9 @@ $('hint').textContent = shortcut
 function setStatus(text: string, state: 'running' | 'done' | 'error' | 'stopped' | 'idle'): void {
   statusEl.textContent = text
   statusEl.className = `status px is-${state}`
+  // The copy in the code's bar, shown while the code fills the desk and the console is out of sight.
+  runStatus.textContent = text
+  runStatus.className = `status run-status px is-${state}`
 }
 
 function setRunning(running: boolean): void {
@@ -563,6 +577,8 @@ function leave(): void {
   output.replaceChildren()
   setStatus('Klar', 'idle')
   setRunning(false)
+  // Another task brings its text: the code gives the desk back.
+  layout.setMax(false)
 }
 
 const newSeed = () => Math.floor(Math.random() * 1_000_000_000)

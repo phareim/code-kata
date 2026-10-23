@@ -270,6 +270,8 @@ async function suite(name, browser) {
   await page.close()
   await desktop.close()
 
+  await layoutSuite(name, browser)
+
   // A phone: editor over console, page scrolls, code at 16 px.
   const phone = await browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
@@ -284,7 +286,119 @@ async function suite(name, browser) {
   await page.$eval('#class-editor', (e) => e.scrollIntoView())
   await page.waitForTimeout(400)
   await page.screenshot({ path: join(shots, `${name}-phone-class.png`) })
+  const barRow = await page.evaluate(() => ['stage-title', 'reset', 'fresh'].map((id) => {
+    const r = document.getElementById(id).getBoundingClientRect()
+    return Math.round(r.top + r.height / 2)
+  }))
+  check(`${name}: phone keeps Monstre, Nullstill and Nye on one row`, Math.max(...barRow) - Math.min(...barRow) <= 2, barRow.join(' '))
+  await page.tap('#console-title .fold')
+  check(`${name}: phone folds the console`, !(await page.isVisible('#output')) && (await page.isVisible('#status')))
+  // The task card's fold on the tightest head: a long level beside the thumbs and the arrows.
+  await page.goto(`${url.replace(/#.*$/, '')}#/hanois-tarn`)
+  await page.waitForSelector('#editor .cm-content')
+  await page.tap('.task-fold')
+  const tight = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+  check(`${name}: phone folds a task card with a long level, and it fits`,
+    !(await page.isVisible('#task-text')) && (await page.isVisible('#task-title')) && tight <= 0, `overflow ${tight}px`)
   await phone.close()
+}
+
+// The layout (src/app/layout.ts), in a context of its own: it lives in localStorage and would fold panes the other
+// checks use.
+async function layoutSuite(name, browser) {
+  const context = await browser.newContext({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2 })
+  let page = await open(context, null)
+  const box = (sel) => page.locator(sel).boundingBox()
+  const reload = async () => {
+    await page.reload()
+    await page.waitForSelector('#editor .cm-content')
+  }
+  const drag = async (sel, dx, dy) => {
+    const b = await box(sel)
+    const x = b.x + b.width / 2
+    const y = b.y + b.height / 2
+    await page.mouse.move(x, y)
+    await page.mouse.down()
+    await page.mouse.move(x + dx / 2, y + dy / 2, { steps: 4 })
+    await page.mouse.move(x + dx, y + dy, { steps: 4 })
+    await page.mouse.up()
+  }
+
+  // Folding: the console becomes its bar (the status stays), and stays folded after a reload.
+  const consoleOpen = (await box('.console-pane')).height
+  await page.click('#console-title .fold')
+  const folded = (await box('.console-pane')).height
+  check(`${name}: the console folds to its bar`, folded < 64 && !(await page.isVisible('#output'))
+    && (await page.isVisible('#status')), `${consoleOpen} → ${folded}`)
+  await reload()
+  check(`${name}: a folded pane stays folded after a reload`, !(await page.isVisible('#output'))
+    && (await page.getAttribute('#console-title .fold', 'aria-expanded')) === 'false')
+  await page.click('#console-title .fold')
+  check(`${name}: and unfolds`, await page.isVisible('#output'))
+
+  // The handles: the columns' width, the stage over the code; a double click puts a part back.
+  const side0 = (await box('.col--side')).width
+  await drag('.split--col', -200, 0)
+  const side1 = (await box('.col--side')).width
+  await reload()
+  const side2 = (await box('.col--side')).width
+  check(`${name}: the column handle sets the width, kept after a reload`,
+    Math.abs(side0 - 200 - side1) <= 4 && Math.abs(side1 - side2) <= 2, `${side0} → ${side1} → ${side2}`)
+  await page.dblclick('.split--col')
+  check(`${name}: a double click on it puts the width back`, Math.abs((await box('.col--side')).width - side0) <= 2)
+  const stage0 = (await box('.stage-pane')).height
+  const editor0 = (await box('.editor-pane')).height
+  await drag('.col--work > .split--row', 0, 100)
+  const stage1 = (await box('.stage-pane')).height
+  const editor1 = (await box('.editor-pane')).height
+  check(`${name}: the row handle moves height from the code to the stage`,
+    Math.abs(stage1 - stage0 - 100) <= 4 && Math.abs(editor0 - editor1 - 100) <= 4,
+    `stage ${stage0} → ${stage1}, code ${editor0} → ${editor1}`)
+  await page.screenshot({ path: join(shots, `${name}-layout.png`) })
+  await page.dblclick('.col--work > .split--row')
+  check(`${name}: a double click puts the heights back`, Math.abs((await box('.stage-pane')).height - stage0) <= 2)
+
+  // The code fills the desk; the run's status shows in its bar; Esc closes a completion first, then gives the desk back.
+  const desk = await box('.desk')
+  await page.click('#maximize')
+  const max = await box('.editor-pane')
+  check(`${name}: the code fills the desk`, !(await page.isVisible('#task')) && !(await page.isVisible('#stage'))
+    && Math.abs(max.width - desk.width) <= 2 && Math.abs(max.height - desk.height) <= 2,
+    `${max.width}×${max.height} in ${desk.width}×${desk.height}`)
+  await page.click('#run')
+  await page.waitForFunction(() => /Ferdig/i.test(document.getElementById('run-status').textContent))
+  check(`${name}: the run's status shows by «Kjør»`, await page.isVisible('#run-status'))
+  await page.screenshot({ path: join(shots, `${name}-max.png`) })
+  await page.click('#editor .cm-content')
+  await page.keyboard.press('ControlOrMeta+End')
+  await page.keyboard.type('\nMath.fl')
+  await page.waitForSelector('.cm-tooltip-autocomplete')
+  await page.keyboard.press('Escape')
+  const stillMax = await page.evaluate(() => document.querySelector('.desk').classList.contains('is-max'))
+  await page.keyboard.press('Escape')
+  const back = !(await page.evaluate(() => document.querySelector('.desk').classList.contains('is-max')))
+  check(`${name}: Esc closes the completion first, then gives the desk back`, stillMax && back
+    && (await page.isVisible('#task')))
+  await page.close()
+
+  // A tree drawn while the stage was folded is laid out again when it unfolds, as a fresh drawing would place it.
+  page = await context.newPage()
+  await page.goto(`${url.replace(/#.*$/, '')}#/speil-treet`)
+  await page.waitForSelector('#editor .cm-content')
+  await page.click('#stage-title .fold')
+  await page.click('#run')
+  await page.waitForFunction(() => /Ikke ennå|Ferdig|Feil/i.test(document.getElementById('status').textContent))
+  await page.click('#stage-title .fold')
+  await page.waitForTimeout(300)
+  const lefts = () => page.$$eval('#stage .token.is-placed', (els) => els.map((e) => e.style.left).join())
+  const unfolded = await lefts()
+  await page.click('#reset')
+  await page.waitForTimeout(700)
+  const fresh = await lefts()
+  check(`${name}: an unfolded stage lays the tree out again`, unfolded.length > 0 && unfolded === fresh,
+    `${unfolded} | ${fresh}`)
+  await page.close()
+  await context.close()
 }
 
 const browsers = [
