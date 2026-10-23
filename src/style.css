@@ -157,6 +157,11 @@ body.has-sheet { overflow: hidden; }
   /* The stage's bar and a row of monsters; past that the stage scrolls (when the bar takes two rows). */
   .col.is-sized > .stage-pane { min-height: calc(9 * 4px + 72px + 52px); }
   .col.is-sized > .stage-pane .stage { min-height: 0; }
+  /*
+   * A graph's height follows the stage's width, which Stage lays out again on a resize: a scrollbar that took width
+   * as it came and went would make the two chase each other.
+   */
+  .stage { scrollbar-gutter: stable; }
 }
 /*
  * A folded pane is only its bar, without the bar's buttons (after .is-sized, which it beats). A folded task card
