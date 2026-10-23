@@ -29,6 +29,13 @@ Live: https://kata.phareim.no (public; signing in is optional and only carries t
 - **Editor**: CodeMirror 6 with JavaScript highlighting, bracket matching, search and undo, and autocomplete as you
   type (Tab or Enter): the code's own names, the roots (`head`, `items`, `root` …), `Monster`, `vis` and the items'
   letters, keywords and snippets, the runner's globals with their members, and common members after any other dot.
+- **Layout**: every pane but the code folds to its bar (the chevron by its title; a folded task card keeps its title
+  and the verdict, a folded console its status). On a screen 900 px or wider the gaps are handles: the one between
+  the columns sets their widths, the ones between panes their heights, and a double click on a handle puts that part
+  back. The button by «Kjør» (or a double click on the code's bar) lets the code fill the desk, with the run's status
+  beside it; Esc or the button brings the rest back, and so does opening another task. The layout is kept per
+  browser (`code-kata:layout`, `src/app/layout.ts`), never on the account. Trees and graphs on the stage are laid out
+  again when its width changes, so a stage unfolded or resized after a run draws them right.
 - **Run** with «Kjør» or Cmd/Ctrl + Enter. Output is printed the way Node prints it (`{ a: 1 }`, `[ 1, 'x' ]`,
   `Map(1) { 'a' => 1 }`). An uncaught error shows its line and marks it in the editor.
 

@@ -27,10 +27,10 @@
       <a id="account" class="account px" href="https://auth.phareim.no/?theme=neon" hidden>Logg inn</a>
     </header>
     <main class="desk">
-      <div class="col col--side">
-        <section id="task" class="pane px-box task-pane" aria-labelledby="task-title">
+      <div class="col col--side" data-col="side">
+        <section id="task" class="pane px-box task-pane" data-pane="task" aria-labelledby="task-title">
           <div class="task-head">
-            <span id="task-meta" class="task-meta px"></span>
+            <button class="fold task-fold" type="button" aria-expanded="true" data-hide="Skjul oppgaveteksten" data-show="Vis oppgaveteksten" title="Skjul oppgaveteksten"><svg class="chev" viewBox="0 0 5 5" width="10" height="10" aria-hidden="true"><path d="M0 1h5v1H4v1H3v1H2V3H1V2H0z"/></svg><span id="task-meta" class="task-meta px"></span></button>
             <span id="task-level"></span>
             <span id="task-solved" class="task-solved px" title="Løst" hidden>✓</span>
             <span class="spacer"></span>
@@ -56,9 +56,10 @@
             </div>
           </div>
         </section>
-        <section class="pane px-box objects-pane" aria-labelledby="objects-title">
+        <div class="split split--row" aria-hidden="true" title="Dra for å endre høyden. Dobbeltklikk for å sette tilbake."></div>
+        <section class="pane px-box objects-pane" data-pane="objects" aria-labelledby="objects-title">
           <div class="pane-bar">
-            <h2 id="objects-title" class="pane-title px">Objekter</h2>
+            <h2 id="objects-title" class="pane-title px"><button class="fold px" type="button" aria-expanded="true" data-hide="Skjul objektene" data-show="Vis objektene" title="Skjul objektene"><svg class="chev" viewBox="0 0 5 5" width="10" height="10" aria-hidden="true"><path d="M0 1h5v1H4v1H3v1H2V3H1V2H0z"/></svg>Objekter</button></h2>
             <span class="spacer"></span>
             <button id="class-toggle" class="btn btn--quiet btn--small px" type="button" aria-controls="class-editor" aria-expanded="true">Skjul klassen</button>
             <button id="apply" class="btn btn--teal px" type="button" title="Bygg monstrene på nytt fra klassen">Bruk</button>
@@ -69,9 +70,10 @@
             <div id="objects" class="objects"></div>
           </div>
         </section>
-        <section class="pane px-box console-pane" aria-labelledby="console-title">
+        <div class="split split--row" aria-hidden="true" title="Dra for å endre høyden. Dobbeltklikk for å sette tilbake."></div>
+        <section class="pane px-box console-pane" data-pane="console" aria-labelledby="console-title">
           <div class="pane-bar">
-            <h2 id="console-title" class="pane-title px">Konsoll</h2>
+            <h2 id="console-title" class="pane-title px"><button class="fold px" type="button" aria-expanded="true" data-hide="Skjul konsollen" data-show="Vis konsollen" title="Skjul konsollen"><svg class="chev" viewBox="0 0 5 5" width="10" height="10" aria-hidden="true"><path d="M0 1h5v1H4v1H3v1H2V3H1V2H0z"/></svg>Konsoll</button></h2>
             <span id="status" class="status px" role="status">Klar</span>
             <span class="spacer"></span>
             <button id="clear" class="btn btn--quiet px" type="button" title="Tøm konsollen">Tøm</button>
@@ -79,10 +81,11 @@
           <div id="output" class="output" role="log" aria-live="polite"></div>
         </section>
       </div>
-      <div class="col col--work">
-        <section class="pane px-box stage-pane" aria-labelledby="stage-title">
+      <div class="split split--col" aria-hidden="true" title="Dra for å endre bredden. Dobbeltklikk for å sette tilbake."></div>
+      <div class="col col--work" data-col="work">
+        <section class="pane px-box stage-pane" data-pane="stage" aria-labelledby="stage-title">
           <div class="pane-bar">
-            <h2 id="stage-title" class="pane-title px">Monstre</h2>
+            <h2 id="stage-title" class="pane-title px"><button class="fold px" type="button" aria-expanded="true" data-hide="Skjul monstrene" data-show="Vis monstrene" title="Skjul monstrene"><svg class="chev" viewBox="0 0 5 5" width="10" height="10" aria-hidden="true"><path d="M0 1h5v1H4v1H3v1H2V3H1V2H0z"/></svg>Monstre</button></h2>
             <span id="stage-note" class="stage-note px" aria-live="polite"></span>
             <span class="spacer"></span>
             <button id="speed" class="btn btn--quiet btn--small px" type="button" title="Fart på avspillingen" hidden>1x</button>
@@ -92,11 +95,14 @@
           </div>
           <div id="stage" class="stage" aria-label="Monstrene, slik koden ser dem"></div>
         </section>
-        <section class="pane px-box editor-pane" aria-labelledby="code-title">
+        <div class="split split--row" aria-hidden="true" title="Dra for å endre høyden. Dobbeltklikk for å sette tilbake."></div>
+        <section class="pane px-box editor-pane" data-pane="editor" aria-labelledby="code-title">
           <div class="pane-bar">
             <h2 id="code-title" class="pane-title px">Kode</h2>
+            <span id="run-status" class="status run-status px" aria-hidden="true"></span>
             <span class="spacer"></span>
             <span id="hint" class="hint px" aria-hidden="true"></span>
+            <button id="maximize" class="btn btn--quiet btn--small max" type="button" aria-pressed="false" aria-label="Forstørr koden" title="Forstørr koden"><svg viewBox="0 0 10 10" width="16" height="16" aria-hidden="true"><path class="max-grow" d="M0 0h4v2H2v2H0zM6 0h4v4H8V2H6zM0 6h2v2h2v2H0zM8 6h2v4H6V8h2z"/><path class="max-shrink" d="M2 0h2v4H0V2h2zM6 0h2v2h2v2H6zM0 6h4v4H2V8H0zM6 6h4v2H8v2H6z"/></svg></button>
             <button id="run" class="btn btn--pink px" type="button">Kjør</button>
           </div>
           <div id="editor" class="editor"></div>

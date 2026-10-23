@@ -48,6 +48,11 @@ how code runs and where things live.
   monsters hides the class (`showClass` in `main.ts`).
 - The pixel font is for the chrome only, at whole multiples of 8 px, uppercase through `.px`. Code, console output and
   task text stay in JetBrains Mono with ligatures off. Code is 16 px on touch screens, or iOS zooms in on focus.
+- The layout (`src/app/layout.ts`: folds, the handles, the code filling the desk) is a per-browser convenience in
+  `code-kata:layout`, never synced. Sizes are CSS custom properties (`--side`, `--work`, `--grow`) that the stylesheet
+  applies only at 900 px and up; `.pane.is-folded` comes after `.is-sized` so it wins. A new pane gets `data-pane`, a
+  `.fold` in its bar and a `.split--row` beside it. `scripts/smoke.mjs` checks it in `layoutSuite`, in a context of its
+  own; elsewhere wait for `#editor .cm-content`, since the class editor can sit in a folded pane.
 - `src/run/worker.js` is imported with `?raw` and started from a `data:` URL: it must stay one self-contained plain
   JavaScript file. The opaque origin is the point; don't move it to a same-origin worker (`new URL(...)`, a blob URL).
 - The worker's globals and the completion scope (`GLOBALS`, `CONSOLE` in `src/editor/completion.ts`, `vis` and the
