@@ -5,7 +5,7 @@ build a Tower of Hanoi, mirror a tree, find the way through a graph, flood-fill 
 the browser, and watch the creatures do what the code says. Neon Coast's pixel look from phareim.no (the night
 palette, Neon Shrine's 5×7 font, notched boxes).
 
-Live: https://kata.phareim.no (public, no login; verified in Chrome and WebKit 2026-10-22).
+Live: https://kata.phareim.no (public, no login; 131 tasks, every one solved in Chrome and WebKit against the built site 2026-10-23).
 
 ## What it does
 
