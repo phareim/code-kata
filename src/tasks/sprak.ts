@@ -31,7 +31,7 @@ const NOUNS = ['bil', 'bakke', 'stol', 'hund', 'katt', 'ape', 'stige', 'fisk', '
 const SORT_PLAIN = ['ape', 'bie', 'dag', 'elg', 'hav', 'is', 'kyr', 'lam', 'mus', 'sau', 'tre', 'ugle', 'vann', 'ost']
 const SORT_YZ = ['yr', 'yoga', 'zoo', 'zoom', 'yte', 'yngel']
 const SORT_AE = ['ære', 'æsj', 'ærlig']
-const SORT_OE = ['ørn', 'øre', 'øy', 'ørret', 'øl']
+const SORT_OE = ['ørn', 'øre', 'øy', 'ørret', 'øks']
 const SORT_AA = ['ål', 'åre', 'åker', 'åpen']
 
 const ANAGRAMS: [string, string][] = [['lampe', 'palme'], ['ost', 'sto'], ['lyst', 'sylt'], ['ål', 'lå'], ['lås', 'sål'], ['stein', 'sinte'], ['sol', 'los']]
@@ -134,7 +134,7 @@ console.log(readWord(head))
     topic: 'språk',
     text: `Et palindrom leses likt forlengs og baklengs: «radar» er «radar» også baklengs. Monstrene i \`items\` staver et ord, med én bokstav på hvert. Skriv \`function isPalindrome(items)\` som gir \`true\` hvis ordet er et palindrom, og \`false\` hvis ikke.
 
-Store og små bokstaver regnes som like, så «Anna» er et palindrom. Et ord med én bokstav er det også, og en tom rad.`,
+Store og små bokstaver regnes som like, så «Anna» er et palindrom. Et ord med én bokstav er også et palindrom, og det samme er en tom rad.`,
     hints: [
       'Sammenlign bokstavene fra hver sin ende: den første med den siste, den andre med den nest siste, og så videre.',
       'Du trenger bare gå halve veien: `for (let i = 0; i < items.length / 2; i++)`. Det motsatte monsteret står på plass `items.length - 1 - i`.',
@@ -233,9 +233,9 @@ console.log(vowels(text))
     title: 'Røverspråket',
     level: 'lett',
     topic: 'språk',
-    text: `I Astrid Lindgrens bøker om Kalle Blomkvist snakker barna et hemmelig språk: Hver konsonant (en bokstav som ikke er en vokal) skrives to ganger, med en \`o\` imellom. «Kalle» blir «KoKalollole»: K blir \`KoK\`, a står som den er, og hver l blir \`lol\`.
+    text: `I Astrid Lindgrens bøker om Kalle Blomkvist snakker barna et hemmelig språk: hver konsonant (en bokstav som ikke er en vokal) skrives to ganger, med en \`o\` imellom. «Kalle» blir «KoKalollole»: K blir \`KoK\`, a står som den er, og hver l blir \`lol\`.
 
-Skriv \`function rover(text)\` som gjør en tekst om til røverspråket. Vokalene (\`a e i o u y æ ø å\`), mellomrom, tall og tegn står som de er. De to kopiene av en konsonant har samme store eller lille bokstav som originalen, mens \`o\`-en imellom alltid er liten.`,
+Skriv \`function rover(text)\` som gjør en tekst om til røverspråket. Vokalene (\`a e i o u y æ ø å\`), mellomrom, tall og tegn står som de er. En stor konsonant er stor begge gangene, og \`o\`-en imellom er alltid liten.`,
     hints: [
       "Bygg opp svaret bokstav for bokstav: `let out = ''`, og `for (const letter of text)`.",
       "Konsonantene er `bcdfghjklmnpqrstvwxz`. Gjør bokstaven liten og se om den står der: `'bcdfghjklmnpqrstvwxz'.includes(letter.toLowerCase())`.",
@@ -327,9 +327,9 @@ console.log(acronym(phrase))
     text: `Norske navneord bøyes etter regler. Skriv \`function inflect(noun)\` for vanlige hankjønnsord («en bil», «en bakke»). Den gir tilbake en array med fire former: ubestemt entall («bil»), bestemt entall («bilen»), ubestemt flertall («biler») og bestemt flertall («bilene»).
 
 - \`'bil'\` gir \`['bil', 'bilen', 'biler', 'bilene']\`
-- ender ordet på \`e\`, legger du til litt mindre: \`'bakke'\` gir \`['bakke', 'bakken', 'bakker', 'bakkene']\`
+- ender ordet på \`e\`, har det allerede den \`e\`-en endelsene begynner med: \`'bakke'\` gir \`['bakke', 'bakken', 'bakker', 'bakkene']\`
 
-Regelen passer ikke for alle ord. «Et monster» blir «monsteret», «monstre» og «monstrene», og der faller en \`e\` bort. Slike ord må man lære utenat, og \`inflect\` klarer seg uten dem.`,
+Regelen passer ikke for alle ord. «Et monster» blir «monsteret», «monstre» og «monstrene», der en \`e\` faller bort. Slike ord må man lære utenat, og \`inflect\` trenger ikke klare dem.`,
     hints: [
       "Det er to tilfeller: ord som slutter på `e` (`noun.endsWith('e')`), og alle de andre.",
       "Alle andre ord får `en`, `er` og `ene` etter seg: bil, bilen, biler, bilene.",
@@ -514,7 +514,7 @@ console.log(isAnagram(first, second))
     title: 'Rimord',
     level: 'middels',
     topic: 'språk',
-    text: `Monstrene i \`items\` har hvert sitt ord, og alle har samme farge. Gi monstre som rimer samme farge, og la ord som ikke rimer få hver sin farge.
+    text: `Monstrene i \`items\` har hvert sitt ord, og alle har samme farge. Gi monstrene samme farge når ordene deres rimer, og ulik farge når de ikke gjør det.
 
 Her rimer to ord når de er like fra den siste vokalen og ut til slutten av ordet: «katt» og «hatt» ender begge på \`att\`, «stol» og «sol» på \`ol\`, og «sjø» ender på \`ø\`. Vokalene er \`a e i o u y æ ø å\`.
 
@@ -664,7 +664,7 @@ console.log(caesar(message, 3))
     title: 'Ordkjeden',
     level: 'middels',
     topic: 'språk',
-    text: `I leken «siste bokstav» sier du et ord som begynner på den bokstaven forrige ord sluttet på. Monstrene i \`items\` har hvert sitt ord, i tilfeldig rekkefølge, og ordene kan settes i en rekke der hvert ord begynner med den siste bokstaven i ordet foran.
+    text: `I leken «siste bokstav» sier du et ord som begynner på bokstaven det forrige ordet sluttet på. Monstrene i \`items\` har hvert sitt ord, i tilfeldig rekkefølge, og ordene kan settes i en rekke der hvert ord begynner med den siste bokstaven i ordet foran.
 
 Lenk monstrene sammen med \`next\` i den rekkefølgen, og la \`head\` peke på det første. Det siste monsteret har \`next\` lik \`null\`. Alle skal være med. Ingen to ord begynner på samme bokstav, så det finnes bare én måte å gjøre det på.`,
     hints: [
@@ -785,7 +785,7 @@ console.log(inWords(number))
     title: 'Mente du …?',
     level: 'vanskelig',
     topic: 'språk',
-    text: `Søkemotorer spør «mente du …?» når du skriver et ord feil. De måler hvor nær to ord er hverandre ved å telle rettelser: å sette inn en bokstav, ta bort en bokstav eller bytte en bokstav med en annen. «katt» til «hatt» er én rettelse, og «sol» til «sjø» er to. Det minste antallet rettelser som gjør ett ord om til et annet, kalles Levenshtein-avstanden.
+    text: `Søkemotorer spør «mente du …?» når du skriver et ord feil. De måler hvor nær hverandre to ord er ved å telle rettelser: å sette inn en bokstav, ta bort en bokstav eller bytte en bokstav med en annen. «katt» til «hatt» er én rettelse, og «sol» til «sjø» er to. Det minste antallet rettelser som gjør ett ord om til et annet, kalles Levenshtein-avstanden.
 
 Skriv to funksjoner:
 
