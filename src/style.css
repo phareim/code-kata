@@ -327,6 +327,7 @@ body.has-sheet { overflow: hidden; }
 .hints:empty { display: none; }
 .hints li { margin-bottom: 6px; }
 .hints li::marker { font-family: var(--font-pixel); color: var(--gold); }
+.hint-scaffold { display: flex; margin: 8px 0 4px; }
 .solution { margin-top: 14px; }
 .solution-code {
   margin: 0 0 10px;

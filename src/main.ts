@@ -11,6 +11,7 @@ import { Stage } from './stage/stage'
 import { OLD_STARTERS, STARTER, TING_CLASS } from './starter'
 import { seeded } from './tasks/build'
 import { TASKS, taskById, taskNumber } from './tasks/index'
+import { hasScaffold, opening, scaffolded } from './tasks/opening'
 import { TOPICS, type Task } from './tasks/types'
 import { renderObjects } from './world/objects'
 import { label, randomWorld, type World } from './world/world'
@@ -101,7 +102,7 @@ function saveNow(): void {
   if (mode.kind === 'task') {
     const task = mode.task
     updateTask(task.id, {
-      code: code === task.starter ? undefined : code,
+      code: code === opening(task) ? undefined : code,
       ting: ting === (task.ting ?? TING_CLASS) ? undefined : ting,
     })
   } else {
@@ -398,11 +399,44 @@ function showVerdict(task: Task, v: Verdict): void {
 }
 
 // The task card.
+let scaffoldArmed = 0
+const SCAFFOLD_LABEL = 'Sett inn et skjelett'
+
+/** Under hint 1: puts the task's skeleton in the editor, asking first when that would replace the visitor's code. */
+function scaffoldButton(task: Task): HTMLButtonElement {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'btn btn--quiet btn--small px hint-scaffold'
+  button.textContent = SCAFFOLD_LABEL
+  button.addEventListener('click', () => {
+    const code = codeView.state.doc.toString()
+    const own = code.trim() !== '' && code !== opening(task) && code !== scaffolded(task)
+    if (own && !scaffoldArmed) {
+      button.textContent = 'Bytte ut koden din? Trykk igjen'
+      scaffoldArmed = window.setTimeout(() => {
+        scaffoldArmed = 0
+        button.textContent = SCAFFOLD_LABEL
+      }, 4000)
+      return
+    }
+    window.clearTimeout(scaffoldArmed)
+    scaffoldArmed = 0
+    button.textContent = SCAFFOLD_LABEL
+    setText(codeView, scaffolded(task))
+    verdictEl.hidden = true
+    codeView.focus()
+  })
+  return button
+}
+
 function renderHints(task: Task): void {
+  window.clearTimeout(scaffoldArmed)
+  scaffoldArmed = 0
   const opened = Math.min(taskState(task.id).hints ?? 0, task.hints.length)
-  hintsEl.replaceChildren(...task.hints.slice(0, opened).map((hint) => {
+  hintsEl.replaceChildren(...task.hints.slice(0, opened).map((hint, i) => {
     const li = document.createElement('li')
     li.append(inlineText(hint))
+    if (i === 0 && hasScaffold(task)) li.append(scaffoldButton(task))
     return li
   }))
   hintButton.disabled = opened >= task.hints.length
@@ -478,7 +512,7 @@ function openTask(task: Task): void {
   }
   start = task.world(seeded(seed))
   built = null
-  replaceDoc(codeView, state.code ?? task.starter)
+  replaceDoc(codeView, state.code ?? opening(task))
   replaceDoc(classView, state.ting ?? task.ting ?? TING_CLASS)
   renderTask(task)
   setClassOpen(task.topic === 'objekter' || state.ting !== undefined)
@@ -551,7 +585,7 @@ $('use-solution').addEventListener('click', () => {
 $('restart-btn').addEventListener('click', () => {
   const task = currentTask()
   if (!task) return
-  setText(codeView, task.starter)
+  setText(codeView, opening(task))
   setText(classView, task.ting ?? TING_CLASS)
   verdictEl.hidden = true
   codeView.focus()

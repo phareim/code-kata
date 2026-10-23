@@ -14,8 +14,12 @@ how code runs and where things live.
 - **A check is an arrow function that uses only `t` and JavaScript's globals.** It is sent to the worker as
   `String(check)`, so a helper from the module it sits in is undefined there. `npm test` catches that in Node; the
   minified build is only covered by `scripts/smoke-tasks.mjs`, so run it after adding or changing tasks.
-- Every task has a solution that passes and a starter that doesn't (`test/tasks.test.ts`, three seeds). A world must
-  look the same for the same seed. A check message says what is wrong in a sentence, naming items by letter
+- Every task has a solution that passes, and an opening and a scaffold that don't (`test/tasks.test.ts`, three
+  seeds). A world must look the same for the same seed, with the same roots.
+- A task opens without a skeleton (Petter, 2026-10-23: the starters gave too much and steered the answer): a comment
+  naming the roots, plus the code that runs the exports on the stage (`src/tasks/opening.ts`). The skeleton is the
+  task's `scaffold`, behind a button in hint 1. Write the scaffold's exports at column 0 with the closing `}` at
+  column 0 and the code that calls them after; set `opening` when the rest of the scaffold is part of the answer. A check message says what is wrong in a sentence, naming items by letter
   (`t.show`). Don't let a check loop on data the code controls without a bound (the code can change anything).
 - A root may not share a name with `t`'s own fields (`out`, `slots`, `start`, `fn` …): the check would read `t`'s.
   A plain object held by a root becomes an item on the stage; give it `color`/`shape` or prefer a Ting.

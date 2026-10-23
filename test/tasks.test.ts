@@ -1,11 +1,12 @@
 /*
- * Every task in the bank, through the real worker: the solution passes on several start worlds, the starter does
- * not, and neither breaks the check.
+ * Every task in the bank, through the real worker: the solution passes on several start worlds, the opening and the
+ * scaffold behind hint 1 do not, and none of them breaks the check.
  */
 import { describe, expect, it } from 'vitest'
 import { TING_CLASS } from '../src/starter'
 import { seeded } from '../src/tasks/build'
 import { ALL_TASKS, TASKS } from '../src/tasks/index'
+import { hasScaffold, opening, scaffolded, variables } from '../src/tasks/opening'
 import { LEVELS, TOPICS, type Task } from '../src/tasks/types'
 import { runWorker } from './harness'
 
@@ -49,6 +50,25 @@ describe('the bank', () => {
   it('makes the same start for the same seed', () => {
     for (const task of TASKS) expect(task.world(seeded(5)), task.id).toEqual(task.world(seeded(5)))
   })
+
+  it('gives every seed the same roots, which the opening names', () => {
+    for (const task of TASKS) {
+      const keys = task.world(seeded(SEEDS[0])).roots.map((p) => p.key)
+      for (const seed of SEEDS) expect(task.world(seeded(seed)).roots.map((p) => p.key), task.id).toEqual(keys)
+      for (const key of keys) expect(variables(task), task.id).toMatch(new RegExp(`\\b${key}\\b`))
+    }
+  })
+
+  it('opens without the skeletons of the exports, which the scaffold has', () => {
+    for (const task of TASKS) {
+      for (const name of task.exports ?? []) {
+        const declared = new RegExp(`^(function|class)\\s+${name}\\b`, 'm')
+        expect(task.scaffold, `${task.id}: ${name}`).toMatch(declared)
+        expect(opening(task), `${task.id}: ${name}`).not.toMatch(declared)
+      }
+      if (!task.solutionTing) expect(hasScaffold(task), task.id).toBe(true)
+    }
+  })
 })
 
 describe.each(TASKS.map((task) => [task.id, task] as const))('%s', (_, task) => {
@@ -64,9 +84,22 @@ describe.each(TASKS.map((task) => [task.id, task] as const))('%s', (_, task) => 
     }
   })
 
-  it('is not solved by its starter, and says why', async () => {
+  it('is not solved by its opening, and says why', async () => {
     for (const seed of SEEDS) {
-      const result = await run(task, task.starter, ting, seed)
+      const result = await run(task, opening(task), ting, seed)
+      // A call to an export the code has yet to declare gets a verdict too; another error (a class task's code
+      // calling a method the class lacks) is the code's own.
+      if (result.end.type === 'error' && result.end.name !== 'ReferenceError') continue
+      expect(result.verdict, `seed ${seed}: ${JSON.stringify(result.end)}`).not.toBeNull()
+      expect(result.verdict!.broken, `seed ${seed}: ${result.verdict!.message}`).toBe(false)
+      expect(result.verdict!.ok, `seed ${seed}`).toBe(false)
+      expect(result.verdict!.message.length).toBeGreaterThan(5)
+    }
+  })
+
+  it('is not solved by its scaffold, and says why', async () => {
+    for (const seed of SEEDS) {
+      const result = await run(task, scaffolded(task), ting, seed)
       if (result.end.type === 'error') continue
       expect(result.end.type, `seed ${seed}`).toBe('done')
       expect(result.verdict, `seed ${seed}`).not.toBeNull()

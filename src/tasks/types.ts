@@ -80,7 +80,13 @@ export interface Task {
   world: (random: () => number) => World
   /** The class the items are built from (the list Ting when left out). */
   ting?: string
-  starter: string
+  /** A skeleton of the answer, which the button under hint 1 puts in the editor. The editor opens with less (opening.ts). */
+  scaffold: string
+  /**
+   * The code under the opening comment, when opening.ts takes the wrong part of the scaffold: it keeps what runs the
+   * exported functions on the stage, or all of it when the answer goes in the class.
+   */
+  opening?: string
   solution: string
   /** The class the solution needs, when the task is about the class. */
   solutionTing?: string

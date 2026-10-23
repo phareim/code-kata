@@ -31,7 +31,7 @@ Snu køen ved hjelp av stabelen: ta én og én fra fronten av køen (\`shift()\`
       return makeWorld(items, { queue: items.map((_, i) => at(i)), stack: [] })
     },
     ting: PLAIN_TING,
-    starter: `while (queue.length) {
+    scaffold: `while (queue.length) {
   stack.push(queue.shift())
   vis()
 }
@@ -75,7 +75,7 @@ Skriv \`function hanoi(n, from, to, via, move)\` som flytter de \`n\` øverste f
       return makeWorld(items, { pegs: [items.map((_, i) => at(i)), [], []] })
     },
     ting: PLAIN_TING,
-    starter: `function hanoi(n, from, to, via, move) {
+    scaffold: `function hanoi(n, from, to, via, move) {
   if (n === 0) return
   // Flytt n - 1 til via, den største til to, og n - 1 fra via til to
 }
@@ -137,7 +137,7 @@ Legg A, B og C på stabelen, i den rekkefølgen, så de ikke lenger står i \`it
     ],
     world: (r) => arrayWorld(things(r, 3), undefined, 'items', { stack: [] }),
     ting: PLAIN_TING,
-    starter: `// 1. Flytt A, B og C fra items til stack, i den rekkefølgen
+    scaffold: `// 1. Flytt A, B og C fra items til stack, i den rekkefølgen
 // 2. Ta den øverste av stack og legg den tilbake i items
 console.log(items.length, stack.length)
 `,
@@ -174,7 +174,7 @@ Skriv \`function peek(stack)\` som gir tilbake den øverste tingen uten å fjern
     ],
     world: (r) => arrayWorld(things(r, 5), undefined, 'stack'),
     ting: PLAIN_TING,
-    starter: `function peek(stack) {
+    scaffold: `function peek(stack) {
   // Hvem ligger øverst? Ikke ta den av.
 }
 
@@ -225,7 +225,7 @@ Flytt spøkelset bakerst i køen. Bruk \`shift()\` til å ta ut den første, og 
       return arrayWorld(items, undefined, 'queue')
     },
     ting: PLAIN_TING,
-    starter: `// Spøkelset står først i køen. Send det bakerst.
+    scaffold: `// Spøkelset står først i køen. Send det bakerst.
 console.log(queue[0].shape)
 `,
     solution: `queue.push(queue.shift())
@@ -263,7 +263,7 @@ Til slutt er \`queue\` tom, og \`removed\` har alle tingene i den rekkefølgen d
       return arrayWorld(items, undefined, 'queue', { removed: [] })
     },
     ting: PLAIN_TING,
-    starter: `while (queue.length) {
+    scaffold: `while (queue.length) {
   const thing = queue.shift()
   // Trekk 1 fra value. Bakerst i køen igjen, eller ferdig?
   removed.push(thing)
@@ -321,7 +321,7 @@ Skriv \`function balanced(items)\` som gir tilbake \`true\` hvis rekka går opp,
       return arrayWorld(Array.from(pattern, (ch, i) => ({ value: i + 1, color: BRACKETS[ch] })))
     },
     ting: PLAIN_TING,
-    starter: `function balanced(items) {
+    scaffold: `function balanced(items) {
   const waiting = [] // lukkingene vi venter på
   for (const thing of items) {
     // Åpning (violet eller pink): legg lukkingen på waiting.
@@ -401,7 +401,7 @@ Bruk bare \`push\` og \`pop\` til å flytte tingene mellom de to stablene. Å ti
     },
     ting: PLAIN_TING,
     views: { spare: 'stack' },
-    starter: `while (stack.length) {
+    scaffold: `while (stack.length) {
   const thing = stack.pop()
   // Legg thing på riktig plass i spare. Flytt noen tilbake til stack om det trengs.
   spare.push(thing)
@@ -454,7 +454,7 @@ Det vanskelige er \`min()\`: den skal svare med én gang og ikke lete gjennom al
     ],
     world: (r) => arrayWorld(things(r, 6)),
     ting: PLAIN_TING,
-    starter: `class MinStack {
+    scaffold: `class MinStack {
   items = []
 
   push(x) {
@@ -583,7 +583,7 @@ Bruk to arrayer som stabler, og bare \`push\` og \`pop\` på dem: \`shift\`, \`u
     ],
     world: (r) => arrayWorld(things(r, 6)),
     ting: PLAIN_TING,
-    starter: `class TwoStackQueue {
+    scaffold: `class TwoStackQueue {
   inbox = [] // nye ting havner her
   outbox = [] // herfra tar du ut
 
@@ -726,7 +726,7 @@ For verdiene 2, 7, 3, 5, 4, 6 er svaret 7, -1, 5, 6, 6, -1. Funksjonen skal ikke
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `function nextGreater(items) {
+    scaffold: `function nextGreater(items) {
   const result = items.map(() => -1)
   const waiting = [] // plassene som venter på en større
   for (let i = 0; i < items.length; i++) {
@@ -802,7 +802,7 @@ Skriv \`function solve(move)\` som kaller \`move(from, to)\` med pinnenummer 0, 
     ],
     world: () => tower(3),
     ting: PLAIN_TING,
-    starter: `function solve(move) {
+    scaffold: `function solve(move) {
   // Skriv flyttene her, ett per linje: move(0, 2) flytter øverste skive fra pinne 0 til pinne 2
 }
 
@@ -882,7 +882,7 @@ Skriv \`function hanoiMoves(n)\` som gir tilbake det minste antallet flytt for \
     ],
     world: () => tower(4),
     ting: PLAIN_TING,
-    starter: `function hanoiMoves(n) {
+    scaffold: `function hanoiMoves(n) {
   if (n === 0) return 0
   // Hvor mange flytt går det på å flytte n - 1 skiver, én skive og så n - 1 skiver igjen?
   return 0
@@ -926,7 +926,7 @@ Skriv \`function neighborHanoi(n, move)\` som flytter et tårn på \`n\` skiver 
       return makeWorld(items, { pegs: [items.map((_, i) => at(i)), [], []] })
     },
     ting: PLAIN_TING,
-    starter: `function neighborHanoi(n, move) {
+    scaffold: `function neighborHanoi(n, move) {
   // Flytt n skiver fra 0 til 2, bare mellom naboer
 }
 

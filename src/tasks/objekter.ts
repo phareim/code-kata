@@ -17,7 +17,7 @@ Koden går gjennom lista og spør hver ting. Trykk «Kjør» når klassen har me
       "Sett sammen teksten: `return this.color + ' ' + this.value`.",
     ],
     world: (r) => listWorld(things(r, 6)),
-    starter: `// Skriv describe() i klassen Ting øverst i Objekter.
+    scaffold: `// Skriv describe() i klassen Ting øverst i Objekter.
 for (let node = head; node; node = node.next) {
   console.log(node.describe())
 }
@@ -59,7 +59,7 @@ Den skal alltid stemme med verdien slik den er nå, også om verdien endres ette
       'Et vanlig felt (`big = …`) regnes ut bare én gang, når tingen lages. En getter regnes ut hver gang noen spør.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    starter: `// Skriv getteren big i klassen Ting øverst i Objekter.
+    scaffold: `// Skriv getteren big i klassen Ting øverst i Objekter.
 for (let node = head; node; node = node.next) {
   console.log(node.value, node.big)
 }
@@ -105,7 +105,7 @@ Verdien må lagres i et annet felt, for eksempel det private \`#value\`.`,
       'Fjern feltet `value = 0`! Et vanlig felt med samme navn legger seg oppå getteren og setteren, så de aldri blir brukt.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    starter: `// Lag getter og setter for value i klassen Ting.
+    scaffold: `// Lag getter og setter for value i klassen Ting.
 A.value = 150
 B.value = -3
 console.log(A.value, B.value)
@@ -149,7 +149,7 @@ Statisk betyr at metoden hører til klassen, ikke til hver ting: den kalles \`Ti
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `// Skriv static compare(a, b) i klassen Ting.
+    scaffold: `// Skriv static compare(a, b) i klassen Ting.
 items.sort(Ting.compare)
 `,
     solution: `items.sort(Ting.compare)
@@ -188,7 +188,7 @@ Lag så én ny katt og ett nytt spøkelse, og sett dem først i lista: katten f�
       'Lenk dem inn foran: `const ghost = new Ghost({ value: 13, next: head })`, så `head = new Cat({ value: 9, next: ghost })`.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    starter: `class Cat extends Ting {
+    scaffold: `class Cat extends Ting {
   // shape og speak()
 }
 
@@ -212,6 +212,8 @@ const ghost = new Ghost({ value: 13, color: 'violet', next: head })
 head = new Cat({ value: 9, color: 'orange', next: ghost })
 console.log(head.speak(), head.next.speak())
 `,
+    // Making the two and linking them in is part of the answer.
+    opening: '',
     exports: ['Cat', 'Ghost'],
     check: (t) => {
       const Cat = t.fn('Cat')
@@ -246,7 +248,7 @@ La så en ny robot ta tre skritt, og sett den først i lista.`,
       '`step() { this.#steps++ }`. Lag roboten med `new Bot({ value: 1, next: head })`.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    starter: `class Bot extends Ting {
+    scaffold: `class Bot extends Ting {
   shape = 'bot'
   // #steps, step() og getteren steps
 }
@@ -268,6 +270,8 @@ bot.step()
 head = bot
 console.log(bot.steps)
 `,
+    // Making the bot and moving it to the front is part of the answer.
+    opening: '',
     exports: ['Bot'],
     check: (t) => {
       const Bot = t.fn('Bot')
@@ -303,7 +307,7 @@ Koden skriver ut tingene og sorterer en rad med \`(a, b) => a - b\`.`,
       '`valueOf` gir bare `this.value`. JavaScript kaller den når tingen brukes som et tall.',
     ],
     world: (r) => listWorld(things(r, 5)),
-    starter: `// Skriv toString() og valueOf() i klassen Ting.
+    scaffold: `// Skriv toString() og valueOf() i klassen Ting.
 for (let node = head; node; node = node.next) console.log(\`\${node}\`)
 `,
     solution: `for (let node = head; node; node = node.next) console.log(\`\${node}\`)
@@ -349,7 +353,7 @@ Bare farger som finnes, skal være med.`,
       return arrayWorld(items)
     },
     ting: PLAIN_TING,
-    starter: `function tally(items) {
+    scaffold: `function tally(items) {
   const counts = new Map()
   // Tell fargene
   return counts
@@ -394,7 +398,7 @@ En \`Set\` holder hver verdi bare én gang, så den gjør det meste av jobben.`,
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `function colorCount(items) {
+    scaffold: `function colorCount(items) {
   // Hvor mange forskjellige farger?
   return 0
 }
@@ -439,7 +443,7 @@ Det er tingene selv som skal i arrayene, ikke bare verdiene.`,
       return arrayWorld(items)
     },
     ting: PLAIN_TING,
-    starter: `function groupByColor(items) {
+    scaffold: `function groupByColor(items) {
   const groups = new Map()
   // Legg hver ting i gruppen for fargen sin
   return groups
@@ -492,7 +496,7 @@ Da virker \`for (const thing of new Chain(head))\` og \`[...new Chain(head)]\` s
       'Gå gjennom lista og `yield node` for hver ting.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    starter: `class Chain {
+    scaffold: `class Chain {
   constructor(head) {
     this.head = head
   }
@@ -552,7 +556,7 @@ Er hylla full når noe nytt skal på, må den som har ligget lengst uten å bli 
     ],
     world: (r) => arrayWorld(things(r, 5)),
     ting: PLAIN_TING,
-    starter: `class Shelf {
+    scaffold: `class Shelf {
   constructor(size) {
     this.size = size
     this.map = new Map()

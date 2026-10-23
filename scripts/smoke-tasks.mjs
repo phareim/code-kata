@@ -1,6 +1,6 @@
 // Browser check of the task bank in the built site, Chrome and WebKit: every task's solution solves it there (the
-// checks travel as minified source, which only the built bundle tests), a starter does not, and the bank searches,
-// filters and picks. Screenshots of each view, the bank and a solved task go to the shots dir.
+// checks travel as minified source, which only the built bundle tests), a task opens without a skeleton and hint 1
+// puts one in, and the bank searches, filters and picks. Screenshots of each view, the bank and a solved task go to the shots dir.
 //   PLAYWRIGHT=<path to playwright-core/index.mjs> node scripts/smoke-tasks.mjs <url> [shots dir] [task ids…]
 // Serve dist/ first. CHROME_BIN points at an installed Chrome. Exits 1 when a check fails.
 import { mkdirSync } from 'node:fs'
@@ -39,8 +39,14 @@ async function goTask(page, id) {
   await page.waitForTimeout(250)
 }
 
-/** Runs and waits for the verdict (skipping the playback) or an error; returns what the card and status say. */
-async function runTask(page) {
+/** The code editor's text. */
+const editorText = (page) => page.$$eval('#editor .cm-line', (els) => els.map((el) => el.textContent).join('\n'))
+
+/**
+ * Runs and waits for the verdict (skipping the playback) or an error; returns what the card and status say. With
+ * untilVerdict an error doesn't end the wait: a missing export's verdict comes after the playback.
+ */
+async function runTask(page, untilVerdict = false) {
   await page.click('#run')
   const deadline = Date.now() + 15000
   for (;;) {
@@ -50,7 +56,7 @@ async function runTask(page) {
       status: document.getElementById('status').textContent,
       skip: !document.getElementById('skip').hidden,
     }))
-    if (state.verdict || /Feil|Stoppet/i.test(state.status)) return state
+    if (state.verdict || (!untilVerdict && /Feil|Stoppet/i.test(state.status))) return state
     if (state.skip) await page.click('#skip').catch(() => {})
     if (Date.now() > deadline) return { ...state, verdict: 'timeout' }
     await page.waitForTimeout(80)
@@ -92,10 +98,37 @@ async function browser(name, launch) {
   await page.waitForFunction(() => document.getElementById('bank').hidden)
   check(`${name}: random opens a task`, /^#\/[a-z0-9-]+$/.test(await page.evaluate(() => location.hash)))
 
-  // A starter is not solved, and the card says why.
+  // A task opens with a comment and the code that runs the answer, no skeleton. Running it names the missing function.
+  await goTask(page, 'tell-tingene')
+  let code = await editorText(page)
+  check(`${name}: a task opens without a skeleton`, /^\/\/ Variabelen head er klar til bruk/.test(code) && /console\.log\(count\(head\)\)/.test(code)
+    && !/function count/.test(code), code)
+  let r = await runTask(page, true)
+  check(`${name}: the opening names the missing function`, /is-not/.test(r.verdict ?? '') && /Fant ikke funksjonen count/.test(r.text), r.text)
+
+  // Hint 1 has the skeleton: straight in over the opening, after a second press over the visitor's own code.
+  await page.click('#hint-btn')
+  await page.click('#hints .hint-scaffold')
+  code = await editorText(page)
+  check(`${name}: hint 1 puts the skeleton in`, /function count\(head\)/.test(code) && /^\/\/ Variabelen head/.test(code), code)
+  await insertSolution(page)
+  await page.click('#hints .hint-scaffold')
+  const asked = await page.textContent('#hints .hint-scaffold')
+  const kept = /for \(let node = head/.test(await editorText(page))
+  await page.click('#hints .hint-scaffold')
+  code = await editorText(page)
+  check(`${name}: the skeleton asks before it replaces own code`, /Trykk igjen/.test(asked) && kept && !/for \(let node = head/.test(code)
+    && /Gå gjennom lista og tell/.test(code), `${asked} · ${code}`)
+  await page.click('#restart-btn')
+  code = await editorText(page)
+  check(`${name}: «Start på nytt» goes back to the opening`, !/function count/.test(code) && /console\.log\(count\(head\)\)/.test(code), code)
+
+  // A task without functions opens with the comment alone, and that is not solved either.
   await goTask(page, 'snu-lista')
-  let r = await runTask(page)
-  check(`${name}: the starter is not solved`, /is-not/.test(r.verdict ?? ''), r.text)
+  code = await editorText(page)
+  check(`${name}: snu-lista opens with the comment alone`, code.trim() === '// Variabelen head er klar til bruk, og tingene heter A–H.', code)
+  r = await runTask(page)
+  check(`${name}: the opening is not solved`, /is-not/.test(r.verdict ?? ''), r.text)
 
   // Hints: one at a time, three in all, then the button gives up; opened hints survive a reload.
   for (let k = 0; k < 3; k++) await page.click('#hint-btn')

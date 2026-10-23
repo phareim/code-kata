@@ -49,7 +49,7 @@ export interface RunHandlers {
    * before end() unless the run was stopped or didn't compile.
    */
   world(world: World, frames: World[], dropped: number): void
-  /** A task's verdict, after world() and before end(). */
+  /** A task's verdict, after world() and before end(); end() is an error when the code called a missing export. */
   verdict?(verdict: Verdict): void
   end(outcome: Outcome): void
 }

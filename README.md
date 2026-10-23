@@ -12,7 +12,10 @@ Live: https://kata.phareim.no (public, no login; 131 tasks, every one solved in 
 - **Tasks** (`#/<id>`): a bank of tasks, each with a text, hints one at a time, a level (lett, middels, vanskelig) and
   a topic (lister, sortering, rydding og flytting, stabler og køer, trær, grafer, rutenett, objekter og klassen,
   klassikere). «Kjør» runs the code and checks it: «Løst!» with confetti, a stamp and the creatures jumping, or
-  «Ikke ennå» with what is still wrong. The solution can be shown and put into the editor, after a «Sikker?».
+  «Ikke ennå» with what is still wrong. The editor opens with a comment that names the variables (`head`, `items` …)
+  and, when the task asks for functions, the code below that runs them on the stage, but no skeleton of the answer:
+  hint 1 has a button that puts one in («Sett inn et skjelett», asking first over the visitor's own code). The
+  solution can be shown and put into the editor, after a «Sikker?».
 - **The bank** («Oppgaver», or `/`): every task, searchable (title, text, topic, level), filtered by level, topic and
   «Bare uløste», with solved ones ticked. «Tilfeldig» picks one not solved yet, from the whole bank or from what the
   filters show.
@@ -117,14 +120,19 @@ A task is an object in one of the topic files in `src/tasks/` (`types.ts` has th
 - `world(random)`: the items, from the builders in `src/tasks/build.ts` (`listWorld`, `arrayWorld`, `bstWorld`,
   `treeWorld`, `graphWorld`, `makeWorld`), with the seeded `random` it gets.
 - `ting`: the class (`src/tasks/classes.ts`), when the items aren't a list.
-- `starter`, `solution` (and `solutionTing` when the task is about the class).
+- `scaffold`: a skeleton of the answer, behind hint 1's button, and `solution` (and `solutionTing` when the task is
+  about the class). The editor opens with less (`src/tasks/opening.ts`): a comment that names the roots, and, for a
+  task with `exports`, the scaffold without their declarations (a declaration runs from `function name` or
+  `class Name` at column 0 to a `}` at column 0); a class task keeps its whole scaffold. `opening` overrides the code
+  under the comment when the rest of the scaffold is part of the answer too.
 - `check: (t) => …`: an arrow function that uses only `t` and JavaScript's globals. It travels to the worker as
   source text, so anything else it names is undefined there.
 - `exports`: the functions the code must declare, for `t.fn`.
 - `views`: a view for a root its shape doesn't give away, such as `{ nodes: 'graph' }`.
 
-`npm test` runs every task through the real worker in Node: its solution must pass on three seeds, its starter must
-not, and the check must not break. It also keeps the table in `docs/tasks.md` in step with the bank
+`npm test` runs every task through the real worker in Node: its solution must pass on three seeds, its opening and its
+scaffold must not, and the check must not break. Code that calls an export it never declared gets «Fant ikke
+funksjonen …» as its verdict, beside the error. It also keeps the table in `docs/tasks.md` in step with the bank
 (`UPDATE_DOCS=1 npx vitest run test/docs.test.ts` rewrites it). `scripts/smoke-tasks.mjs` then solves every task in
 the built site in Chrome and WebKit, which also covers the checks as minified source.
 
@@ -136,7 +144,7 @@ the built site in Chrome and WebKit, which also covers the checks as minified so
 - `src/app/`: the bank (`bank.ts`), progress (`progress.ts`), the success effect (`celebrate.ts`), task text
   (`text.ts`).
 - `src/tasks/`: the task bank: one file per topic, `index.ts` (the order they are numbered in), `build.ts`
-  (start worlds), `classes.ts` (the Ting classes), `types.ts`.
+  (start worlds), `classes.ts` (the Ting classes), `opening.ts` (what the editor opens with), `types.ts`.
 - `src/stage/`: the stage (`stage.ts`: panels, views, tokens, glides) and the creatures (`creatures.ts`).
 - `src/world/world.ts`: the items' data, the palette, letters, random sets, walking a list, what the roots reach.
 - `src/world/objects.ts`: the objects pane.

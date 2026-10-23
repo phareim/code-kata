@@ -24,7 +24,7 @@ Både de rosa og de andre skal beholde rekkefølgen de hadde seg imellom.`,
       return arrayWorld(items)
     },
     ting: PLAIN_TING,
-    starter: `const pink = []
+    scaffold: `const pink = []
 const rest = []
 for (const thing of items) {
   // Legg thing i pink eller rest
@@ -67,7 +67,7 @@ Flytt tingene så alle de små står foran alle de store. Rekkefølgen inni hver
       return arrayWorld(values.map((value) => ({ value, color: value < 50 ? 'cyan' : 'gold' })))
     },
     ting: PLAIN_TING,
-    starter: `let place = 0
+    scaffold: `let place = 0
 for (let i = 0; i < items.length; i++) {
   // Er items[i] liten (under 50)? Bytt den med items[place], og øk place.
 }
@@ -120,7 +120,7 @@ Flytt alle spøkelsene til slutten av \`items\`. De andre rykker fram. Både sp�
       return arrayWorld(items)
     },
     ting: PLAIN_TING,
-    starter: `const others = []
+    scaffold: `const others = []
 const ghosts = []
 for (const thing of items) {
   // Er thing et spøkelse? Legg den i ghosts, ellers i others.
@@ -172,7 +172,7 @@ Skyv alle tingene mot venstre, i samme rekkefølge som før, så alle hullene ha
       return makeWorld(things(r, 8 - holes), { items: kinds.map((item) => (item ? at(next++) : null)) })
     },
     ting: PLAIN_TING,
-    starter: `let write = 0
+    scaffold: `let write = 0
 for (let read = 0; read < items.length; read++) {
   // Er items[read] en ting (ikke null)? Flytt den til plass write, og øk write.
 }
@@ -214,7 +214,7 @@ Sjekken stenger \`reverse()\`, \`toReversed()\`, \`slice()\`, \`splice()\` og \`
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `function reverseInPlace(items) {
+    scaffold: `function reverseInPlace(items) {
   // Bytt første og siste, så nest første og nest siste, helt til du møter midten
 }
 
@@ -282,7 +282,7 @@ La \`items\` bare holde den første tingen av hver farge, i samme rekkefølge so
       return arrayWorld(items)
     },
     ting: PLAIN_TING,
-    starter: `const seen = new Set()
+    scaffold: `const seen = new Set()
 const first = []
 for (const thing of items) {
   // Har du sett thing.color før? Hvis ikke: husk fargen i seen, og legg thing i first.
@@ -333,7 +333,7 @@ items = first
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `function rotate(items, k) {
+    scaffold: `function rotate(items, k) {
   const n = items.length
   // k kan være større enn n, og n kan være 0
 }
@@ -412,7 +412,7 @@ Skriv \`function flag(items, swap)\` som ordner dem i én gjennomgang, med tre p
       return arrayWorld(items)
     },
     ting: PLAIN_TING,
-    starter: `function flag(items, swap) {
+    scaffold: `function flag(items, swap) {
   let low = 0
   let mid = 0
   let high = items.length - 1
@@ -522,7 +522,7 @@ Du trenger ikke sortere. Bare bytt plass til hver ting passer med naboene sine. 
       return arrayWorld(values.map((value) => ({ value, color: pick(r, PALETTE) })))
     },
     ting: PLAIN_TING,
-    starter: `for (let i = 1; i < items.length; i++) {
+    scaffold: `for (let i = 1; i < items.length; i++) {
   // Oddetall-plasser skal ikke være større enn plassen foran,
   // partall-plasser skal ikke være mindre. Står de feil vei? Bytt.
 }
@@ -581,7 +581,7 @@ Gjenta til ingen naboer har samme farge. Tre like på rad blir altså til én ti
       return arrayWorld(items)
     },
     ting: PLAIN_TING,
-    starter: `let i = 0
+    scaffold: `let i = 0
 while (i + 1 < items.length) {
   // Har items[i] og items[i + 1] samme farge? Slå dem sammen.
   // Pass på: etter en sammenslåing kan den nye naboen ha samme farge også.
@@ -640,7 +640,7 @@ Skriv \`function nextPermutation(items)\` som endrer rekkefølgen i \`items\` p�
       return arrayWorld(values.map((value) => ({ value, color: pick(r, PALETTE) })))
     },
     ting: PLAIN_TING,
-    starter: `function nextPermutation(items) {
+    scaffold: `function nextPermutation(items) {
   // 1. Fra slutten: finn siste plass i der items[i] er mindre enn items[i + 1]
   // 2. Fra slutten: finn første j der items[j] er større enn items[i], og bytt dem
   // 3. Snu alt som står etter plass i
@@ -751,7 +751,7 @@ Skriv \`function groupCyan(items, swap)\` som samler alle cyan med færrest muli
       return arrayWorld(things(r).map((spec, i) => ({ ...spec, color: flags[i] ? 'cyan' : pick(r, others) })))
     },
     ting: PLAIN_TING,
-    starter: `function groupCyan(items, swap) {
+    scaffold: `function groupCyan(items, swap) {
   // Hvor mange cyan er det? Hvilke plasser skal de stå på?
 }
 

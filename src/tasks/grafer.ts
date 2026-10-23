@@ -98,7 +98,7 @@ Gå bredden først: A, så alle vennene til A, så vennene deres, og så videre.
     world: (r) => graphWorld(r, things(r, 8), 3),
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `A.steps = 0
+    scaffold: `A.steps = 0
 const queue = [A]
 while (queue.length) {
   const node = queue.shift()
@@ -156,7 +156,7 @@ Skriv \`function popular(nodes)\` som gir tilbake tingen med flest venner. Er de
     world: (r) => graphWorld(r, things(r, 8), 3),
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `function popular(nodes) {
+    scaffold: `function popular(nodes) {
   if (nodes.length === 0) return null
   let best = nodes[0]
   // Gå gjennom resten: har noen flere venner enn best?
@@ -239,7 +239,7 @@ Skriv \`function friends(a, b)\` som gir \`true\` bare når de er venner begge v
     },
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `function friends(a, b) {
+    scaffold: `function friends(a, b) {
   // Står b hos a, og a hos b?
   return a.neighbors.includes(b)
 }
@@ -307,7 +307,7 @@ Kall den på \`a\` og \`b\`. Alt annet i grafen skal være som før.`,
     },
     ting: GRAPH_TING,
     views: { nodes: 'graph', a: 'pointer', b: 'pointer' },
-    starter: `function befriend(x, y) {
+    scaffold: `function befriend(x, y) {
   // Legg y hos x og x hos y, men ikke hvis de står der fra før
 }
 
@@ -377,7 +377,7 @@ Ta \`gone\` bort fra \`nodes\` og fra alles \`neighbors\`, og tøm \`gone.neighb
     world: (r) => graphWorld(r, things(r, 8), 3, { gone: at(int(r, 0, 7)) }),
     ting: GRAPH_TING,
     views: { nodes: 'graph', gone: 'pointer' },
-    starter: `for (const node of nodes) {
+    scaffold: `for (const node of nodes) {
   // Ta gone ut av node.neighbors
 }
 // Ta gone ut av nodes, og tøm gone.neighbors
@@ -426,7 +426,7 @@ Vennene prøves i den rekkefølgen de står i \`neighbors\`. Sjekken sammenligne
     world: (r) => graphWorld(r, things(r, 8), 3),
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `function dfs(start) {
+    scaffold: `function dfs(start) {
   const seen = new Set()
   const order = []
   // Besøk start, og så vennene dens én etter én, dypt først
@@ -518,7 +518,7 @@ Gå bredden først og husk for hver ting hvem du kom fra. Når du er framme, gå
     world: (r) => graphWorld(r, things(r, 8), 3),
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `function route(a, b) {
+    scaffold: `function route(a, b) {
   const from = new Map([[a, null]])
   const queue = [a]
   // Gå bredden først og husk hvem du kom fra. Bygg veien baklengs fra b.
@@ -637,7 +637,7 @@ Vil du se dem, kan du gi hver gjeng sin egen \`color\` underveis.`,
     },
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `function groups(nodes) {
+    scaffold: `function groups(nodes) {
   const seen = new Set()
   let count = 0
   // Gå gjennom nodes. En ting du ikke har sett, er en ny gjeng: besøk alle i den.
@@ -748,7 +748,7 @@ Det går ikke alltid. Danner vennene en ring med et odde antall ting, som tre so
     },
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `function twoTeams(nodes) {
+    scaffold: `function twoTeams(nodes) {
   // Gi hver ting 'pink' eller 'cyan', så ingen venner får samme farge
   return true
 }
@@ -852,7 +852,7 @@ Danner pilene en ring, finnes det ingen rekkefølge. Da skal \`order\` gi tilbak
     world: (r) => arrowsOf(r, things(r, 8), 3, false),
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `function order(nodes) {
+    scaffold: `function order(nodes) {
   const result = []
   // Hvor mange piler peker inn på hver ting? Begynn med dem som ingen peker på.
   return result
@@ -948,7 +948,7 @@ Bruk Dijkstras metode: ta alltid ut den uferdige tingen som er billigst å nå. 
     world: (r) => graphWorld(r, things(r, 8), 3),
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `function cheapest(a, b) {
+    scaffold: `function cheapest(a, b) {
   const best = new Map([[a, 0]])
   const todo = [a]
   // Ta alltid ut den billigste i todo, og oppdater prisen til vennene
@@ -1065,7 +1065,7 @@ Merk hver ting hvit (ikke besøkt), grå (du er på vei ned gjennom den) eller s
     world: (r) => arrowsOf(r, things(r, 8), 3, r() < 0.5),
     ting: GRAPH_TING,
     views: { nodes: 'graph' },
-    starter: `function hasCycle(nodes) {
+    scaffold: `function hasCycle(nodes) {
   const state = new Map() // ikke i kartet = hvit, 'grå' = under besøk, 'svart' = ferdig
   // Gå dypt fra hver hvit ting. Møter du en grå, er det en ring.
   return false

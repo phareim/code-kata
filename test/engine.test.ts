@@ -130,6 +130,32 @@ describe('task checks', () => {
     expect(run.verdict!.message).toContain('length')
   })
 
+  it('names a missing function or class the code calls, before the error', async () => {
+    const cases = [
+      ['console.log(count(head))', ['count'], 'Fant ikke funksjonen count.'],
+      ['const s = new MinStack()', ['MinStack'], 'Fant ikke klassen MinStack.'],
+      // WebKit's wording, thrown by hand: V8 says «count is not defined».
+      [`throw new ReferenceError("Can't find variable: count")`, ['count'], 'Fant ikke funksjonen count.'],
+    ] as const
+    for (const [code, exports, message] of cases) {
+      const run = await runWorker({ code, classSource: TING, world: randomWorld(), task: { check: String(() => true), exports: [...exports] } })
+      expect(run.end, code).toMatchObject({ type: 'error', name: 'ReferenceError' })
+      expect(run.verdict, code).toMatchObject({ ok: false, broken: false })
+      expect(run.verdict!.message, code).toContain(message)
+    }
+  })
+
+  it('gives no verdict for a missing name that is not an export', async () => {
+    const run = await runWorker({
+      code: 'console.log(cuont(head))',
+      classSource: TING,
+      world: randomWorld(),
+      task: { check: String(() => true), exports: ['count'] },
+    })
+    expect(run.end).toMatchObject({ type: 'error', name: 'ReferenceError' })
+    expect(run.verdict).toBeNull()
+  })
+
   it('calls an exported function on fresh lists, and places its error in the code', async () => {
     const check = String((t: any) => {
       const length = t.fn('length')

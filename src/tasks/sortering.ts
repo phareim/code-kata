@@ -69,7 +69,7 @@ Bytt \`items[0]\` og den siste, og la de andre stå der de står.`,
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `const last = items.length - 1
+    scaffold: `const last = items.length - 1
 const first = items[0]
 // Flytt den siste fram, og den første bakerst
 `,
@@ -104,7 +104,7 @@ Kall \`vis(items[i], items[i + 1])\` etter hvert bytte, så ser du de store bobl
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `let swapped = true
+    scaffold: `let swapped = true
 while (swapped) {
   swapped = false
   for (let i = 0; i + 1 < items.length; i++) {
@@ -152,7 +152,7 @@ Sorter \`items\` så den minste står først og den største sist. Du velger met
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
     ting: PLAIN_TING,
-    starter: `// Sorter items etter value, minst først.
+    scaffold: `// Sorter items etter value, minst først.
 // items.sort(…) tar en funksjon som sammenligner to ting: (a, b) => …
 console.log(items.map((thing) => thing.value))
 `,
@@ -186,7 +186,7 @@ Sorter \`items\` fra størst til minst. Det skal være de samme tingene i raden,
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), descending)),
     ting: PLAIN_TING,
-    starter: `// Sorter items etter value, størst først.
+    scaffold: `// Sorter items etter value, størst først.
 console.log(items.map((thing) => thing.value))
 `,
     solution: `items.sort((a, b) => b.value - a.value)
@@ -226,7 +226,7 @@ To like verdier ved siden av hverandre er greit. En tom rad og en rad med én ti
       return arrayWorld(row)
     },
     ting: PLAIN_TING,
-    starter: `function isSorted(items) {
+    scaffold: `function isSorted(items) {
   // Se på parene av naboer. Står noen feil vei?
   return true
 }
@@ -283,7 +283,7 @@ Gå gjennom \`items\` fra venstre mot høyre, én eneste gang. For hvert par nab
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), (row) => ascending(row) || ascending(onePass(row)))),
     ting: PLAIN_TING,
-    starter: `for (let i = 0; i + 1 < items.length; i++) {
+    scaffold: `for (let i = 0; i + 1 < items.length; i++) {
   // Står items[i] og items[i + 1] feil vei? Bytt dem.
 }
 `,
@@ -333,7 +333,7 @@ Raden skal ende sortert etter \`value\`, minst først, med høyst \`n - 1\` bytt
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
     ting: PLAIN_TING,
-    starter: `function selectionSort(items, swap) {
+    scaffold: `function selectionSort(items, swap) {
   for (let i = 0; i < items.length - 1; i++) {
     // Finn plassen til den minste fra i og utover, og bytt den til plass i med swap(i, min)
   }
@@ -420,7 +420,7 @@ Sjekken teller byttene: det skal være like mange som det er par som står feil 
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
     ting: PLAIN_TING,
-    starter: `function insertionSort(items, swap) {
+    scaffold: `function insertionSort(items, swap) {
   for (let i = 1; i < items.length; i++) {
     // La items[i] bytte seg bakover med swap(j - 1, j) så lenge tingen foran er større
   }
@@ -506,7 +506,7 @@ Skriv \`function gnomeSort(items, swap)\` med nissens regler. \`pos\` starter p�
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
     ting: PLAIN_TING,
-    starter: `function gnomeSort(items, swap) {
+    scaffold: `function gnomeSort(items, swap) {
   let pos = 0
   while (pos < items.length) {
     // Står tingen på pos og den foran i riktig rekkefølge? Gå fram.
@@ -596,7 +596,7 @@ Trikset er å få den største ned først: én vending henter den opp øverst, o
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
     ting: PLAIN_TING,
-    starter: `function pancakeSort(items, flip) {
+    scaffold: `function pancakeSort(items, flip) {
   for (let size = items.length; size > 1; size--) {
     // Finn den største blant de size første, og få den ned på plass size - 1 med flip
   }
@@ -688,7 +688,7 @@ Sjekken prøver også en rad med flere tusen ting, så en treg metode klarer seg
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
     ting: PLAIN_TING,
-    starter: `function mergeSort(items) {
+    scaffold: `function mergeSort(items) {
   if (items.length <= 1) return [...items]
   // Del på midten, sorter hver halvdel med mergeSort, og flett dem
   return [...items]
@@ -799,7 +799,7 @@ Sjekken prøver også en rad med flere tusen ting, så metoden må være rask.`,
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
     ting: PLAIN_TING,
-    starter: `function quickSort(items, swap) {
+    scaffold: `function quickSort(items, swap) {
   function sortRange(lo, hi) {
     if (lo >= hi) return
     // Velg pivot, flytt de mindre til venstre med swap, og sorter begge sider
@@ -931,7 +931,7 @@ Skriv \`function countingSort(items)\` som gir tilbake en ny array med de samme 
     ],
     world: (r) => arrayWorld(smallValues(r)),
     ting: PLAIN_TING,
-    starter: `function countingSort(items) {
+    scaffold: `function countingSort(items) {
   const counts = new Array(10).fill(0)
   // Tell hvor mange det er av hver verdi, og legg tingene på riktig plass i result
   const result = [...items]
@@ -1025,7 +1025,7 @@ Skriv \`function heapSort(items, swap)\` som sorterer \`items\` på stedet, mins
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
     ting: PLAIN_TING,
-    starter: `function heapSort(items, swap) {
+    scaffold: `function heapSort(items, swap) {
   const n = items.length
   function siftDown(i, size) {
     // La tingen på plass i synke ned til den er minst like stor som barna
@@ -1163,7 +1163,7 @@ Sjekken prøver alle 24 rekkefølgene av fire ting, og du får kalle \`cmpSwap\`
     ],
     world: (r) => arrayWorld(scrambled(r, things(r, 4), ascending)),
     ting: PLAIN_TING,
-    starter: `function network(cmpSwap) {
+    scaffold: `function network(cmpSwap) {
   // Hvilke par vil du sammenligne? cmpSwap(0, 1) bytter plass 0 og 1 hvis de står feil vei.
 }
 
@@ -1250,7 +1250,7 @@ Sorter \`items\` etter \`color\`. De som har samme farge, skal beholde rekkeføl
       return arrayWorld(scrambled(r, specs, (row) => byColor(row) || keepsOrder(row)))
     },
     ting: PLAIN_TING,
-    starter: `// Sorter items etter color, a til å. Like farger beholder rekkefølgen.
+    scaffold: `// Sorter items etter color, a til å. Like farger beholder rekkefølgen.
 console.log(items.map((thing) => thing.color))
 `,
     solution: `items.sort((a, b) => a.color.localeCompare(b.color))
@@ -1291,7 +1291,7 @@ Skriv \`function fewestMoves(items)\` som gir tilbake det minste antallet ting s
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
     ting: PLAIN_TING,
-    starter: `function fewestMoves(items) {
+    scaffold: `function fewestMoves(items) {
   // Hvor lang er den lengste stigende rekka?
   return items.length
 }

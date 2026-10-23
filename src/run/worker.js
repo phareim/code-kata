@@ -13,7 +13,8 @@
  *                                                frames are the snapshots vis() took (dropped: how many past the cap)
  *                  { type: 'verdict', ok, message, broken, line, where }
  *                                                a task's check, after world and before done; broken when the check
- *                                                itself failed, line/where when an error in the code was the reason
+ *                                                itself failed, line/where when an error in the code was the reason.
+ *                                                Also before an error that is a call to an export never declared
  *                  { type: 'done', ms }                         the code returned and no timer is left
  *                  { type: 'error', name, message, line, where, compile, ms }
  *                                                an uncaught error; line is 1-based in the editor `where` names
@@ -641,11 +642,24 @@ function start() {
 
   const where = (err) => place(errorLine(err, cal, false, source.split('\n').length), classLines)
 
+  // A function or class the task wants and the code hasn't declared; a capital letter says class.
+  const missingExport = (name) => /^[A-Z]/.test(name)
+    ? `Fant ikke klassen ${name}. Skriv class ${name} { … } i koden.`
+    : `Fant ikke funksjonen ${name}. Skriv function ${name}(…) { … } i koden.`
+
   const fail = (err, compiling) => {
     if (finished) return
     flush()
     if (!compiling) sendWorld()
     finished = true
+    // The code calls an export it never declared (V8 and Firefox say «x is not defined», WebKit «Can't find
+    // variable: x»): the task's verdict says so, as when the check finds it missing.
+    const undeclared = !compiling && task && err?.name === 'ReferenceError'
+      && /^(?:(\S+) is not defined|Can't find variable: (\S+))$/.exec(String(err.message))
+    const name = undeclared && (undeclared[1] ?? undeclared[2])
+    if (name && (task.exports ?? []).includes(name)) {
+      send({ type: 'verdict', ok: false, broken: false, line: null, where: null, message: missingExport(name) })
+    }
     const isError = err instanceof Error
     const at = place(errorLine(err, cal, compiling, source.split('\n').length), classLines)
     send({
@@ -685,7 +699,7 @@ function start() {
         })
         const missing = (task.exports ?? []).filter((name) => typeof exported[name] !== 'function')
         const verdict = missing.length
-          ? { ok: false, message: `Fant ikke funksjonen ${missing[0]}. Skriv function ${missing[0]}(…) { … } i koden.` }
+          ? { ok: false, message: missingExport(missing[0]) }
           : await judge(task.check, t, where)
         send({ type: 'verdict', broken: false, line: null, where: null, ...verdict })
       }

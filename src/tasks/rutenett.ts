@@ -82,7 +82,7 @@ To ruter henger sammen når de ligger rett ved siden av hverandre: over, under, 
       grid[sr][sc] = 'lime'
       return makeWorld([], { grid, start: [sr, sc] })
     },
-    starter: `const [r, c] = start
+    scaffold: `const [r, c] = start
 const old = grid[r][c]
 const todo = [[r, c]]
 while (todo.length) {
@@ -143,7 +143,7 @@ Mal en ramme: alle rutene ytterst, altså første og siste rad og første og sis
       '`if (r === 0 || r === rows - 1 || c === 0 || c === cols - 1) grid[r][c] = \'gold\'`, med `rows = grid.length` og `cols = grid[0].length`.',
     ],
     world: () => makeWorld([], { grid: blank(6, 8) }),
-    starter: `const rows = grid.length
+    scaffold: `const rows = grid.length
 const cols = grid[0].length
 for (let r = 0; r < rows; r++) {
   for (let c = 0; c < cols; c++) {
@@ -202,7 +202,7 @@ Speilvend hver rad, så den første ruta i raden havner sist og den siste først
       })
       return makeWorld([], { grid })
     },
-    starter: `for (const row of grid) {
+    scaffold: `for (const row of grid) {
   // Bytt første og siste i raden, så nest første og nest siste …
 }
 `,
@@ -247,7 +247,7 @@ Rutene på diagonalen, fra øverst til venstre til nederst til høyre, blir stå
       grid[5][0] = '.'
       return makeWorld([], { grid })
     },
-    starter: `const n = grid.length
+    scaffold: `const n = grid.length
 for (let r = 0; r < n; r++) {
   // Bytt grid[r][c] og grid[c][r] for rutene over diagonalen (c > r)
 }
@@ -293,7 +293,7 @@ Rutenettet skal fortsatt være 6 × 6 og ligge i \`grid\`.`,
       grid[0][5] = '.'
       return makeWorld([], { grid })
     },
-    starter: `const n = grid.length
+    scaffold: `const n = grid.length
 // 1. Bytt rader og kolonner
 // 2. Speilvend hver rad
 `,
@@ -341,7 +341,7 @@ Rutenettet kan være bare én rad eller bare én kolonne, og det kan være tomt 
       const cols = int(r, 3, 6)
       return makeWorld([], { grid: Array.from({ length: rows }, (_, y) => Array.from({ length: cols }, (_, x) => y * cols + x + 1)) })
     },
-    starter: `function spiral(grid) {
+    scaffold: `function spiral(grid) {
   const out = []
   let top = 0
   let bottom = grid.length - 1
@@ -444,7 +444,7 @@ Skriv \`function islands(grid)\` som gir tilbake hvor mange øyer det er. Et rut
       }
       return makeWorld([], { grid })
     },
-    starter: `function islands(grid) {
+    scaffold: `function islands(grid) {
   let count = 0
   for (let r = 0; r < grid.length; r++) {
     for (let c = 0; c < grid[r].length; c++) {
@@ -554,7 +554,7 @@ Skriv \`function steps(grid)\` som gir tilbake det minste antallet steg fra \`'S
       'For hver nabo: er det `E`, gi tilbake `steg + 1`; er det `\'.\'`, mal den og legg den i køen med `steg + 1`. Er køen tom uten at du fant `E`, gi tilbake `-1`.',
     ],
     world: (r) => makeWorld([], { grid: maze(r, 9, 11) }),
-    starter: `function steps(grid) {
+    scaffold: `function steps(grid) {
   // Finn S, og let utover derfra ett steg om gangen
   return -1
 }
@@ -679,7 +679,7 @@ Gjør ett steg. Alle rutene avgjøres ut fra rutenettet slik det var før steget
       for (let x = 0; x < 3; x++) grid[br][bc + x] = 'lime'
       return makeWorld([], { grid })
     },
-    starter: `const next = grid.map((row) => [...row])
+    scaffold: `const next = grid.map((row) => [...row])
 for (let r = 0; r < grid.length; r++) {
   for (let c = 0; c < grid[r].length; c++) {
     // Tell de levende naboene (åtte ruter) til [r][c] i grid
@@ -745,7 +745,7 @@ Minene selv blir stående som de er.`,
       for (const i of distinct(r, 12, 0, 79)) grid[Math.floor(i / 10)][i % 10] = '*'
       return makeWorld([], { grid })
     },
-    starter: `for (let r = 0; r < grid.length; r++) {
+    scaffold: `for (let r = 0; r < grid.length; r++) {
   for (let c = 0; c < grid[r].length; c++) {
     // Er ruta tom ('.')? Tell minene ('*') rundt den, og skriv tallet i ruta.
   }
@@ -806,7 +806,7 @@ Gjør 200 steg. Til slutt skal \`grid\` vise det maura har malt, og \`ant\` skal
     // color and shape are only for the stage: a plain object in a root is drawn as an item, and this one gets a face.
     world: () => makeWorld([], { grid: blank(15, 15), ant: { row: 3, col: 3, dir: 0, color: 'red', shape: 'bot' } }),
     views: { ant: 'value' },
-    starter: `const n = grid.length
+    scaffold: `const n = grid.length
 for (let step = 1; step <= 200; step++) {
   // På '.': sving høyre og mal 'violet'. På 'violet': sving venstre og mal '.'.
   // Gå så ett steg fram i retningen ant.dir, og rund kanten.
@@ -902,7 +902,7 @@ Skriv \`function solve(grid)\` som gir tilbake en liste med trykk, \`[rad, kolon
       if (grid.every((row) => row.every((v) => v === '.'))) press(2, 2)
       return makeWorld([], { grid })
     },
-    starter: `// Trykk på (r, c): den og de fire naboene skifter tilstand
+    scaffold: `// Trykk på (r, c): den og de fire naboene skifter tilstand
 function press(grid, r, c) {
   for (const [y, x] of [[r, c], [r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]) {
     if (grid[y]?.[x] === undefined) continue
@@ -1030,7 +1030,7 @@ Skriv \`function flashes(grid, steps)\` som gjør \`steps\` steg og gir tilbake 
       'Når du tar en rute av stabelen, øker du de åtte naboene. En nabo som da kommer over 9 og ikke har blinket, legges på stabelen. Tell hver rute som blinker.',
     ],
     world: (r) => makeWorld([], { grid: Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => int(r, 0, 9))) }),
-    starter: `function flashes(grid, steps) {
+    scaffold: `function flashes(grid, steps) {
   let count = 0
   for (let s = 0; s < steps; s++) {
     // Øk alle, la blinkene spre seg, nullstill de som blinket

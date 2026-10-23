@@ -17,7 +17,7 @@ Skriv \`function count(head)\` som går gjennom lista og gir tilbake hvor mange 
       'Øk `n` med én for hver runde, og `return n` etter løkka.',
     ],
     world: (r) => listWorld(things(r)),
-    starter: `function count(head) {
+    scaffold: `function count(head) {
   let n = 0
   // Gå gjennom lista og tell
   return n
@@ -57,7 +57,7 @@ Ikke lag nye ting, og ikke bytt verdier: flytt \`next\` på de som er der.`,
       'Når løkka er ferdig, peker `prev` på den nye første. Sett `head = prev`.',
     ],
     world: (r) => listWorld(things(r)),
-    starter: `let prev = null
+    scaffold: `let prev = null
 let node = head
 while (node) {
   const next = node.next
@@ -109,7 +109,7 @@ head = prev
       if (order[0] === top) order.push(order.shift()!)
       return listWorld(items, order)
     },
-    starter: `let best = head
+    scaffold: `let best = head
 let bestPrev = null
 let prev = null
 for (let node = head; node; node = node.next) {
@@ -170,7 +170,7 @@ Pass på: det står rosa ting først, og noen står etter hverandre.`,
       const order = [pinks[0], ...others.slice(0, 2), pinks[1], pinks[2], ...others.slice(2)]
       return listWorld(items, order)
     },
-    starter: `let node = head
+    scaffold: `let node = head
 while (node && node.next) {
   // Er node.next rosa? Hopp over den.
   node = node.next
@@ -211,7 +211,7 @@ En tom liste (\`null\`) har summen 0.`,
       'Når pekeren er `null`, er du ferdig: `return total`.',
     ],
     world: (r) => listWorld(things(r)),
-    starter: `function sum(head) {
+    scaffold: `function sum(head) {
   let total = 0
   // Gå gjennom lista og legg sammen
   return total
@@ -252,7 +252,7 @@ Lista skal være som før etterpå. En tom liste gir \`[]\`.`,
       'Ikke endre `next` underveis: flytt bare din egen peker.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    starter: `function toArray(head) {
+    scaffold: `function toArray(head) {
   const values = []
   // Fyll values
   return values
@@ -294,7 +294,7 @@ Det er selve tingen som skal tilbake, ikke verdien.`,
       'Et negativt `n` finnes heller ikke: gi `null` med en gang.',
     ],
     world: (r) => listWorld(things(r)),
-    starter: `function nth(head, n) {
+    scaffold: `function nth(head, n) {
   let node = head
   // Gå n steg
   return node
@@ -347,7 +347,7 @@ Du kan bruke bokstaven: \`G\` er tingen G.`,
       if (order[0] === 6) order.push(order.shift()!)
       return listWorld(items, order)
     },
-    starter: `let before = head
+    scaffold: `let before = head
 while (before.next !== G) {
   before = before.next
 }
@@ -388,7 +388,7 @@ De andre skal stå i samme rekkefølge, og den som nå står sist, skal ha \`nex
       'Hekt den første på der: `last.next = first`, og husk `first.next = null`.',
     ],
     world: (r) => listWorld(things(r), shuffled(r, [0, 1, 2, 3, 4, 5, 6, 7])),
-    starter: `const first = head
+    scaffold: `const first = head
 head = head.next
 let last = head
 // Finn den siste, og heng first på der
@@ -427,7 +427,7 @@ Sett både \`slow\` og \`fast\` til \`head\`, og la dem gå til \`fast\` ikke ka
     ],
     world: (r) => listWorld(things(r, r() < 0.5 ? 7 : 8), undefined, { slow: null, fast: null }),
     views: { slow: 'pointer', fast: 'pointer' },
-    starter: `slow = head
+    scaffold: `slow = head
 fast = head
 while (fast && fast.next) {
   // Ett steg for slow, to for fast
@@ -468,7 +468,7 @@ Er \`k\` større enn lista er lang, eller mindre enn 1, skal den gi \`null\`. Pr
       'Flytt så begge ett steg av gangen til den første er `null`. Da står den andre der du skal.',
     ],
     world: (r) => listWorld(things(r)),
-    starter: `function fromEnd(head, k) {
+    scaffold: `function fromEnd(head, k) {
   let ahead = head
   let behind = head
   // Send ahead k steg i forveien, og flytt så begge
@@ -525,7 +525,7 @@ Flytt pekerne; ikke bytt verdier eller farger. \`head\` skal peke på den nye f�
       'Flytt `prev` til `a` og fortsett. Til slutt: `head = dummy.next`.',
     ],
     world: (r) => listWorld(things(r, r() < 0.5 ? 7 : 8)),
-    starter: `const dummy = { next: head }
+    scaffold: `const dummy = { next: head }
 let prev = dummy
 while (prev.next && prev.next.next) {
   const a = prev.next
@@ -586,7 +586,7 @@ Bruk tingene som er der, og flytt pekerne. Det holder å se på de to første he
       for (const part of [inA, inB]) part.forEach((slot, k) => { linked[slot].next = k + 1 < part.length ? at(part[k + 1]) : null })
       return makeWorld(linked, { a: at(inA[0]), b: at(inB[0]), head: null })
     },
-    starter: `const dummy = { next: null }
+    scaffold: `const dummy = { next: null }
 let tail = dummy
 while (a && b) {
   // Heng den minste av a og b på tail
@@ -640,7 +640,7 @@ En vanlig løkke som går til \`null\`, blir aldri ferdig i en ring. Bruk to pek
       linked[7].next = at(int(r, 1, 5))
       return makeWorld(linked, { head: at(0) })
     },
-    starter: `function hasLoop(head) {
+    scaffold: `function hasLoop(head) {
   let slow = head
   let fast = head
   // La fast ta to steg og slow ett, til de møtes eller fast er ute
@@ -703,7 +703,7 @@ Det går an med en \`Set\` av tingene du har sett. Men det finnes et triks som k
       linked[7].next = at(int(r, 2, 5))
       return makeWorld(linked, { head: at(0) })
     },
-    starter: `function loopStart(head) {
+    scaffold: `function loopStart(head) {
   // Finn tingen der ringen begynner
   return null
 }
@@ -763,7 +763,7 @@ Med A B C D E F G H blir det C B A F E D G H. Flytt pekerne, og la \`head\` peke
       'Snu de tre slik du snur en hel liste, og koble dem inn igjen: `prev.next` skal peke på den som var tredje, og den som var første skal peke videre til resten. Flytt `prev` til den som nå står sist i gruppen.',
     ],
     world: (r) => listWorld(things(r)),
-    starter: `const dummy = { next: head }
+    scaffold: `const dummy = { next: head }
 let prev = dummy
 // Snu gruppene på tre, én om gangen
 head = dummy.next
@@ -834,7 +834,7 @@ Det er tingen som skal være felles, ikke bare verdien.`,
       link(shared, null)
       return makeWorld(linked, { a: at(onlyA[0]), b: at(onlyB[0]) })
     },
-    starter: `function meeting(a, b) {
+    scaffold: `function meeting(a, b) {
   // Finn den første tingen begge listene har
   return null
 }
@@ -896,7 +896,7 @@ Flytt pekerne, og la \`head\` peke på den nye første.`,
       const items = shuffled(r, [...small, ...big]).map((value) => ({ value, color: pick(r, PALETTE) }))
       return listWorld(items)
     },
-    starter: `const small = { next: null }
+    scaffold: `const small = { next: null }
 const big = { next: null }
 let smallTail = small
 let bigTail = big
@@ -958,7 +958,7 @@ Når en ting og den foran peker på hverandre, viser scenen ⇄ mellom dem.`,
       return makeWorld(linked, { head: at(order[0]) })
     },
     ting: DOUBLE_TING,
-    starter: `let prev = null
+    scaffold: `let prev = null
 for (let node = head; node; node = node.next) {
   // Sett node.prev
 }
@@ -1005,7 +1005,7 @@ Etterpå skal både \`next\` og \`prev\` stemme: \`prev\` peker på tingen foran
       return makeWorld(linked, { head: at(order[0]) })
     },
     ting: DOUBLE_TING,
-    starter: `let node = head
+    scaffold: `let node = head
 while (node) {
   const next = node.next
   // Bytt next og prev på node

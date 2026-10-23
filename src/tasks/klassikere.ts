@@ -18,7 +18,7 @@ Del på midten hver gang: se på tingen i midten, og let videre bare i den halvd
     ],
     world: (r) => arrayWorld(things(r).sort((a, b) => (a.value as number) - (b.value as number))),
     ting: PLAIN_TING,
-    starter: `function find(items, value) {
+    scaffold: `function find(items, value) {
   let lo = 0
   let hi = items.length - 1
   // Let i midten til lo og hi møtes
@@ -87,7 +87,7 @@ To løkker inni hverandre virker. Med en \`Map\` over verdiene du har sett, hold
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `function twoSum(items, target) {
+    scaffold: `function twoSum(items, target) {
   // Finn i og j der verdiene blir target til sammen
   return null
 }
@@ -145,7 +145,7 @@ console.log(twoSum(items, items[1].value + items[4].value))
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `function bestProfit(items) {
+    scaffold: `function bestProfit(items) {
   let lowest = Infinity
   let best = 0
   // Gå gjennom dagene
@@ -202,7 +202,7 @@ Raden er ikke sortert. Lengden forteller hvor mange det skulle vært: én mer en
       return arrayWorld(values.map((value) => ({ value, color: pick(r, PALETTE) })))
     },
     ting: PLAIN_TING,
-    starter: `function missing(items) {
+    scaffold: `function missing(items) {
   // Hvilken verdi fra 1 til items.length + 1 er borte?
   return 0
 }
@@ -255,7 +255,7 @@ Gi tilbake den første slike plassen, eller \`-1\` hvis det ikke finnes noen. Fo
       return arrayWorld(values.map((value) => ({ value, color: pick(r, PALETTE) })))
     },
     ting: PLAIN_TING,
-    starter: `function balance(items) {
+    scaffold: `function balance(items) {
   // Finn plassen der venstre og høyre er like tunge
   return -1
 }
@@ -309,7 +309,7 @@ Tips: når vinduet på tre flytter seg ett hakk, går én ting ut og én kommer 
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `function bestThree(items) {
+    scaffold: `function bestThree(items) {
   if (items.length < 3) return null
   // Flytt et vindu på tre gjennom raden
   return 0
@@ -373,7 +373,7 @@ Rekkefølgen i \`items\` skal være som før.`,
       return arrayWorld(values.map((value) => ({ value, color: 'teal' })))
     },
     ting: PLAIN_TING,
-    starter: `for (const thing of items) {
+    scaffold: `for (const thing of items) {
   // Gi thing riktig farge
 }
 `,
@@ -415,7 +415,7 @@ Bruk køen som en ring: den som ikke går ut, stilles bakerst med \`queue.push(q
       return makeWorld(items, { queue: items.map((_, i) => at(i)), removed: [] })
     },
     ting: PLAIN_TING,
-    starter: `while (queue.length > 1) {
+    scaffold: `while (queue.length > 1) {
   // Tell én, to, tre: de to første går bakerst, den tredje går ut
   break
 }
@@ -465,7 +465,7 @@ Det går med en \`Map\` som teller. Men det finnes en lur måte som klarer seg m
       return arrayWorld(shuffled(r, items))
     },
     ting: PLAIN_TING,
-    starter: `function majority(items) {
+    scaffold: `function majority(items) {
   // Hvilken farge har mer enn halvparten?
   return null
 }
@@ -520,7 +520,7 @@ Er alle sure, er svaret det minst sure humøret. En tom rad gir \`null\`.`,
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `function happiest(items) {
+    scaffold: `function happiest(items) {
   if (!items.length) return null
   // Finn den gladeste strekningen
   return 0
@@ -581,7 +581,7 @@ Sjekken stokker tre ting mange tusen ganger og teller rekkefølgene. Det populæ
     ],
     world: (r) => arrayWorld(things(r)),
     ting: PLAIN_TING,
-    starter: `function shuffle(items) {
+    scaffold: `function shuffle(items) {
   // Stokk items rettferdig
 }
 
@@ -635,7 +635,7 @@ Over hver søyle står vannet like høyt som den laveste av de høyeste søylene
     ],
     world: (r) => arrayWorld(Array.from({ length: 8 }, () => ({ value: int(r, 1, 9), color: 'cyan' }))),
     ting: PLAIN_TING,
-    starter: `function rain(items) {
+    scaffold: `function rain(items) {
   // Hvor mye vann blir liggende?
   return 0
 }
@@ -701,7 +701,7 @@ Sjekken kjører den mange tusen ganger på strømmer av ulik lengde og teller hv
     ],
     world: (r) => arrayWorld(things(r, 6)),
     ting: PLAIN_TING,
-    starter: `function pickOne(next) {
+    scaffold: `function pickOne(next) {
   let chosen = null
   // Les strømmen og velg én
   return chosen
@@ -769,7 +769,7 @@ Sjekken spør om ringer med opptil en milliard ting, så du kan ikke telle deg g
       return makeWorld(items, { queue: items.map((_, i) => at(i)) })
     },
     ting: PLAIN_TING,
-    starter: `function survivor(n) {
+    scaffold: `function survivor(n) {
   // Hvem står igjen når annenhver går ut?
   return 1
 }

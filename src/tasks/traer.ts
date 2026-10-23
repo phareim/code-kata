@@ -56,7 +56,7 @@ Skriv \`function height(node)\` som gir tilbake hvor mange nivåer treet under \
     ],
     world: (r) => treeWorld(r, things(r, 9)),
     ting: TREE_TING,
-    starter: `function height(node) {
+    scaffold: `function height(node) {
   if (!node) return 0
   // Hvor høye er de to trærne under node?
   return 1
@@ -103,7 +103,7 @@ console.log(height(root))
     ],
     world: (r) => bstWorld(things(r, 9)),
     ting: TREE_TING,
-    starter: `function mirror(node) {
+    scaffold: `function mirror(node) {
   if (!node) return
   // Bytt left og right, og speil barna
 }
@@ -152,7 +152,7 @@ Begge skal klare et tomt tre: \`null\` gir 0.`,
     ],
     world: (r) => treeWorld(r, things(r, 9)),
     ting: TREE_TING,
-    starter: `function size(node) {
+    scaffold: `function size(node) {
   if (!node) return 0
   // Hvor mange er det i treet til venstre og i treet til høyre?
   return 1
@@ -219,7 +219,7 @@ Gjør hvert blad i treet fra \`root\` gull med \`color = 'gold'\`. Tingene som h
     ],
     world: (r) => treeWorld(r, notGold(r, 9)),
     ting: TREE_TING,
-    starter: `function paint(node) {
+    scaffold: `function paint(node) {
   if (!node) return
   // Er node et blad? Mal det gull. Besøk så begge sider.
 }
@@ -270,7 +270,7 @@ Treet på scenen er et søketre: alt til venstre for en ting er mindre enn den, 
     ],
     world: (r) => bstWorld(things(r, 9)),
     ting: TREE_TING,
-    starter: `function inOrder(node) {
+    scaffold: `function inOrder(node) {
   if (!node) return []
   // Venstre tre, så node.value, så høyre tre
   return [node.value]
@@ -334,7 +334,7 @@ Et tomt tre (\`null\`) gir \`{ pre: [], post: [] }\`.`,
     ],
     world: (r) => treeWorld(r, things(r, 9)),
     ting: TREE_TING,
-    starter: `function walks(node) {
+    scaffold: `function walks(node) {
   const pre = []
   const post = []
   // Gå gjennom treet. Legg verdien i pre før barna, og i post etter dem.
@@ -411,7 +411,7 @@ Bruk en kø: ta en ting ut foran, og still barna bakerst.`,
     ],
     world: (r) => treeWorld(r, things(r, 10)),
     ting: TREE_TING,
-    starter: `function levels(root) {
+    scaffold: `function levels(root) {
   const result = []
   const queue = root ? [root] : []
   while (queue.length) {
@@ -496,7 +496,7 @@ Et tomt tre (\`null\`) gir \`null\`. Sjekken teller hvor mange verdier du leser,
     ],
     world: (r) => bstWorld(things(r, 9)),
     ting: TREE_TING,
-    starter: `function find(node, value) {
+    scaffold: `function find(node, value) {
   if (!node) return null
   // Er node tingen du leter etter? Ellers: gå til venstre eller høyre.
   return null
@@ -573,7 +573,7 @@ Et tomt tre (\`null\`) gir \`null\`. Har treet bare én ting, er den både minst
     ],
     world: (r) => bstWorld(things(r, 9)),
     ting: TREE_TING,
-    starter: `function extremes(root) {
+    scaffold: `function extremes(root) {
   if (!root) return null
   let smallest = root
   let biggest = root
@@ -671,7 +671,7 @@ Ingen andre lenker i treet skal endres.`,
     },
     ting: TREE_TING,
     views: { guest: 'pointer' },
-    starter: `let node = root
+    scaffold: `let node = root
 while (true) {
   // Skal guest til venstre eller høyre for node?
   // Er plassen ledig, heng guest der. Ellers: gå videre.
@@ -764,7 +764,7 @@ Se opp for lumske trær: hver ting kan passe fint med sin egen forelder og likev
       return makeWorld(nodes, { root: at(0) })
     },
     ting: TREE_TING,
-    starter: `function isSearchTree(node) {
+    scaffold: `function isSearchTree(node) {
   // Er alt til venstre mindre, og alt til høyre større?
   return true
 }
@@ -862,7 +862,7 @@ Skriv \`function lca(root, a, b)\` («lowest common ancestor») som gir tilbake 
     },
     ting: TREE_TING,
     views: { a: 'pointer', b: 'pointer' },
-    starter: `function lca(root, a, b) {
+    scaffold: `function lca(root, a, b) {
   if (!root) return null
   // Er root en av a og b? Ellers: spør treet til venstre og treet til høyre.
   return root
@@ -942,7 +942,7 @@ Skriv \`function diameter(root)\` som gir tilbake lengden på den lengste veien 
     ],
     world: (r) => treeWorld(r, things(r, 10)),
     ting: TREE_TING,
-    starter: `function diameter(root) {
+    scaffold: `function diameter(root) {
   // Hvor høye er de to sidene under hver ting? Husk den lengste veien som snur der.
   return 0
 }
@@ -1061,7 +1061,7 @@ Forelderen må peke på tingen som tar over, og \`gone\` kan også være \`root\
     },
     ting: TREE_TING,
     views: { gone: 'pointer' },
-    starter: `function remove(node, target) {
+    scaffold: `function remove(node, target) {
   if (!node) return null
   // Er node tingen som skal ut? Ellers: fjern den fra venstre eller høyre tre.
   return node
@@ -1148,7 +1148,7 @@ Alle tingene skal være med, og ingen verdier skal endres. Med \`n\` ting kan tr
       return arrayWorld(specs, order, 'items', { root: null })
     },
     ting: TREE_TING,
-    starter: `function build(from, to) {
+    scaffold: `function build(from, to) {
   if (from >= to) return null
   // Ta tingen midt mellom from og to til topp, og bygg venstre og høyre tre av resten
   return null
@@ -1241,7 +1241,7 @@ Bygg treet opp igjen: sett \`left\` og \`right\` på tingene, og la \`root\` pek
       return makeWorld(items.map((s) => ({ ...s, left: null, right: null })), { pre: pre.map(at), ino: ino.map(at), root: null })
     },
     ting: TREE_TING,
-    starter: `function build(preStart, inStart, size) {
+    scaffold: `function build(preStart, inStart, size) {
   if (size === 0) return null
   const node = pre[preStart]
   // Hvor står node i ino? Hvor mange ting er til venstre for den?
@@ -1307,7 +1307,7 @@ Tingene vet ikke hvem som er forelderen deres. Det må du finne ut selv.`,
     ],
     world: (r) => treeWorld(r, things(r, 9)),
     ting: TREE_TING,
-    starter: `function burnTime(root, start) {
+    scaffold: `function burnTime(root, start) {
   // Finn foreldrene, og spre brannen lag for lag
   return 0
 }
