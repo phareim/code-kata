@@ -22,7 +22,13 @@ export interface TaskState {
   seed?: number
   /** When the task was first solved (ISO time). */
   solved?: string
+  /** Thumbs up or down: whether the visitor liked the task. */
+  vote?: Vote
+  /** When the vote last changed, taken back included (ISO time): the newer vote wins when two browsers meet. */
+  votedAt?: string
 }
+
+export type Vote = 'up' | 'down'
 
 const KEY = 'code-kata:progress'
 const LAST = 'code-kata:last'
@@ -53,6 +59,7 @@ export function updateTask(id: string, patch: Partial<TaskState>, urgent = false
   const next: TaskState = { ...before, ...patch }
   for (const key of Object.keys(next) as (keyof TaskState)[]) if (next[key] === undefined) delete next[key]
   if (next.code !== before.code || next.ting !== before.ting) next.at = new Date().toISOString()
+  if (next.vote !== before.vote) next.votedAt = new Date().toISOString()
   if (sameTask(before, next)) return
   states[id] = next
   save()

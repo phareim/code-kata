@@ -139,7 +139,8 @@ cookie on `.phareim.no`) also has their progress on their account:
   request. A failed request is tried again, and anything still not sent is found again on the next visit.
 - The merge (`src/app/merge.ts`, the same on both sides): a solve keeps its first time, hints the most opened, a
   peek at the solution sticks, and the code and the class come together from whichever browser edited them last
-  (`at`, set when either changes). The open task's editor takes the account's code when it is newer.
+  (`at`, set when either changes). The open task's editor takes the account's code when it is newer. The thumbs
+  on the task card (`vote`, up or down) come from whichever browser voted last (`votedAt`), taking it back included.
 - Signing in on a browser that has progress from before adds that progress to the account. Signing out (on
   auth.phareim.no) leaves the browser's copy as it is.
 

@@ -283,6 +283,10 @@ body.has-sheet { overflow: hidden; }
 }
 .task-head > .spacer { flex: 1 0 0; }
 .task-solved { font-size: 16px; line-height: 1; color: var(--lime); }
+.vote svg { display: block; fill: currentColor; shape-rendering: crispEdges; }
+.vote--down svg { transform: scaleY(-1); }
+.vote[aria-pressed='true'] { --edge: var(--lime); color: var(--bg); background: var(--edge); }
+.vote--down[aria-pressed='true'] { --edge: var(--red); }
 .task-scroll {
   min-height: 0;
   overflow: auto;

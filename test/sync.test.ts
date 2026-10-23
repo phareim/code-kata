@@ -29,6 +29,17 @@ describe('mergeTask', () => {
     expect(mergeTask({ seed: 1 }, { seed: 2 }).seed).toBe(2)
     expect(mergeTask({ seed: 1 }, {}).seed).toBe(1)
   })
+
+  it('takes the vote from the side that voted last, a vote taken back too', () => {
+    const up = { vote: 'up', votedAt: '2026-10-23T10:00:00.000Z' } as const
+    const down = { vote: 'down', votedAt: '2026-10-23T11:00:00.000Z' } as const
+    const takenBack = { votedAt: '2026-10-23T12:00:00.000Z' }
+    expect(mergeTask(up, down)).toEqual(down)
+    expect(mergeTask(down, up)).toEqual(down)
+    expect(mergeTask(up, takenBack)).toEqual(takenBack)
+    expect(mergeTask(takenBack, up)).toEqual(takenBack)
+    expect(mergeTask(up, { hints: 1 })).toEqual({ ...up, hints: 1 })
+  })
 })
 
 describe('cleanTask', () => {
@@ -36,6 +47,8 @@ describe('cleanTask', () => {
     expect(cleanTask({ code: 'x', hints: 2, seed: 5, peeked: true, solved: '2026-10-23T00:00:00.000Z', evil: 1 }))
       .toEqual({ code: 'x', hints: 2, seed: 5, peeked: true, solved: '2026-10-23T00:00:00.000Z' })
     expect(cleanTask({ code: 7, hints: -1, seed: 1.5, peeked: 'yes', solved: 'never' })).toEqual({})
+    expect(cleanTask({ vote: 'up', votedAt: '2026-10-23T00:00:00.000Z' })).toEqual({ vote: 'up', votedAt: '2026-10-23T00:00:00.000Z' })
+    expect(cleanTask({ vote: 'meh', votedAt: 'never' })).toEqual({})
     expect(cleanTask({ code: 'x'.repeat(70_000), at: '2026-10-23T00:00:00.000Z' })).toBeNull()
     expect(cleanTask([1])).toBeNull()
     expect(cleanTask('x')).toBeNull()

@@ -3,7 +3,7 @@ import './style.css'
 import type { EditorView } from '@codemirror/view'
 import { Bank, levelBadge, randomTask } from './app/bank'
 import { confetti, stamp } from './app/celebrate'
-import { flushProgress, isSolved, lastTask, markSolved, rememberLast, startSync, syncNow, taskState, updateTask, type Account } from './app/progress'
+import { flushProgress, isSolved, lastTask, markSolved, rememberLast, startSync, syncNow, taskState, updateTask, type Account, type Vote } from './app/progress'
 import { Talk } from './app/talk'
 import { inlineText, richText } from './app/text'
 import { createEditor, firstSyntaxErrorLine, goToLine, markErrorLine, replaceDoc } from './editor/editor'
@@ -436,6 +436,25 @@ async function openTalk(): Promise<void> {
 }
 talkButton.addEventListener('click', () => void openTalk())
 
+/* Thumbs on the task card: whether the visitor liked the task, kept with its progress. Pressing it again takes it back. */
+const voteButtons: Record<Vote, HTMLButtonElement> = { up: $<HTMLButtonElement>('vote-up'), down: $<HTMLButtonElement>('vote-down') }
+function showVote(): void {
+  const task = currentTask()
+  const vote = task ? taskState(task.id).vote : undefined
+  for (const [kind, button] of Object.entries(voteButtons)) {
+    button.hidden = !task
+    button.setAttribute('aria-pressed', String(vote === kind))
+  }
+}
+for (const [kind, button] of Object.entries(voteButtons) as [Vote, HTMLButtonElement][]) {
+  button.addEventListener('click', () => {
+    const task = currentTask()
+    if (!task) return
+    updateTask(task.id, { vote: taskState(task.id).vote === kind ? undefined : kind })
+    showVote()
+  })
+}
+
 // The task card.
 let scaffoldArmed = 0
 const SCAFFOLD_LABEL = 'Sett inn et skjelett'
@@ -495,6 +514,7 @@ function renderTask(task: Task): void {
   $('task-level').replaceChildren(levelBadge(task.level))
   $('task-solved').hidden = !isSolved(task.id)
   showTalkButton()
+  showVote()
   $('task-title').textContent = task.title
   $('task-text').replaceChildren(richText(task.text))
   $('task-actions').hidden = false
@@ -519,6 +539,7 @@ Vil du ha noe å bryne deg på, trykk «Oppgaver» eller «Tilfeldig» øverst.`
   $('task-actions').hidden = true
   verdictEl.hidden = true
   showTalkButton()
+  showVote()
   hintsEl.replaceChildren()
   solutionEl.hidden = true
   $<HTMLButtonElement>('prev-task').hidden = true
@@ -703,6 +724,7 @@ function merged(ids: string[]): void {
   const state = taskState(task.id)
   $('task-solved').hidden = !isSolved(task.id)
   showTalkButton()
+  showVote()
   renderHints(task)
   const code = state.code ?? opening(task)
   if (code !== codeView.state.doc.toString()) replaceDoc(codeView, code)
