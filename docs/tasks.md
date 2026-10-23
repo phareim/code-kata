@@ -71,6 +71,12 @@ Fetched 2026-10-22. They are for ideas only; no statement was copied.
   - Exercism's [JavaScript track](https://github.com/exercism/javascript/tree/main/exercises/practice)
   - MDN on [classes](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)
   - javascript.info on [array methods](https://javascript.info/array-methods)
+- **Language:**
+  - Wikipedia on [Røverspråket](https://no.wikipedia.org/wiki/R%C3%B8verspr%C3%A5ket),
+    [palindromes](https://en.wikipedia.org/wiki/Palindrome), [anagrams](https://en.wikipedia.org/wiki/Anagram),
+    [acronyms](https://en.wikipedia.org/wiki/Acronym), the [Caesar cipher](https://en.wikipedia.org/wiki/Caesar_cipher),
+    [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) and
+    [the Danish-Norwegian alphabet](https://no.wikipedia.org/wiki/Det_dansk-norske_alfabetet)
 - **Visuals:**
   - [VisuAlgo](https://visualgo.net/en): marking the items compared, a playback speed, captions per step
   - [CS Unplugged](https://www.csunplugged.org/en/topics/sorting-networks/)
@@ -78,13 +84,34 @@ Fetched 2026-10-22. They are for ideas only; no statement was copied.
 LeetCode, Project Euler, neetcode.io, exercism.org and Bebras gave nothing usable to the fetcher (blocked or empty
 pages); LeetCode links in `source` fields point at the problem a task resembles.
 
+## The Språk tasks (2026-10-24)
+
+Thirteen tasks about words and text in Norwegian, added after the rest (they are numbered 132–144, so no earlier
+number moved). The Norwegian alphabet is a–z and then æ ø å (29 letters), and the vowels are `a e i o u y æ ø å`: the
+tasks lean on the traps that follow (y and æøå counted as vowels, å sorting before æ and ø in code point order, a
+Caesar shift that wraps at å).
+
+- **Letters and words are monsters.** The letters of a word are monsters with the letter as `value` (a list in
+  `les-beskjeden`, a row in `palindrom`), and words are monsters too (`ae-oe-aa`, `rimord`, `ordkjeden`). The stage
+  writes `value` under each monster in capitals, so the case of a letter isn't visible there; the checks still
+  test it. A letter always has the same colour, so a palindrome looks symmetrical.
+- **Plain text has no monsters.** The vowels, the robbers' language, acronyms, inflection, anagrams, Caesar, numbers in
+  words and edit distance take a string (or a number) in a root such as `text` or `phrase`, which the stage draws as
+  `name = value`, and the opening runs the function on it.
+- **The check carries its own reference.** Each check writes out the alphabet or the rule it tests against inside the
+  arrow function (nothing may come from the module), and compares many inputs, edge cases first: the empty string,
+  one letter, upper and lower case, æøå. `tall-med-ord` compares all of 0–999; `mente-du` also tries 60 generated pairs.
+- **`rimord` and `ordkjeden` change the monsters**, not return something: the colours by rhyme, and `next` and `head`
+  for the chain. The worlds are built so a shortcut fails (rhyme groups that end on the same letter; word chains with
+  all first letters different, so there is exactly one way to link them).
+
 ## Keeping the table current
 
 `npm test` compares the table below with `src/tasks/`, and fails when a task is added, renamed or moved without it.
 `UPDATE_DOCS=1 npx vitest run test/docs.test.ts` rewrites it.
 
 <!-- tasks:start -->
-131 tasks: 49 lett, 59 middels, 23 vanskelig.
+144 tasks: 55 lett, 64 middels, 25 vanskelig.
 
 ### Lister (20)
 
@@ -261,5 +288,23 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 | 129 | `regnvann` | Regnvann | vanskelig | [link](https://leetcode.com/problems/trapping-rain-water/) |
 | 130 | `en-fra-strommen` | Én fra strømmen | vanskelig | [link](https://en.wikipedia.org/wiki/Reservoir_sampling) |
 | 131 | `josefus-uten-a-telle` | Josefus uten å telle | vanskelig | [link](https://en.wikipedia.org/wiki/Josephus_problem#k=2) |
+
+### Språk (13)
+
+| # | Id | Title | Level | Source |
+|---|---|---|---|---|
+| 132 | `les-beskjeden` | Les beskjeden | lett |  |
+| 133 | `palindrom` | Palindrom | lett | [link](https://en.wikipedia.org/wiki/Palindrome) |
+| 134 | `tell-vokalene` | Tell vokalene | lett |  |
+| 135 | `roverspraket` | Røverspråket | lett | [link](https://no.wikipedia.org/wiki/R%C3%B8verspr%C3%A5ket) |
+| 136 | `forkortelser` | Forkortelser | lett | [link](https://en.wikipedia.org/wiki/Acronym) |
+| 137 | `boy-ordet` | Bøy ordet | lett |  |
+| 138 | `ae-oe-aa` | Æ, Ø og Å | middels | [link](https://no.wikipedia.org/wiki/Det_dansk-norske_alfabetet) |
+| 139 | `anagrammer` | Anagrammer | middels | [link](https://en.wikipedia.org/wiki/Anagram) |
+| 140 | `rimord` | Rimord | middels |  |
+| 141 | `caesar-pa-norsk` | Cæsar på norsk | middels | [link](https://en.wikipedia.org/wiki/Caesar_cipher) |
+| 142 | `ordkjeden` | Ordkjeden | middels |  |
+| 143 | `tall-med-ord` | Tall med bokstaver | vanskelig |  |
+| 144 | `mente-du` | Mente du …? | vanskelig | [link](https://en.wikipedia.org/wiki/Levenshtein_distance) |
 
 <!-- tasks:end -->

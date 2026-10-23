@@ -53,6 +53,19 @@ export function colored(random: Random, n = 8): Spec[] {
   return Array.from({ length: n }, () => ({ color: pick(random, PALETTE) }))
 }
 
+/** The Norwegian alphabet: a to z, then æ, ø and å. */
+export const ALPHABET = 'abcdefghijklmnopqrstuvwxyzæøå'
+
+/** One monster per letter of a word: [{ value: 'k', color }]. The same letter always gets the same colour, so a repeat shows. */
+export function letters(word: string): Spec[] {
+  return [...word].map((value) => ({ value, color: PALETTE[Math.max(0, ALPHABET.indexOf(value.toLowerCase())) % PALETTE.length] }))
+}
+
+/** One monster per word, each in a random palette colour: [{ value: 'katt', color }]. */
+export function worded(random: Random, list: readonly string[]): Spec[] {
+  return list.map((value) => ({ value, color: pick(random, PALETTE) }))
+}
+
 /** A pointer to the item in a slot. */
 export interface At { at: number }
 export const at = (slot: number): At => ({ at: slot })

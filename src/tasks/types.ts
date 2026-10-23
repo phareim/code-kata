@@ -7,7 +7,7 @@ import type { ViewKind } from '../stage/stage'
 import type { World } from '../world/world'
 
 export type Level = 'lett' | 'middels' | 'vanskelig'
-export type Topic = 'lister' | 'sortering' | 'rydding' | 'stabler' | 'trær' | 'grafer' | 'rutenett' | 'objekter' | 'klassikere'
+export type Topic = 'lister' | 'sortering' | 'rydding' | 'stabler' | 'trær' | 'grafer' | 'rutenett' | 'objekter' | 'klassikere' | 'språk'
 
 export const LEVELS: Record<Level, string> = { lett: 'Lett', middels: 'Middels', vanskelig: 'Vanskelig' }
 export const TOPICS: Record<Topic, string> = {
@@ -20,6 +20,7 @@ export const TOPICS: Record<Topic, string> = {
   rutenett: 'Rutenett',
   objekter: 'Objekter og klassen',
   klassikere: 'Klassikere',
+  språk: 'Språk',
 }
 
 /** An item as a check sees it. */

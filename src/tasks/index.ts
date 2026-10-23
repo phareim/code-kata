@@ -9,6 +9,7 @@ import { tasks as objekter } from './objekter'
 import { tasks as rutenett } from './rutenett'
 import { tasks as rydding } from './rydding'
 import { tasks as sortering } from './sortering'
+import { tasks as sprak } from './sprak'
 import { tasks as stabler } from './stabler'
 import { tasks as traer } from './traer'
 import type { Task } from './types'
@@ -23,6 +24,7 @@ export const ALL_TASKS: Task[] = [
   ...rutenett,
   ...objekter,
   ...klassikere,
+  ...sprak,
 ]
 
 /** The tasks a visitor sees, numbered from 1 in this order. */

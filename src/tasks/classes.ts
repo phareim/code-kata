@@ -32,3 +32,14 @@ export const COLOR_MONSTER = monsterClass([COLOR])
 export const COLOR_DOUBLE_MONSTER = monsterClass([COLOR, 'prev = null', 'next = null'])
 export const COLOR_TREE_MONSTER = monsterClass([COLOR, 'left = null', 'right = null'])
 export const COLOR_GRAPH_MONSTER = monsterClass([COLOR, 'neighbors = []'])
+
+/*
+ * Letters and words: the value is the text under the monster, so it starts as '' rather than 0. A word monster is the
+ * same class as a letter monster; its `value` is just longer (the stage shrinks a value over four characters).
+ */
+const TEXT = "value = ''"
+
+/** value (a letter or a word) and color: items in an array. */
+export const TEXT_MONSTER = monsterClass([TEXT, COLOR])
+/** value (a letter or a word), color and next: a list. */
+export const TEXT_LIST_MONSTER = monsterClass([TEXT, COLOR, 'next = null'])
