@@ -167,6 +167,12 @@ async function browser(name, launch) {
   await mobile.screenshot({ path: join(shots, `${name}-phone-grid.png`), fullPage: true })
   await mobile.screenshot({ path: join(shots, `${name}-phone-task.png`), fullPage: true })
   await mobile.click('#open-bank')
+  const sheet = await mobile.evaluate(() => {
+    const box = document.querySelector('.bank-box').getBoundingClientRect()
+    const level = document.querySelector('#bank-list .level').getBoundingClientRect()
+    return { box: Math.round(box.right), level: Math.round(level.right), width: window.innerWidth }
+  })
+  check(`${name}: the bank fits a phone`, sheet.box <= sheet.width && sheet.level <= sheet.width, JSON.stringify(sheet))
   await mobile.screenshot({ path: join(shots, `${name}-phone-bank.png`) })
   await phone.close()
   await b.close()

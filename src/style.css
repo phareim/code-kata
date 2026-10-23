@@ -740,12 +740,15 @@ body.has-sheet { overflow: hidden; }
   inset: 0;
   z-index: 20;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   padding: 24px;
   background: rgba(11, 6, 22, 0.78);
 }
 .bank[hidden] { display: none; }
 .bank-box {
+  min-width: 0;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
   width: min(920px, 100%);
@@ -886,6 +889,9 @@ body.has-sheet { overflow: hidden; }
   .bank { padding: 0; place-items: stretch; }
   .bank-box { width: 100%; max-height: none; height: 100%; }
   .bank-row { grid-template-columns: 28px minmax(0, 1fr) auto 16px; }
+  /* One row of chips per group, scrolled sideways, so the list starts higher. */
+  .bank-filters .chips { flex-wrap: nowrap; overflow-x: auto; padding: 2px; scrollbar-width: none; }
+  .chip { flex: none; }
   .bank-topic { display: none; }
   .grid { --cell: 22px; }
 }
