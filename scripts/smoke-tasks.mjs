@@ -97,6 +97,17 @@ async function browser(name, launch) {
   let r = await runTask(page)
   check(`${name}: the starter is not solved`, /is-not/.test(r.verdict ?? ''), r.text)
 
+  // Hints: one at a time, three in all, then the button gives up; opened hints survive a reload.
+  for (let k = 0; k < 3; k++) await page.click('#hint-btn')
+  let hints = await page.$$eval('#hints li', (els) => els.length)
+  const spent = await page.$eval('#hint-btn', (b) => b.disabled)
+  check(`${name}: three hints, then no more`, hints === 3 && spent, `${hints} hints, button disabled: ${spent}`)
+  await page.reload()
+  await page.waitForSelector('#editor .cm-content')
+  await page.waitForFunction(() => document.getElementById('task-title').textContent.length > 0)
+  hints = await page.$$eval('#hints li', (els) => els.length)
+  check(`${name}: opened hints survive a reload`, hints === 3 && (await page.evaluate(() => location.hash)) === '#/snu-lista', `${hints}`)
+
   // Each view, solved, with a screenshot of its start and of the celebration.
   for (const [view, id] of Object.entries(VIEWS)) {
     await goTask(page, id)
