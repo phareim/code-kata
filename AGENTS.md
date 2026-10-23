@@ -67,8 +67,11 @@ how code runs and where things live.
   `src/app/merge.ts` too (`mergeTask`, `sameTask`, `cleanTask`), or the Worker drops it. The Worker reads Reader's
   `reader-service` D1 and never writes to it; writes must come from the site's own origin, which the opaque-origin
   runner never is.
-- «Snakk om det» (`worker/talk.ts`) puts the reference solution in Claude's prompt: keep the server-side check that
-  the account has solved the task (`/talk/begin` in `ProgressStore`), and keep task text and solution read from the
-  bank in the Worker, never from the request. The conversation is append-only (Claude's whole answers, thinking blocks
-  included); don't edit or trim stored turns.
+- «Snakk om det» (`worker/talk.ts`, README → Talking about a solution) has two ways in. Signed in, Opus with the
+  reference solution in the prompt: keep the server-side check that the account has solved the task (`/talk/begin` in
+  `ProgressStore`). The conversation is append-only (Claude's whole answers, thinking blocks included); don't edit or
+  trim stored turns. Not signed in (Petter, 2026-10-24: open it with Haiku on low effort and a few fixed questions,
+  with no way for the client to slip in its own): the page sends a question's id and the code, never words or a
+  history, and nothing proves the task is solved, so that prompt must never carry the reference solution. Either
+  way, task text and solution come from the bank in the Worker, never from the request.
 - A push to `main` deploys.

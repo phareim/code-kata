@@ -7,7 +7,8 @@
  *                        answers with the merged state of those tasks
  *   GET  /api/talk?task  the account's conversation about a task ({ view, turnsLeft, full })
  *   POST /api/talk       { task, code, ting, text } one turn with Claude about a solved task (worker/talk.ts),
- *                        streamed as lines of JSON: { text } … then { done } or { error }
+ *                        streamed as lines of JSON: { text } … then { done } or { error }. Without an account:
+ *                        { task, question, code, ting }, one of the fixed questions, answered and not kept
  *   DELETE /api/talk?task  starts that conversation over
  *
  * The account is auth.phareim.no's (Reader): the `session_token` cookie on .phareim.no, looked up READ-ONLY in
@@ -21,8 +22,8 @@
 import { cleanTask, isTaskId, mergeTask, sameTask } from '../src/app/merge'
 import type { TaskState } from '../src/app/progress'
 import {
-  ask, costOf, MAX_MESSAGES, OPENER, talkRequest, taskFor, textOf, today, TURNS_PER_DAY, USD_PER_DAY, userMessage,
-  type Conversation,
+  ask, askQuick, costOf, MAX_MESSAGES, OPENER, QUICK_PER_DAY, QUICK_USD_PER_DAY, quickCostOf, quickMessage,
+  quickRequest, talkRequest, taskFor, textOf, today, TURNS_PER_DAY, USD_PER_DAY, userMessage, type Conversation,
 } from './talk'
 
 // The few Cloudflare types this uses, so the repo needs no type package.
@@ -113,6 +114,7 @@ export async function handleApi(request: Request, env: Env, ctx?: Context): Prom
   } catch {
     return Response.json({ error: 'Sign-in check failed' }, { status: 503, headers: { ...NO_STORE, 'Retry-After': '30' } })
   }
+  if (!user && url.pathname === '/api/talk' && request.method === 'POST') return handleQuickTalk(request, env, ctx)
   if (!user) return json({ user: null }, 401)
   const store = env.PROGRESS.get(env.PROGRESS.idFromName(String(user.id)))
   const name = user.name || (user.email ?? '').split('@')[0]
@@ -174,10 +176,68 @@ async function handleTalk(request: Request, env: Env, ctx: Context | undefined, 
 
   const content = userMessage(task, words, code, ting, before)
   const messages = [...(before?.api ?? []), { role: 'user' as const, content }]
+  return streamed(ctx, async (send) => {
+    const out = await ask(env.KATA_ANTHROPIC_KEY!, task, messages, (piece) => send({ text: piece }))
+    await call(budget, '/', { usd: costOf(out.usage) })
+    const answer = textOf(out.content)
+    if (out.refused || !answer) return send({ error: 'refused' })
+    await call(store, '/talk/append', {
+      task: task.id,
+      api: [messages[messages.length - 1], { role: 'assistant', content: out.content }],
+      view: [{ role: 'user', text: words }, { role: 'assistant', text: answer }],
+      code,
+      ting,
+    })
+    await send({ done: true })
+  })
+}
+
+/**
+ * A fixed question from a visitor who isn't signed in (worker/talk.ts): the question by its id, answered by Haiku,
+ * nothing kept. Counted per IP address and against its own daily budget, so it can't use up the accounts' talks.
+ */
+async function handleQuickTalk(request: Request, env: Env, ctx: Context | undefined): Promise<Response> {
+  if (!env.KATA_ANTHROPIC_KEY) return json({ error: 'off' }, 503)
+  const text = await request.text()
+  if (text.length > MAX_BODY) return json({ error: 'long' }, 413)
+  let req: ReturnType<typeof quickRequest>
+  try {
+    req = quickRequest(JSON.parse(text))
+  } catch {
+    req = null
+  }
+  if (req === 'long') return json({ error: 'long' }, 413)
+  if (!req) return json({ error: 'Bad request' }, 400)
+  const { task, question, code, ting } = req
+
+  const budget = env.BUDGET.get(env.BUDGET.idFromName('global'))
+  const ip = request.headers.get('CF-Connecting-IP') ?? ''
+  const begin = await call(budget, '/quick', { who: await digest(ip) })
+  const started = await begin.json() as { left?: number; error?: string }
+  if (!begin.ok) return json(started, begin.status)
+  return streamed(ctx, async (send) => {
+    await send({ left: started.left })
+    const out = await askQuick(env.KATA_ANTHROPIC_KEY!, task, quickMessage(task, question, code, ting), (piece) => send({ text: piece }))
+    await call(budget, '/quick/spent', { usd: quickCostOf(out.usage) })
+    if (out.refused || !textOf(out.content)) return send({ error: 'refused' })
+    await send({ done: true })
+  })
+}
+
+/** An IP address as the budget keeps it: hashed, so the store holds no addresses. */
+async function digest(text: string): Promise<string> {
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`code-kata:${text}`))
+  return [...new Uint8Array(hash).slice(0, 12)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * A streamed answer as lines of JSON: `turn` sends `{ text }` as Claude writes, then `{ done }` or `{ error }`. A
+ * visitor who closes the sheet mid-answer stops reading, not the turn: it still finishes, and is kept and paid for.
+ */
+function streamed(ctx: Context | undefined, turn: (send: (line: unknown) => Promise<void>) => Promise<void>): Response {
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>()
   const writer = writable.getWriter()
   const encoder = new TextEncoder()
-  // A visitor who closes the sheet mid-answer stops reading, not the turn: it is still kept on the account.
   const send = async (line: unknown) => {
     try {
       await writer.write(encoder.encode(`${JSON.stringify(line)}\n`))
@@ -185,20 +245,9 @@ async function handleTalk(request: Request, env: Env, ctx: Context | undefined, 
       // The page has gone.
     }
   }
-  const turn = (async () => {
+  const done = (async () => {
     try {
-      const out = await ask(env.KATA_ANTHROPIC_KEY!, task, messages, (piece) => send({ text: piece }))
-      await call(budget, '/', { usd: costOf(out.usage) })
-      const answer = textOf(out.content)
-      if (out.refused || !answer) return send({ error: 'refused' })
-      await call(store, '/talk/append', {
-        task: task.id,
-        api: [messages[messages.length - 1], { role: 'assistant', content: out.content }],
-        view: [{ role: 'user', text: words }, { role: 'assistant', text: answer }],
-        code,
-        ting,
-      })
-      await send({ done: true })
+      await turn(send)
     } catch {
       await send({ error: 'failed' })
     } finally {
@@ -209,7 +258,7 @@ async function handleTalk(request: Request, env: Env, ctx: Context | undefined, 
       }
     }
   })()
-  ctx?.waitUntil(turn)
+  ctx?.waitUntil(done)
   return new Response(readable, { headers: { ...NO_STORE, 'Content-Type': 'application/x-ndjson; charset=utf-8' } })
 }
 
@@ -299,17 +348,50 @@ export class ProgressStore {
   }
 }
 
-/** What the talks have cost, per day (one instance for the whole site): GET reads today, POST { usd } adds. */
+/** The questions from visitors who aren't signed in, today: per hashed IP address, and what they have cost. */
+interface QuickDay {
+  day: string
+  usd: number
+  asked: Record<string, number>
+}
+
+/**
+ * What the talks have cost, per day (one instance for the whole site): GET reads today, POST { usd } adds. The fixed
+ * questions keep their own day in one key, `quick` (replaced when the day changes, so old days don't pile up):
+ * POST /quick { who } takes one of `who`'s questions for today, or answers 429; POST /quick/spent { usd } adds.
+ */
 export class TalkBudget {
   constructor(private readonly ctx: { storage: Storage }) {}
 
   async fetch(request: Request): Promise<Response> {
+    const path = new URL(request.url).pathname
+    if (path.startsWith('/quick')) return this.quick(request, path)
     const key = `usd:${today()}`
     const usd = (await this.ctx.storage.get<number>(key)) ?? 0
     if (request.method !== 'POST') return Response.json({ usd })
     const { usd: add } = await request.json() as { usd: number }
     await this.ctx.storage.put(key, usd + (Number.isFinite(add) && add > 0 ? add : 0))
     return Response.json({ usd: usd + add })
+  }
+
+  private async quick(request: Request, path: string): Promise<Response> {
+    const day = today()
+    const stored = await this.ctx.storage.get<QuickDay>('quick')
+    const state: QuickDay = stored?.day === day ? stored : { day, usd: 0, asked: {} }
+    const body = await request.json() as { who?: string; usd?: number }
+    if (path === '/quick/spent') {
+      const add = Number(body.usd)
+      state.usd += Number.isFinite(add) && add > 0 ? add : 0
+      await this.ctx.storage.put('quick', state)
+      return Response.json({ usd: state.usd })
+    }
+    if (state.usd >= QUICK_USD_PER_DAY) return Response.json({ error: 'budget' }, { status: 429 })
+    const who = String(body.who ?? '')
+    const asked = state.asked[who] ?? 0
+    if (asked >= QUICK_PER_DAY) return Response.json({ error: 'quick-turns' }, { status: 429 })
+    state.asked[who] = asked + 1
+    await this.ctx.storage.put('quick', state)
+    return Response.json({ left: QUICK_PER_DAY - asked - 1 })
   }
 }
 

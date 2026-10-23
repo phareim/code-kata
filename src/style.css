@@ -1038,6 +1038,7 @@ body.is-resizing { user-select: none; -webkit-user-select: none; }
   border-top: 2px solid color-mix(in srgb, var(--lime) 22%, transparent);
   margin-top: 12px;
 }
+.talk-log:focus { outline: none; }
 .talk-line { display: grid; gap: 6px; min-width: 0; }
 .talk-who { font-size: 16px; line-height: 1; color: var(--lime); }
 .talk-line.is-user .talk-who { color: var(--cyan); }
@@ -1098,6 +1099,20 @@ body.is-resizing { user-select: none; -webkit-user-select: none; }
 }
 .talk-input:focus-visible { outline: none; box-shadow: 0 -2px 0 var(--hi), 0 2px 0 var(--hi), -2px 0 0 var(--hi), 2px 0 0 var(--hi), 0 0 14px rgba(47, 243, 255, 0.45); }
 .talk-input:disabled { opacity: 0.6; }
+.talk-form[hidden] { display: none; }
+/* Not signed in: the fixed questions as buttons, in the text's font (they are sentences, not chrome). */
+.talk-quick { display: grid; gap: 12px; padding: 14px; }
+.talk-quick[hidden] { display: none; }
+.talk-questions { display: flex; flex-wrap: wrap; gap: 12px; }
+.talk-question { font: var(--code-size) / 1.3 var(--font-code); font-variant-ligatures: none; text-align: left; }
+.talk.is-quick .talk-log:empty::before {
+  content: 'Velg et spørsmål under, så ser Claude på koden din.';
+  font-size: var(--code-size);
+  line-height: 1.6;
+  color: var(--muted);
+}
+.talk-login { margin: 0; font-size: var(--code-size); line-height: 1.4; color: var(--muted); }
+.talk-login a { color: var(--cyan); }
 @media (prefers-reduced-motion: reduce) {
   .talk-line.is-writing .talk-text:empty::after,
   .talk-line.is-writing .talk-text > :last-child::after { animation: none; }

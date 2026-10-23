@@ -139,12 +139,16 @@
         <button id="talk-close" class="btn btn--quiet px" type="button" aria-label="Lukk">Lukk</button>
       </div>
       <p id="talk-task" class="talk-task px"></p>
-      <ol id="talk-log" class="talk-log" aria-live="polite"></ol>
+      <ol id="talk-log" class="talk-log" aria-live="polite" tabindex="-1"></ol>
       <p id="talk-note" class="talk-note" hidden></p>
       <form id="talk-form" class="talk-form">
         <textarea id="talk-input" class="talk-input" rows="2" placeholder="Spør om noe: hvorfor, hva om, hvordan ellers …" aria-label="Det du vil spørre om" spellcheck="true"></textarea>
         <button id="talk-send" class="btn btn--lime px" type="submit">Send</button>
       </form>
+      <div id="talk-quick" class="talk-quick" hidden>
+        <div id="talk-questions" class="talk-questions" role="group" aria-label="Spørsmål du kan stille"></div>
+        <p class="talk-login">Logget inn kan du spørre om hva du vil. <a id="talk-login" href="https://auth.phareim.no/">Logg inn</a></p>
+      </div>
     </div>
   </div>
   <canvas id="confetti" class="confetti" aria-hidden="true" hidden></canvas>

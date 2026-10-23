@@ -406,7 +406,7 @@ function showVerdict(task: Task, v: Verdict): void {
       link.textContent = 'Neste oppgave'
       verdictEl.append(link)
     }
-    if (signedIn) {
+    if (talkUp) {
       const talk = document.createElement('button')
       talk.type = 'button'
       talk.className = 'btn btn--lime btn--small px verdict-talk'
@@ -434,10 +434,13 @@ function showVerdict(task: Task, v: Verdict): void {
 }
 
 /*
- * «Snakk om det» (src/app/talk.ts): for a signed-in visitor, a talk with Claude about a solved task, from the verdict
- * and from the task card.
+ * «Snakk om det» (src/app/talk.ts): a talk with Claude about a solved task, from the verdict and from the task card.
+ * Signed in, a conversation of the visitor's own; otherwise the fixed questions. It needs the API, so not on a dev
+ * server or in an outage (`talkUp`, from the account check).
  */
 let signedIn = false
+let talkUp = false
+const signInUrl = () => `https://auth.phareim.no/?redirect=${encodeURIComponent(location.href)}&theme=neon`
 const talkButton = $<HTMLButtonElement>('talk-btn')
 const talk = new Talk($('talk'), {
   code: () => ({ code: codeView.state.doc.toString(), ting: classView.state.doc.toString() }),
@@ -445,14 +448,16 @@ const talk = new Talk($('talk'), {
     saveNow()
     await syncNow()
   },
+  signedIn: () => signedIn,
+  signInUrl,
 })
 function showTalkButton(): void {
   const task = currentTask()
-  talkButton.hidden = !(signedIn && task && isSolved(task.id))
+  talkButton.hidden = !(talkUp && task && isSolved(task.id))
 }
 async function openTalk(): Promise<void> {
   const task = currentTask()
-  if (task && signedIn) await talk.open(task)
+  if (task && talkUp) await talk.open(task)
 }
 talkButton.addEventListener('click', () => void openTalk())
 
@@ -725,9 +730,10 @@ $('clear').addEventListener('click', () => output.replaceChildren())
 const accountLink = $<HTMLAnchorElement>('account')
 function showAccount(account: Account | null, available: boolean): void {
   signedIn = !!account
+  talkUp = available
   showTalkButton()
   accountLink.hidden = !available
-  accountLink.href = `https://auth.phareim.no/?redirect=${encodeURIComponent(location.href)}&theme=neon`
+  accountLink.href = signInUrl()
   accountLink.textContent = account ? account.name || 'Konto' : 'Logg inn'
   accountLink.classList.toggle('is-in', !!account)
   accountLink.title = account
@@ -736,7 +742,7 @@ function showAccount(account: Account | null, available: boolean): void {
 }
 // The way back is where the visitor is when they click, not where they were when the page asked.
 accountLink.addEventListener('click', () => {
-  accountLink.href = `https://auth.phareim.no/?redirect=${encodeURIComponent(location.href)}&theme=neon`
+  accountLink.href = signInUrl()
 })
 
 /** The account changed tasks: redraw what shows them, and the open task's code when the account's is newer. */

@@ -271,6 +271,7 @@ async function suite(name, browser) {
   await desktop.close()
 
   await layoutSuite(name, browser)
+  await talkSuite(name, browser)
 
   // A phone: editor over console, page scrolls, code at 16 px.
   const phone = await browser.newContext({
@@ -398,6 +399,77 @@ async function layoutSuite(name, browser) {
   check(`${name}: an unfolded stage lays the tree out again`, unfolded.length > 0 && unfolded === fresh,
     `${unfolded} | ${fresh}`)
   await page.close()
+  await context.close()
+}
+
+// «Snakk om det» (src/app/talk.ts) on a solved task, with the API played by the test: not signed in, the fixed
+// questions, and only a question's id goes up; signed in, the conversation and its text box.
+async function talkSuite(name, browser) {
+  const solved = JSON.stringify({ 'snu-lista': { solved: '2026-10-23T10:00:00.000Z' } })
+  const answer = 'Du kunne også snudd lista med rekursjon.'
+  const ndjson = (lines) => ({ status: 200, contentType: 'application/x-ndjson', body: lines.map((l) => `${JSON.stringify(l)}\n`).join('') })
+  async function visit(viewport, account) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 2 })
+    const sent = []
+    await context.route('**/api/progress', (route) => route.fulfill(account
+      ? { status: 200, contentType: 'application/json', body: JSON.stringify({ user: { name: 'Petter' }, tasks: JSON.parse(solved) }) }
+      : { status: 401, contentType: 'application/json', body: '{"user":null}' }))
+    await context.route('**/api/talk**', (route) => {
+      const request = route.request()
+      if (request.method() === 'GET') {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: '{"view":[],"turnsLeft":20,"full":false}' })
+      }
+      sent.push(JSON.parse(request.postData() ?? '{}'))
+      return route.fulfill(ndjson([...(account ? [] : [{ left: 2 }]), { text: answer }, { done: true }]))
+    })
+    const page = await context.newPage()
+    await page.addInitScript((progress) => {
+      if (sessionStorage.getItem('seeded')) return
+      sessionStorage.setItem('seeded', '1')
+      localStorage.setItem('code-kata:progress', progress)
+    }, solved)
+    await page.goto(`${url.replace(/#.*$/, '')}#/snu-lista`)
+    await page.waitForSelector('#editor .cm-content')
+    await page.waitForSelector('#talk-btn:not([hidden])')
+    await page.click('#talk-btn')
+    await page.waitForSelector('#talk:not([hidden])')
+    return { context, page, sent }
+  }
+
+  let { context, page, sent } = await visit({ width: 1400, height: 900 }, false)
+  const questions = await page.$$eval('.talk-question', (els) => els.map((e) => e.textContent))
+  check(`${name}: not signed in, the talk offers the fixed questions and no text box`,
+    questions.length === 3 && (await page.isVisible('#talk-quick')) && !(await page.isVisible('#talk-input')),
+    questions.join(' | '))
+  await page.click('.talk-question >> nth=0')
+  await page.waitForSelector('.talk-line.is-assistant:not(.is-writing)')
+  const reply = await page.textContent('.talk-line.is-assistant .talk-text')
+  const body = sent[0] ?? {}
+  check(`${name}: a question sends its id and the code, never words`,
+    body.question === 'alternativer' && !('text' in body) && body.task === 'snu-lista' && typeof body.code === 'string',
+    JSON.stringify(Object.keys(body)))
+  check(`${name}: the answer shows, the question is spent, and the count shows when few are left`,
+    reply.includes('rekursjon') && (await page.isDisabled('.talk-question >> nth=0'))
+    && !(await page.isDisabled('.talk-question >> nth=1')) && /2 spørsmål igjen/.test(await page.textContent('#talk-note')),
+    reply)
+  await page.screenshot({ path: join(shots, `${name}-talk-quick.png`) })
+  await page.keyboard.press('Escape')
+  check(`${name}: Esc closes the sheet after an answer (the spent question took the focus with it)`, await page.isHidden('#talk'))
+  await page.click('#talk-btn')
+  check(`${name}: the answers are still there when the sheet opens again`, (await page.$$('.talk-line')).length === 2)
+  await context.close()
+
+  ;({ context, page, sent } = await visit({ width: 390, height: 844 }, false))
+  const wide = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+  check(`${name}: the questions fit on a phone`, wide <= 0, `overflow ${wide}px`)
+  await page.screenshot({ path: join(shots, `${name}-talk-phone.png`) })
+  await context.close()
+
+  ;({ context, page, sent } = await visit({ width: 1400, height: 900 }, true))
+  await page.waitForSelector('.talk-line.is-assistant:not(.is-writing)')
+  check(`${name}: signed in, the talk opens with the opening questions and a text box`,
+    (await page.isVisible('#talk-input')) && !(await page.isVisible('#talk-quick')) && sent[0]?.text === '' && !('question' in (sent[0] ?? {})),
+    JSON.stringify(sent[0] && Object.keys(sent[0])))
   await context.close()
 }
 

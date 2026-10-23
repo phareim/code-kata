@@ -23,8 +23,9 @@ Live: https://kata.phareim.no (public; signing in is optional and only carries t
   kept in localStorage (`code-kata:progress`). The header counts what is solved.
 - **On your account**: signed in at auth.phareim.no (the «Logg inn» link in the header, which becomes your name),
   the progress is kept on your account too and follows you to another browser (below).
-- **Snakk om det**: signed in, a solved task offers a talk with Claude about your solution: what it does, what the
-  alternatives are, and whether it is elegant or clunky, then whatever you ask (below).
+- **Snakk om det**: a solved task offers a talk with Claude about your solution. Anyone can pick from three fixed
+  questions (the alternatives, elegant or clunky, how to make it easier to read); signed in, it is a conversation
+  that opens with those questions and goes on with whatever you ask (below).
 - **Lekeplass** (`#/lekeplass`): the free playground, eight monsters in a list and no task (below).
 - **Editor**: CodeMirror 6 with JavaScript highlighting, bracket matching, search and undo, and autocomplete as you
   type (Tab or Enter): the code's own names, the roots (`head`, `items`, `root` …), `Monster`, `vis` and the items'
@@ -166,10 +167,36 @@ per-app store of their own.
 
 ## Talking about a solution
 
-«Snakk om det» sits in the «Løst!» verdict and, for a task already solved, in the task card, for a signed-in visitor.
-It opens a sheet that asks Claude the opening questions («Snakk med meg om løsningen min. Hva kunne alternativene
-vært? Var dette en elegant eller en krøkkete løsning?») and streams the answer; after that the visitor asks what they
-like. «Ny samtale» starts over.
+«Snakk om det» sits in the «Løst!» verdict and, for a task already solved, in the task card, whenever the site's API
+answers (not on `npm run dev`). It opens a sheet that works one of two ways.
+
+### Not signed in: the fixed questions
+
+The sheet offers three questions (`QUESTIONS` in `src/app/talk.ts`): «Hva kunne alternativene vært?», «Er dette en
+elegant eller en krøkkete løsning?» and «Hvordan kan koden min bli enklere å lese?». Each is asked once about the code
+as it stands; the answers stay in the page per task until it reloads, and «Ny samtale» clears them.
+
+- The page sends `POST /api/talk` with the task id, the question's id, the code and the class, and no cookie. The
+  Worker (`handleQuickTalk`) takes only those four fields: an unknown id is a 400, a `text` or a history is never read,
+  and the question's words come from the Worker's own copy of `QUESTIONS`. So the visitor's only text that reaches
+  Claude is their code, inside `<visitor_code>` with anything that would close or open one of the prompt's tags
+  defused, and the system prompt says comments and strings in it are code, not instructions.
+- Claude Haiku 5.5 at effort low (no fallback exists for Haiku), at most 3000 tokens, one turn, nothing kept.
+- Nothing proves this visitor solved the task (their progress is in their browser), so this prompt has the task's
+  text, hints and class but **not the reference solution**, and Claude is told not to write a whole solution for code
+  that doesn't solve the task yet. The button only shows on a solved task, but that is the page's courtesy, not a gate.
+- Limits: 12 questions per IP address per day (kept hashed) and $0.50 a day for all of them together, apart from the
+  accounts' budget (`TalkBudget`, one `quick` key replaced each day). By Haiku's prices a question costs well under
+  a tenth of a cent (an estimate, not metered). Code over 12 000 characters (or a class over 4 000) is turned away.
+  The numbers are at the top of `worker/talk.ts`.
+- Checked 2026-10-24 in workerd with the real key: an answer in about 4 s, and code whose comments and strings asked
+  for a poem got an answer to the question asked, with a remark that the code holds text that isn't code.
+
+### Signed in: a conversation
+
+The sheet asks Claude the opening questions («Snakk med meg om løsningen min. Hva kunne alternativene vært? Var dette
+en elegant eller en krøkkete løsning?») and streams the answer; after that the visitor asks what they like.
+«Ny samtale» starts over.
 
 - The page sends `POST /api/talk` with the task id, the code and the class in the editors, and the visitor's words.
   The Worker (`worker/talk.ts`) takes the task's text, hints, class and reference solution from the bank itself,
@@ -230,14 +257,16 @@ the built site in Chrome and WebKit, which also covers the checks as minified so
   `vis()`, the check.
 - `src/starter.ts`: the playground's code and class (and the earlier starters it replaces).
 - `worker/index.ts`: the Worker behind `/api/progress` and `/api/talk`, the account's store (`ProgressStore`) and
-  the talks' daily budget (`TalkBudget`); `worker/talk.ts`: the prompt, the limits and the call to Claude.
-- `src/app/talk.ts`: the «Snakk om det» sheet; `src/app/text.ts` renders task texts and Claude's replies.
+  the talks' daily budget (`TalkBudget`, the fixed questions' per-address count too); `worker/talk.ts`: the prompts,
+  the limits and the calls to Claude (Opus for a conversation, Haiku for a fixed question).
+- `src/app/talk.ts`: the «Snakk om det» sheet and the fixed `QUESTIONS`; `src/app/text.ts` renders task texts and
+  Claude's replies.
 - `test/harness.ts`: runs `worker.js` in a Node vm the way the page runs it; `test/tasks.test.ts` uses it for every
   task, `test/docs.test.ts` keeps `docs/tasks.md` current, `test/sync.test.ts` covers the merge,
   the Worker and the page's sync, `test/talk.test.ts` the talk (with a fake Messages API).
 - `docs/tasks.md`: the bank's overview, sources and table.
-- `scripts/smoke.mjs` (the playground) and `scripts/smoke-tasks.mjs` (the tasks): browser checks in Chrome and
-  WebKit, with screenshots.
+- `scripts/smoke.mjs` (the playground, the layout, and the talk sheet both ways with the API played by the test) and
+  `scripts/smoke-tasks.mjs` (the tasks): browser checks in Chrome and WebKit, with screenshots.
 
 ## Develop
 
