@@ -1,5 +1,5 @@
-import { at, graphWorld, int, makeWorld, pick, shuffled, things, type Random, type Spec } from './build'
-import { GRAPH_MONSTER } from './classes'
+import { at, colored, graphWorld, int, makeWorld, pick, shuffled, things, type Random, type Spec } from './build'
+import { COLOR_GRAPH_MONSTER, GRAPH_MONSTER } from './classes'
 import type { Task } from './types'
 import type { World } from '../world/world'
 
@@ -95,8 +95,8 @@ Gå bredden først: A, så alle vennene til A, så vennene deres, og så videre.
       'Ta det første ut av køen. For hver venn som ikke har `steps` ennå: sett `steps` én høyere, og still vennen bakerst i køen.',
       'Gi gjerne monstrene farge etter avstanden, for eksempel `node.color = [\'pink\', \'cyan\', \'gold\', \'lime\'][node.steps]`, så ser du lagene.',
     ],
-    world: (r) => graphWorld(r, things(r, 8), 3),
-    monster: GRAPH_MONSTER,
+    world: (r) => graphWorld(r, colored(r, 8), 3),
+    monster: COLOR_GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `A.steps = 0
 const queue = [A]
@@ -374,8 +374,8 @@ Ta \`gone\` bort fra \`nodes\` og fra alles \`neighbors\`, og tøm \`gone.neighb
       'For hver `node`: `node.neighbors = node.neighbors.filter((friend) => friend !== gone)`.',
       'Gjør `nodes` til en ny liste uten `gone` på samme måte, og sett til slutt `gone.neighbors = []`.',
     ],
-    world: (r) => graphWorld(r, things(r, 8), 3, { gone: at(int(r, 0, 7)) }),
-    monster: GRAPH_MONSTER,
+    world: (r) => graphWorld(r, colored(r, 8), 3, { gone: at(int(r, 0, 7)) }),
+    monster: COLOR_GRAPH_MONSTER,
     views: { nodes: 'graph', gone: 'pointer' },
     scaffold: `for (const node of nodes) {
   // Ta gone ut av node.neighbors

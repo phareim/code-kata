@@ -1,5 +1,5 @@
-import { arrayWorld, at, distinct, int, makeWorld, PALETTE, pick, shuffled, things } from './build'
-import { PLAIN_MONSTER } from './classes'
+import { arrayWorld, at, colored, distinct, int, makeWorld, PALETTE, pick, shuffled, things } from './build'
+import { COLOR_MONSTER, PLAIN_MONSTER } from './classes'
 import type { Task } from './types'
 
 export const tasks: Task[] = [
@@ -17,13 +17,13 @@ Både de rosa og de andre skal beholde rekkefølgen de hadde seg imellom.`,
       'Sett dem sammen igjen: `items = [...pink, ...rest]`.',
     ],
     world: (r) => {
-      const items = things(r)
+      const items = colored(r)
       const others = ['cyan', 'gold', 'lime', 'violet', 'teal', 'orange']
       const colors = shuffled(r, ['pink', 'pink', 'pink', pick(r, others), pick(r, others), pick(r, others), pick(r, others), pick(r, others)])
       items.forEach((s, i) => { s.color = colors[i] })
       return arrayWorld(items)
     },
-    monster: PLAIN_MONSTER,
+    monster: COLOR_MONSTER,
     scaffold: `const pink = []
 const rest = []
 for (const thing of items) {
@@ -111,7 +111,7 @@ Flytt alle spøkelsene til slutten av \`items\`. De andre rykker fram. Både sp�
       'Sett dem sammen til slutt, de andre først: `items = [...others, ...ghosts]`.',
     ],
     world: (r) => {
-      const items = things(r)
+      const items = colored(r)
       // Two or three ghosts, the first one near the front.
       const ghosts = new Set([int(r, 0, 3)])
       const count = int(r, 2, 3)
@@ -119,7 +119,7 @@ Flytt alle spøkelsene til slutten av \`items\`. De andre rykker fram. Både sp�
       for (const i of ghosts) items[i].shape = 'ghost'
       return arrayWorld(items)
     },
-    monster: PLAIN_MONSTER,
+    monster: COLOR_MONSTER,
     scaffold: `const others = []
 const ghosts = []
 for (const thing of items) {
@@ -169,9 +169,9 @@ Skyv alle monstrene mot venstre, i samme rekkefølge som før, så alle hullene 
       let kinds = shuffled(r, [...Array(8 - holes).fill(true), ...Array(holes).fill(false)])
       for (let tries = 0; tries < 20 && !between(kinds); tries++) kinds = shuffled(r, kinds)
       let next = 0
-      return makeWorld(things(r, 8 - holes), { items: kinds.map((item) => (item ? at(next++) : null)) })
+      return makeWorld(colored(r, 8 - holes), { items: kinds.map((item) => (item ? at(next++) : null)) })
     },
-    monster: PLAIN_MONSTER,
+    monster: COLOR_MONSTER,
     scaffold: `let write = 0
 for (let read = 0; read < items.length; read++) {
   // Er items[read] et monster (ikke null)? Flytt det til plass write, og øk write.
@@ -274,14 +274,14 @@ La \`items\` bare holde det første monsteret av hver farge, i samme rekkefølge
       'Legg de første i en ny array, `first`, og sett `items = first` etter løkka.',
     ],
     world: (r) => {
-      const items = things(r)
+      const items = colored(r)
       const colors = shuffled(r, PALETTE).slice(0, int(r, 3, 4))
       // Every colour at least once, the rest repeated.
       const list = shuffled(r, [...colors, ...Array.from({ length: 8 - colors.length }, () => pick(r, colors))])
       items.forEach((s, i) => { s.color = list[i] })
       return arrayWorld(items)
     },
-    monster: PLAIN_MONSTER,
+    monster: COLOR_MONSTER,
     scaffold: `const seen = new Set()
 const first = []
 for (const thing of items) {

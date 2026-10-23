@@ -51,6 +51,18 @@ describe('the bank', () => {
     for (const task of TASKS) expect(task.world(seeded(5)), task.id).toEqual(task.world(seeded(5)))
   })
 
+  it('gives the items a value exactly when the class has one', () => {
+    // A class with value over items without puts 0 under every monster; a task with no use for a number has neither.
+    for (const task of TASKS) {
+      const field = /^\s*value\s*=/m.test(task.monster ?? MONSTER_CLASS)
+      for (const seed of SEEDS) {
+        for (const item of task.world(seeded(seed)).items) {
+          expect(item.props.some((p) => p.key === 'value'), task.id).toBe(field)
+        }
+      }
+    }
+  })
+
   it('gives every seed the same roots, which the opening names', () => {
     for (const task of TASKS) {
       const keys = task.world(seeded(SEEDS[0])).roots.map((p) => p.key)

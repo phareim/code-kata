@@ -1,5 +1,5 @@
-import { arrayWorld, at, int, makeWorld, PALETTE, pick, shuffled, things, type Spec } from './build'
-import { PLAIN_MONSTER } from './classes'
+import { arrayWorld, at, colored, int, makeWorld, PALETTE, pick, shuffled, things, type Spec } from './build'
+import { COLOR_MONSTER, PLAIN_MONSTER } from './classes'
 import type { Task } from './types'
 
 const descending = (row: Spec[]) => row.every((s, i) => i === 0 || (row[i - 1].value as number) >= (s.value as number))
@@ -27,10 +27,10 @@ Snu køen ved hjelp av stabelen: ta ett og ett fra fronten av køen (\`shift()\`
       'Kall `vis()` i løkkene for å se monstrene vandre.',
     ],
     world: (r) => {
-      const items = things(r, 6)
+      const items = colored(r, 6)
       return makeWorld(items, { queue: items.map((_, i) => at(i)), stack: [] })
     },
-    monster: PLAIN_MONSTER,
+    monster: COLOR_MONSTER,
     scaffold: `while (queue.length) {
   stack.push(queue.shift())
   vis()
@@ -135,8 +135,8 @@ Legg A, B og C på stabelen, i den rekkefølgen, så de ikke lenger står i \`it
       'Gjør `stack.push(items.shift())` tre ganger. Da ligger C øverst, og `items` er tom.',
       '`stack.pop()` tar det øverste av og gir det tilbake. Legg det i `items` med `items.push(…)`.',
     ],
-    world: (r) => arrayWorld(things(r, 3), undefined, 'items', { stack: [] }),
-    monster: PLAIN_MONSTER,
+    world: (r) => arrayWorld(colored(r, 3), undefined, 'items', { stack: [] }),
+    monster: COLOR_MONSTER,
     scaffold: `// 1. Flytt A, B og C fra items til stack, i den rekkefølgen
 // 2. Ta det øverste av stack og legg det tilbake i items
 console.log(items.length, stack.length)
@@ -221,10 +221,10 @@ Flytt spøkelset bakerst i køen. Bruk \`shift()\` til å ta ut det første, og 
       'Sett de to sammen: `queue.push(queue.shift())`.',
     ],
     world: (r) => {
-      const items = things(r, 6).map((spec, i) => ({ ...spec, shape: i === 0 ? 'ghost' : pick(r, ['blob', 'cat', 'bot']) }))
+      const items = colored(r, 6).map((spec, i) => ({ ...spec, shape: i === 0 ? 'ghost' : pick(r, ['blob', 'cat', 'bot']) }))
       return arrayWorld(items, undefined, 'queue')
     },
-    monster: PLAIN_MONSTER,
+    monster: COLOR_MONSTER,
     scaffold: `// Spøkelset står først i køen. Send det bakerst.
 console.log(queue[0].shape)
 `,
@@ -581,8 +581,8 @@ Bruk to arrayer som stabler, og bare \`push\` og \`pop\` på dem: \`shift\`, \`u
       '`inbox` tar imot alt fra `enqueue` med `push`. `dequeue` tar fra `outbox` med `pop`. Er `outbox` tom, flytter du først alt fra `inbox` over til `outbox`, med `pop` og `push`.',
       'Flytt bare over når `outbox` er tom, aldri ellers. Da blir hvert monster flyttet høyst én gang, og alt går fort. `size` er lengden på begge stablene lagt sammen.',
     ],
-    world: (r) => arrayWorld(things(r, 6)),
-    monster: PLAIN_MONSTER,
+    world: (r) => arrayWorld(colored(r, 6)),
+    monster: COLOR_MONSTER,
     scaffold: `class TwoStackQueue {
   inbox = [] // nye monstre havner her
   outbox = [] // herfra tar du ut

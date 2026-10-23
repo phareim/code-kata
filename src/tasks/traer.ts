@@ -1,12 +1,12 @@
-import { arrayWorld, at, bstWorld, distinct, int, makeWorld, PALETTE, pick, things, treeWorld, type Random, type Spec } from './build'
-import { TREE_MONSTER } from './classes'
+import { arrayWorld, at, bstWorld, colored, int, makeWorld, PALETTE, pick, things, treeWorld, type Random, type Spec } from './build'
+import { COLOR_TREE_MONSTER, TREE_MONSTER } from './classes'
 import type { Task } from './types'
 import { label, type World } from '../world/world'
 
-/** Items with different values and palette colours, none of them gold. */
+/** Items in palette colours, none of them gold, and no value. */
 function notGold(random: Random, n: number): Spec[] {
   const colors = PALETTE.filter((c) => c !== 'gold')
-  return distinct(random, n).map((value) => ({ value, color: pick(random, colors) }))
+  return Array.from({ length: n }, () => ({ color: pick(random, colors) }))
 }
 
 /** A search tree from specs inserted in this order (as bstWorld links them): the specs with left/right as slot pointers. */
@@ -54,8 +54,8 @@ Skriv \`function height(node)\` som gir tilbake hvor mange nivåer treet under \
       'Høyden er 1 pluss den høyeste av `height(node.left)` og `height(node.right)`.',
       'Husk stoppen først: `if (!node) return 0`.',
     ],
-    world: (r) => treeWorld(r, things(r, 9)),
-    monster: TREE_MONSTER,
+    world: (r) => treeWorld(r, colored(r, 9)),
+    monster: COLOR_TREE_MONSTER,
     scaffold: `function height(node) {
   if (!node) return 0
   // Hvor høye er de to trærne under node?
@@ -101,8 +101,8 @@ console.log(height(root))
       'For ett monster: bytt `node.left` og `node.right`, og speil så begge barna.',
       'Stopp når `node` er `null`.',
     ],
-    world: (r) => bstWorld(things(r, 9)),
-    monster: TREE_MONSTER,
+    world: (r) => treeWorld(r, colored(r, 9)),
+    monster: COLOR_TREE_MONSTER,
     scaffold: `function mirror(node) {
   if (!node) return
   // Bytt left og right, og speil barna
@@ -218,7 +218,7 @@ Gjør hvert blad i treet fra \`root\` gull med \`color = 'gold'\`. Monstrene som
       'Mal bladet med `node.color = \'gold\'`, og besøk begge sider etterpå. For et blad er de `null`, så det stopper av seg selv.',
     ],
     world: (r) => treeWorld(r, notGold(r, 9)),
-    monster: TREE_MONSTER,
+    monster: COLOR_TREE_MONSTER,
     scaffold: `function paint(node) {
   if (!node) return
   // Er node et blad? Mal det gull. Besøk så begge sider.
@@ -1214,7 +1214,7 @@ Bygg treet opp igjen: sett \`left\` og \`right\` på monstrene, og la \`root\` p
     ],
     world: (r) => {
       // A random tree, written down as two walks, with every link taken away.
-      const items = things(r, 8)
+      const items = colored(r, 8)
       const left: (number | null)[] = items.map(() => null)
       const right: (number | null)[] = items.map(() => null)
       for (let i = 1; i < items.length; i++) {
@@ -1240,7 +1240,7 @@ Bygg treet opp igjen: sett \`left\` og \`right\` på monstrene, og la \`root\` p
       // The monsters' fields are null; the roots hold the two walks.
       return makeWorld(items.map((s) => ({ ...s, left: null, right: null })), { pre: pre.map(at), ino: ino.map(at), root: null })
     },
-    monster: TREE_MONSTER,
+    monster: COLOR_TREE_MONSTER,
     scaffold: `function build(preStart, inStart, size) {
   if (size === 0) return null
   const node = pre[preStart]

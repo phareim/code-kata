@@ -147,6 +147,19 @@ async function browser(name, launch) {
     await page.screenshot({ path: join(shots, `${name}-view-${view}.png`) })
   }
 
+  // A number under a monster only where the task has use for one, and the class only where there are monsters.
+  const numbers = () => page.$$eval('.token-value', (nodes) => nodes.filter((n) => n.offsetParent !== null).length)
+  await goTask(page, 'snu-lista')
+  let shown = await numbers()
+  check(`${name}: a list with no values shows no numbers`, shown === 0, `${shown} shown`)
+  check(`${name}: a task with monsters shows the class`, await page.isVisible('#class-toggle'))
+  await goTask(page, 'boblesortering')
+  shown = await numbers()
+  check(`${name}: a sort shows its values`, shown === 8, `${shown} shown`)
+  await goTask(page, 'malingsbotta')
+  const classShown = await page.isVisible('#class-toggle') || await page.isVisible('#apply') || await page.isVisible('#class-summary')
+  check(`${name}: a task with no monsters hides the class`, !classShown)
+
   // Every task: its solution solves it in this browser.
   const todo = only.length ? only : ids
   let solved = 0

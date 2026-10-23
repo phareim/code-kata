@@ -1,5 +1,5 @@
-import { arrayWorld, at, distinct, int, makeWorld, PALETTE, pick, shuffled, things } from './build'
-import { PLAIN_MONSTER } from './classes'
+import { arrayWorld, at, colored, distinct, int, makeWorld, PALETTE, pick, shuffled, things } from './build'
+import { COLOR_MONSTER, PLAIN_MONSTER } from './classes'
 import type { Task } from './types'
 
 export const tasks: Task[] = [
@@ -411,10 +411,10 @@ Bruk køen som en ring: det som ikke går ut, stilles bakerst med \`queue.push(q
       'Kall `vis()` hver gang et monster går ut, så ser du ringen krympe.',
     ],
     world: (r) => {
-      const items = things(r)
+      const items = colored(r)
       return makeWorld(items, { queue: items.map((_, i) => at(i)), removed: [] })
     },
-    monster: PLAIN_MONSTER,
+    monster: COLOR_MONSTER,
     scaffold: `while (queue.length > 1) {
   // Tell én, to, tre: de to første går bakerst, det tredje går ut
   break
@@ -579,8 +579,8 @@ Sjekken stokker tre monstre mange tusen ganger og teller rekkefølgene. Det popu
       'Velg en tilfeldig plass `j` fra 0 til og med `i`: `Math.floor(Math.random() * (i + 1))`.',
       'Bytt `items[i]` og `items[j]`.',
     ],
-    world: (r) => arrayWorld(things(r)),
-    monster: PLAIN_MONSTER,
+    world: (r) => arrayWorld(colored(r)),
+    monster: COLOR_MONSTER,
     scaffold: `function shuffle(items) {
   // Stokk items rettferdig
 }
@@ -765,10 +765,10 @@ Sjekken spør om ringer med opptil en milliard monstre, så du kan ikke telle de
       'Svaret er `2 * (n - 2^m) + 1`. Den største toerpotensen finner du med en løkke som dobler, eller med `2 ** Math.floor(Math.log2(n))`.',
     ],
     world: (r) => {
-      const items = things(r, 7)
+      const items = colored(r, 7)
       return makeWorld(items, { queue: items.map((_, i) => at(i)) })
     },
-    monster: PLAIN_MONSTER,
+    monster: COLOR_MONSTER,
     scaffold: `function survivor(n) {
   // Hvem står igjen når annenhver går ut?
   return 1

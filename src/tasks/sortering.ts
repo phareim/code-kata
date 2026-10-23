@@ -1,5 +1,5 @@
-import { arrayWorld, int, pick, PALETTE, shuffled, things, type Random, type Spec } from './build'
-import { PLAIN_MONSTER } from './classes'
+import { arrayWorld, colored, int, pick, PALETTE, shuffled, things, type Random, type Spec } from './build'
+import { COLOR_MONSTER, PLAIN_MONSTER } from './classes'
 import type { Task } from './types'
 
 const val = (s: Spec) => s.value as number
@@ -67,8 +67,8 @@ Bytt \`items[0]\` og det siste, og la de andre stå der de står.`,
       'Ta vare på det ene i en variabel før du skriver over plassen: `const first = items[0]`.',
       'Eller bytt begge på én gang: `[items[0], items[last]] = [items[last], items[0]]`.',
     ],
-    world: (r) => arrayWorld(things(r)),
-    monster: PLAIN_MONSTER,
+    world: (r) => arrayWorld(colored(r)),
+    monster: COLOR_MONSTER,
     scaffold: `const last = items.length - 1
 const first = items[0]
 // Flytt det siste fram, og det første bakerst
@@ -1246,10 +1246,10 @@ Sorter \`items\` etter \`color\`. De som har samme farge, skal beholde rekkeføl
     world: (r) => {
       const names = shuffled(r, PALETTE).slice(0, 3)
       const colors = [names[0], names[0], names[0], names[1], names[1], names[1], names[2], names[2]]
-      const specs = things(r).map((spec, i) => ({ ...spec, color: colors[i] }))
+      const specs = colored(r).map((spec, i) => ({ ...spec, color: colors[i] }))
       return arrayWorld(scrambled(r, specs, (row) => byColor(row) || keepsOrder(row)))
     },
-    monster: PLAIN_MONSTER,
+    monster: COLOR_MONSTER,
     scaffold: `// Sorter items etter color, a til å. Like farger beholder rekkefølgen.
 console.log(items.map((thing) => thing.color))
 `,

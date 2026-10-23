@@ -54,12 +54,12 @@ shape:
   far) from where it was to where it is, even from one panel to another.
 - An item's `shape` picks its creature: `blob` (the default), `ghost`, `cat` or `bot`. `color` is a palette name
   (`pink`, `cyan`, `gold`, `lime`, `violet`, `orange`, `red`, `teal`) or any CSS colour.
-- A blob with no `shape` of its own gets a look from its letter and its value when it first shows (`blobLook` in
-  `src/stage/creatures.ts`): the same face on all of them, with a dome or a lower head with horns, an antenna, a
-  sprout, a tuft or ears, and drippy, two-footed or round feet, now and then spots. About one in eleven stands out (a
-  gold crown, a gold antenna, one big eye). The look is the stage's alone: it is not in the item's data, a given
-  `shape` wins, a disc on a peg is the plain blob, and a blob keeps its look while the world is the same (a value
-  changing in a run doesn't change it; «Nye» or opening a task draws afresh).
+- A blob with no `shape` of its own gets a look from its letter and its value (its colour when it has no value) when
+  it first shows (`blobLook` in `src/stage/creatures.ts`): the same face on all of them, with a dome or a lower head
+  with horns, an antenna, a sprout, a tuft or ears, and drippy, two-footed or round feet, now and then spots. About one
+  in eleven stands out (a gold crown, a gold antenna, one big eye). The look is the stage's alone: it is not in the
+  item's data, a given `shape` wins, a disc on a peg is the plain blob, and a blob keeps its look while the world is
+  the same (a value changing in a run doesn't change it; «Nye» or opening a task draws afresh).
 - **`vis()`** takes a snapshot. After the run the stage plays the snapshots, then the end, with a frame counter;
   «Hopp over» skips to the end and the speed button plays at 1x, 2x, 4x or 0,5x (remembered per browser). Strings
   and numbers in the call make the snapshot's caption, items (or arrays of them) light up gold:
@@ -94,6 +94,11 @@ playground, taking a field out takes it off every item. Methods in the class wor
 `new Monster({ value: 5, color: 'gold', next: head })` makes a new one in the code. A `value`, `color` or `shape` that
 comes from a getter is drawn like a field. In a task the class folds to a one-line summary
 (`class Monster { value, color, next }`) unless the task is about the class or the visitor has changed it.
+
+A task has `value` only when it has use for a number. Reversing a list, moving the pink ones or mirroring a tree
+needs none, so there the class and the items leave it out: the monsters are told apart by their letter and colour,
+and the stage shows no number under them. The discs on the pegs keep theirs, as their width. A task with no monsters
+at all (the grids) doesn't show the class, unless the visitor has written one there.
 
 Until 2026-10-23 the class was `Ting` (and the creatures «ting»), and visitors have code and classes saved from then.
 The worker builds the items from the class the class editor declares, `Monster`, or else `Ting`, and gives the other
@@ -181,7 +186,9 @@ A task is an object in one of the topic files in `src/tasks/` (`types.ts` has th
   starting with "- " make a list), and two or more `hints`, from a nudge to nearly the answer.
 - `world(random)`: the items, from the builders in `src/tasks/build.ts` (`listWorld`, `arrayWorld`, `bstWorld`,
   `treeWorld`, `graphWorld`, `makeWorld`), with the seeded `random` it gets.
-- `monster`: the class (`src/tasks/classes.ts`), when the items aren't a list.
+- `monster`: the class (`src/tasks/classes.ts`), when the items aren't a list with values. A task with no use for a
+  number takes a `COLOR_` class and builds its items with `colored` instead of `things`; `npm test` checks that the
+  class and the items agree on `value`.
 - `scaffold`: a skeleton of the answer, behind hint 1's button, and `solution` (and `solutionMonster` when the task is
   about the class). The editor opens with less (`src/tasks/opening.ts`): a comment that names the roots, and, for a
   task with `exports`, the scaffold without their declarations (a declaration runs from `function name` or

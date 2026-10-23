@@ -62,7 +62,10 @@ type Layout = () => void
 
 export class Stage {
   private tokens = new Map<string, HTMLElement>()
-  /** Each blob's look, from its letter and its value when it first showed; kept until a new world is shown. */
+  /**
+   * Each blob's look, from its letter and its value (its colour when it has no value) when it first showed; kept until
+   * a new world is shown.
+   */
   private looks = new Map<string, string>()
   private panels = new Map<string, Panel>()
   private claimed = new Set<number>()
@@ -149,8 +152,9 @@ export class Stage {
     }
     // A shape the item has wins; a blob gets a look of its own, but a disc on a peg is the plain blob.
     const shape = prop(item, 'shape')?.raw
+    const value = itemValue(item)
     let look = this.looks.get(name)
-    if (look === undefined) this.looks.set(name, (look = blobLook(name, itemValue(item))))
+    if (look === undefined) this.looks.set(name, (look = blobLook(name, value || String(prop(item, 'color')?.raw ?? ''))))
     const shapeName = typeof shape === 'string' ? shape : opts.disc ? 'blob' : look
     if (node.dataset.shape !== shapeName) {
       node.dataset.shape = shapeName
@@ -165,7 +169,7 @@ export class Stage {
     node.classList.toggle('is-loose', !!opts.loose)
     node.classList.toggle('is-disc', !!opts.disc)
     node.classList.toggle('no-color', color === null)
-    const value = itemValue(item)
+    node.classList.toggle('no-value', value === '')
     const raw = prop(item, 'value')?.raw
     node.style.setProperty('--w', String(typeof raw === 'number' && raw > 0 ? Math.min(raw, 12) : 3))
 
@@ -176,7 +180,7 @@ export class Stage {
       valueNode.animate([{ transform: 'scale(1.6)' }, { transform: 'none' }], { duration: 260, easing: 'steps(4)' })
     }
     node.dataset.value = value
-    node.title = `${name}: ${value}${opts.loose ? ' (ingen peker hit)' : ''}`
+    node.title = `${value === '' ? name : `${name}: ${value}`}${opts.loose ? ' (ingen peker hit)' : ''}`
     return node
   }
 

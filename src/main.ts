@@ -36,6 +36,7 @@ const solutionEl = $('solution')
 const speedButton = $<HTMLButtonElement>('speed')
 const classToggle = $<HTMLButtonElement>('class-toggle')
 const classSummary = $<HTMLButtonElement>('class-summary')
+const objectsSection = classSummary.closest<HTMLElement>('.objects-pane')!
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -186,6 +187,11 @@ classSummary.addEventListener('click', () => {
   setClassOpen(true)
   classView.focus()
 })
+
+/** A task with no monsters (the grids) has no use for the class, unless the visitor has written one there. */
+function showClass(shown: boolean): void {
+  objectsSection.classList.toggle('no-class', !shown)
+}
 
 /** A button that jumps to a line in an editor, and the line marked there. */
 function lineLink(where: Where, at: number): HTMLButtonElement {
@@ -577,6 +583,7 @@ function openTask(task: Task): void {
   replaceDoc(classView, state.ting ?? task.monster ?? MONSTER_CLASS)
   renderTask(task)
   setClassOpen(task.topic === 'objekter' || state.ting !== undefined)
+  showClass(start.items.length > 0 || state.ting !== undefined)
   showWorld(start, false)
   build()
 }
@@ -590,6 +597,7 @@ function openPlay(): void {
   replaceDoc(classView, load(PLAY_CLASS, MONSTER_CLASS, OLD_CLASSES))
   renderPlay()
   setClassOpen(true)
+  showClass(true)
   showWorld(start, false)
   build()
 }
@@ -731,6 +739,7 @@ function merged(ids: string[]): void {
   const ting = state.ting ?? task.monster ?? MONSTER_CLASS
   if (ting !== classView.state.doc.toString()) {
     replaceDoc(classView, ting)
+    showClass(start.items.length > 0 || state.ting !== undefined)
     build()
   }
 }

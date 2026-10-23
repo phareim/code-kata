@@ -592,6 +592,8 @@ body.has-sheet { overflow: hidden; }
 .is-loose .blob .look-right { display: none; }
 .is-loose .blob .look-down { display: inline; }
 .no-color .token-value::after { content: '?'; color: var(--red); }
+/* An item with no value (a task with no use for a number) shows only its letter and its colour. */
+.token.no-value:not(.no-color) .token-value { display: none; }
 .token.is-hot .token-label { color: var(--cyan); }
 .token.is-hot .blob { filter: drop-shadow(0 0 10px var(--c)) brightness(1.15); }
 .end--loop.is-hot { color: var(--hi); }
@@ -703,6 +705,8 @@ body.has-sheet { overflow: hidden; }
   border-bottom: 2px dashed color-mix(in srgb, var(--teal) 30%, transparent);
 }
 .class-editor[hidden] { display: none; }
+/* A task with no monsters has no class to show (showClass in main.ts). */
+.objects-pane.no-class :is(.class-editor, .class-summary, #class-toggle, #apply) { display: none; }
 .class-summary {
   display: block;
   width: 100%;

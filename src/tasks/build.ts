@@ -48,6 +48,11 @@ export function things(random: Random, n = 8, min = 1, max = 99): Spec[] {
   return distinct(random, n, min, max).map((value) => ({ value, color: pick(random, PALETTE) }))
 }
 
+/** n items with palette colours and no value, for a task that has no use for a number: [{ color }]. */
+export function colored(random: Random, n = 8): Spec[] {
+  return Array.from({ length: n }, () => ({ color: pick(random, PALETTE) }))
+}
+
 /** A pointer to the item in a slot. */
 export interface At { at: number }
 export const at = (slot: number): At => ({ at: slot })

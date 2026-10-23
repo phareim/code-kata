@@ -40,8 +40,12 @@ how code runs and where things live.
   say `Ting`: the worker builds from whichever the class editor declares (Monster first) and gives the other name to
   the same class (`classNames()` in `worker.js`; `test/engine.test.ts` and every task's solution with a `class Ting`
   check it). The `ting` storage key and progress field are data and keep their names.
-- A blob's look (`blobLook` in `src/stage/creatures.ts`) is the stage's: from its letter and value when first drawn,
-  never written to the item. A task's `shape` wins; checks read only `shape` and `color`.
+- A blob's look (`blobLook` in `src/stage/creatures.ts`) is the stage's: from its letter and value (colour when it
+  has none) when first drawn, never written to the item. A task's `shape` wins; checks read only `shape` and `color`.
+- Monsters have a `value` only where the task needs a number (Petter, 2026-10-23). Such a task takes a `COLOR_` class
+  from `classes.ts` and builds its items with `colored`; both must leave `value` out, or the class's default puts a 0
+  under every monster (`test/tasks.test.ts` checks it). The pegs keep `value` as the discs' width. A task with no
+  monsters hides the class (`showClass` in `main.ts`).
 - The pixel font is for the chrome only, at whole multiples of 8 px, uppercase through `.px`. Code, console output and
   task text stay in JetBrains Mono with ligatures off. Code is 16 px on touch screens, or iOS zooms in on focus.
 - `src/run/worker.js` is imported with `?raw` and started from a `data:` URL: it must stay one self-contained plain

@@ -1,5 +1,5 @@
-import { at, distinct, int, listWorld, makeWorld, PALETTE, pick, shuffled, things, type Spec } from './build'
-import { DOUBLE_MONSTER } from './classes'
+import { at, colored, distinct, int, listWorld, makeWorld, PALETTE, pick, shuffled, things, type Spec } from './build'
+import { COLOR_DOUBLE_MONSTER, COLOR_LIST_MONSTER } from './classes'
 import type { Task } from './types'
 
 export const tasks: Task[] = [
@@ -16,7 +16,8 @@ Skriv \`function count(head)\` som går gjennom lista og gir tilbake hvor mange 
       '`while (node) { … }` går så lenge det er et monster igjen. Husk `node = node.next` inne i løkka.',
       'Øk `n` med én for hver runde, og `return n` etter løkka.',
     ],
-    world: (r) => listWorld(things(r)),
+    world: (r) => listWorld(colored(r)),
+    monster: COLOR_LIST_MONSTER,
     scaffold: `function count(head) {
   let n = 0
   // Gå gjennom lista og tell
@@ -50,13 +51,14 @@ console.log(count(head))
     topic: 'lister',
     text: `Monstrene vil stå i motsatt rekkefølge. Snu lista ved å flytte pekerne: det siste skal bli det første, og \`head\` skal peke på det nye første.
 
-Ikke lag nye monstre, og ikke bytt verdier: flytt \`next\` på de som er der.`,
+Ikke lag nye monstre, og ikke bytt farger: flytt \`next\` på de som er der.`,
     hints: [
       'Du trenger tre pekere: `prev` (starter som `null`), `node` (starter på `head`) og `next`.',
       'I hver runde: husk `node.next` i `next`, sett `node.next = prev`, og flytt så `prev` og `node` ett hakk fram.',
       'Når løkka er ferdig, peker `prev` på det nye første. Sett `head = prev`.',
     ],
-    world: (r) => listWorld(things(r)),
+    world: (r) => listWorld(colored(r)),
+    monster: COLOR_LIST_MONSTER,
     scaffold: `let prev = null
 let node = head
 while (node) {
@@ -161,7 +163,7 @@ Pass på: det står rosa monstre først, og noen står etter hverandre.`,
       'Flytt bare `node` fram når `node.next` ikke er rosa; ellers kan du gå glipp av to rosa på rad.',
     ],
     world: (r) => {
-      const items = things(r)
+      const items = colored(r)
       const colors = shuffled(r, ['pink', 'pink', 'pink', 'cyan', 'gold', 'lime', 'violet', 'teal'])
       items.forEach((s, i) => { s.color = colors[i] })
       // Pink first, and two pinks side by side somewhere after.
@@ -170,6 +172,7 @@ Pass på: det står rosa monstre først, og noen står etter hverandre.`,
       const order = [pinks[0], ...others.slice(0, 2), pinks[1], pinks[2], ...others.slice(2)]
       return listWorld(items, order)
     },
+    monster: COLOR_LIST_MONSTER,
     scaffold: `let node = head
 while (node && node.next) {
   // Er node.next rosa? Hopp over det.
@@ -342,11 +345,12 @@ Du kan bruke bokstaven: \`G\` er monsteret G.`,
       'Sett G først: `G.next = head`, og så `head = G`.',
     ],
     world: (r) => {
-      const items = things(r)
+      const items = colored(r)
       const order = shuffled(r, items.map((_, i) => i))
       if (order[0] === 6) order.push(order.shift()!)
       return listWorld(items, order)
     },
+    monster: COLOR_LIST_MONSTER,
     scaffold: `let before = head
 while (before.next !== G) {
   before = before.next
@@ -387,7 +391,8 @@ De andre skal stå i samme rekkefølge, og det som nå står sist, skal ha \`nex
       'Gå til det siste monsteret i lista: det som har `next === null`.',
       'Hekt det første på der: `last.next = first`, og husk `first.next = null`.',
     ],
-    world: (r) => listWorld(things(r), shuffled(r, [0, 1, 2, 3, 4, 5, 6, 7])),
+    world: (r) => listWorld(colored(r), shuffled(r, [0, 1, 2, 3, 4, 5, 6, 7])),
+    monster: COLOR_LIST_MONSTER,
     scaffold: `const first = head
 head = head.next
 let last = head
@@ -425,7 +430,8 @@ Sett både \`slow\` og \`fast\` til \`head\`, og la dem gå til \`fast\` ikke ka
       'Løkka går så lenge `fast` og `fast.next` finnes.',
       'I hver runde: `slow = slow.next` og `fast = fast.next.next`. Ikke endre `next` på monstrene.',
     ],
-    world: (r) => listWorld(things(r, r() < 0.5 ? 7 : 8), undefined, { slow: null, fast: null }),
+    world: (r) => listWorld(colored(r, r() < 0.5 ? 7 : 8), undefined, { slow: null, fast: null }),
+    monster: COLOR_LIST_MONSTER,
     views: { slow: 'pointer', fast: 'pointer' },
     scaffold: `slow = head
 fast = head
@@ -518,13 +524,14 @@ console.log(fromEnd(head, 2))
     topic: 'lister',
     text: `Monstrene vil danse to og to: det første og det andre bytter plass, det tredje og det fjerde, og så videre. Står det ett til overs til slutt, blir det stående.
 
-Flytt pekerne; ikke bytt verdier eller farger. \`head\` skal peke på det nye første.`,
+Flytt pekerne; ikke bytt farger. \`head\` skal peke på det nye første.`,
     hints: [
       'Det er lettere med et ekstra monster foran lista: `const dummy = { next: head }`, og en peker `prev = dummy`.',
       'Så lenge det finnes to monstre etter `prev`: kall dem `a` og `b`. Sett `a.next = b.next`, `b.next = a` og `prev.next = b`.',
       'Flytt `prev` til `a` og fortsett. Til slutt: `head = dummy.next`.',
     ],
-    world: (r) => listWorld(things(r, r() < 0.5 ? 7 : 8)),
+    world: (r) => listWorld(colored(r, r() < 0.5 ? 7 : 8)),
+    monster: COLOR_LIST_MONSTER,
     scaffold: `const dummy = { next: head }
 let prev = dummy
 while (prev.next && prev.next.next) {
@@ -635,11 +642,12 @@ En vanlig løkke som går til \`null\`, blir aldri ferdig i en ring. Bruk to pek
       'Peker de på det samme monsteret (`slow === fast`), går lista i ring. Kommer `fast` til `null`, gjør den ikke det.',
     ],
     world: (r) => {
-      const items = things(r)
+      const items = colored(r)
       const linked: Spec[] = items.map((s, i) => ({ ...s, next: i + 1 < items.length ? at(i + 1) : null }))
       linked[7].next = at(int(r, 1, 5))
       return makeWorld(linked, { head: at(0) })
     },
+    monster: COLOR_LIST_MONSTER,
     scaffold: `function hasLoop(head) {
   let slow = head
   let fast = head
@@ -762,7 +770,8 @@ Med A B C D E F G H blir det C B A F E D G H. Flytt pekerne, og la \`head\` peke
       'Sjekk først at det finnes tre monstre etter `prev`; ellers er du ferdig.',
       'Snu de tre slik du snur en hel liste, og koble dem inn igjen: `prev.next` skal peke på det som var tredje, og det som var første skal peke videre til resten. Flytt `prev` til det som nå står sist i gruppen.',
     ],
-    world: (r) => listWorld(things(r)),
+    world: (r) => listWorld(colored(r)),
+    monster: COLOR_LIST_MONSTER,
     scaffold: `const dummy = { next: head }
 let prev = dummy
 // Snu gruppene på tre, én om gangen
@@ -951,13 +960,13 @@ Når et monster og det foran peker på hverandre, viser scenen ⇄ mellom dem.`,
       'Flytt begge ett hakk fram: `prev = node` og `node = node.next`.',
     ],
     world: (r) => {
-      const items = things(r)
+      const items = colored(r)
       const order = shuffled(r, [0, 1, 2, 3, 4, 5, 6, 7])
       const linked: Spec[] = items.map((s) => ({ ...s, prev: null, next: null }))
       order.forEach((slot, k) => { linked[slot].next = k + 1 < order.length ? at(order[k + 1]) : null })
       return makeWorld(linked, { head: at(order[0]) })
     },
-    monster: DOUBLE_MONSTER,
+    monster: COLOR_DOUBLE_MONSTER,
     scaffold: `let prev = null
 for (let node = head; node; node = node.next) {
   // Sett node.prev
@@ -995,7 +1004,7 @@ Etterpå skal både \`next\` og \`prev\` stemme: \`prev\` peker på monsteret fo
       'Det siste du bytter på, er det nye første: sett `head` til det.',
     ],
     world: (r) => {
-      const items = things(r)
+      const items = colored(r)
       const order = shuffled(r, [0, 1, 2, 3, 4, 5, 6, 7])
       const linked: Spec[] = items.map((s) => ({ ...s, prev: null, next: null }))
       order.forEach((slot, k) => {
@@ -1004,7 +1013,7 @@ Etterpå skal både \`next\` og \`prev\` stemme: \`prev\` peker på monsteret fo
       })
       return makeWorld(linked, { head: at(order[0]) })
     },
-    monster: DOUBLE_MONSTER,
+    monster: COLOR_DOUBLE_MONSTER,
     scaffold: `let node = head
 while (node) {
   const next = node.next

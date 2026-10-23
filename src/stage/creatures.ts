@@ -112,7 +112,10 @@ function pick<T extends string>(n: number, weights: [T, number][]): T {
   return weights[0][0]
 }
 
-/** The look of a blob with no shape of its own, from what it is called and its value when it first shows. */
+/**
+ * The look of a blob with no shape of its own, from what it is called and its value when it first shows (the stage
+ * passes its colour instead when it has no value).
+ */
 export function blobLook(name: string, value: string): string {
   const h = hash(`${name}:${value}`)
   const rare = pick(h % 100, [['', 91], ['crown', 3], ['star', 3], ['cyclops', 3]])
