@@ -35,7 +35,7 @@ const VIEWS = {
 async function goTask(page, id) {
   await page.evaluate((to) => { location.hash = `#/${to}` }, id)
   await page.waitForFunction((to) => location.hash === `#/${to}` && document.getElementById('task-title').textContent.length > 0, id)
-  // The quiet build lands the items as Ting.
+  // The quiet build lands the items as Monster.
   await page.waitForTimeout(250)
 }
 
@@ -126,7 +126,7 @@ async function browser(name, launch) {
   // A task without functions opens with the comment alone, and that is not solved either.
   await goTask(page, 'snu-lista')
   code = await editorText(page)
-  check(`${name}: snu-lista opens with the comment alone`, code.trim() === '// Variabelen head er klar til bruk, og tingene heter A–H.', code)
+  check(`${name}: snu-lista opens with the comment alone`, code.trim() === '// Variabelen head er klar til bruk, og monstrene heter A–H.', code)
   r = await runTask(page)
   check(`${name}: the opening is not solved`, /is-not/.test(r.verdict ?? ''), r.text)
 

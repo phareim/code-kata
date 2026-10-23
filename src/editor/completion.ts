@@ -5,7 +5,7 @@
  *   - the globals the runner offers, with their members after a dot (Math.floor, JSON.stringify, console.log)
  *   - after a dot on anything else: the items' value/color/next, common array/string/number/promise members and the
  *     property names used in the code
- *   - the items' names: head, the class Ting and the letters A, B, C … of the world as it is now
+ *   - the items' names: head, the class Monster and the letters A, B, C … of the world as it is now
  */
 import {
   completeFromList,
@@ -86,7 +86,7 @@ const prop = (detail: string) => (label: string): Completion => ({ label, type: 
 
 /** Members most kata code reaches for, offered after a dot when the receiver's type is unknown. */
 export const COMMON_MEMBERS: Completion[] = merge([
-  ...['value', 'color', 'next'].map((label): Completion => ({ label, type: 'property', detail: 'ting', boost: 1 })),
+  ...['value', 'color', 'next'].map((label): Completion => ({ label, type: 'property', detail: 'monster', boost: 1 })),
   ...['length'].map(prop('array · string')),
   ...['at', 'concat', 'includes', 'indexOf', 'lastIndexOf', 'slice'].map(method('array · string')),
   ...[
@@ -145,14 +145,14 @@ export function memberSource(scope: Record<string, unknown>): CompletionSource {
 }
 
 const WORLD_DETAILS: Record<string, Completion> = {
-  Ting: { label: 'Ting', type: 'class', detail: 'klassen' },
-  vis: { label: 'vis', type: 'function', detail: 'ta et bilde av tingene' },
-  head: { label: 'head', type: 'variable', detail: 'første ting' },
-  items: { label: 'items', type: 'variable', detail: 'array av ting' },
+  Monster: { label: 'Monster', type: 'class', detail: 'klassen' },
+  vis: { label: 'vis', type: 'function', detail: 'ta et bilde av monstrene' },
+  head: { label: 'head', type: 'variable', detail: 'det første monsteret' },
+  items: { label: 'items', type: 'variable', detail: 'array av monstre' },
   root: { label: 'root', type: 'variable', detail: 'roten i treet' },
 }
 
-/** The roots (head, items …), Ting, vis and the items' letters, read from the current world on every call. */
+/** The roots (head, items …), Monster, vis and the items' letters, read from the current world on every call. */
 export function worldSource(names: () => string[]): CompletionSource {
   return (context) => {
     const path = completionPath(context)
@@ -160,7 +160,7 @@ export function worldSource(names: () => string[]): CompletionSource {
     return {
       from: context.pos - path.name.length,
       options: names().map((label) => ({
-        ...(WORLD_DETAILS[label] ?? { label, type: 'variable', detail: /^[A-Z]\d*$/.test(label) ? 'ting' : 'global' }),
+        ...(WORLD_DETAILS[label] ?? { label, type: 'variable', detail: /^[A-Z]\d*$/.test(label) ? 'monster' : 'global' }),
         boost: 2,
       })),
       validFor: Identifier,

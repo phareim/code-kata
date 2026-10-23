@@ -8,7 +8,7 @@ import { inlineText, richText } from './app/text'
 import { createEditor, firstSyntaxErrorLine, goToLine, markErrorLine, replaceDoc } from './editor/editor'
 import { Runner, TIME_LIMIT_MS, type Entry, type Outcome, type Verdict, type Where } from './run/runner'
 import { Stage } from './stage/stage'
-import { OLD_STARTERS, STARTER, TING_CLASS } from './starter'
+import { MONSTER_CLASS, OLD_CLASSES, OLD_STARTERS, STARTER } from './starter'
 import { seeded } from './tasks/build'
 import { TASKS, taskById, taskNumber } from './tasks/index'
 import { hasScaffold, opening, scaffolded } from './tasks/opening'
@@ -91,8 +91,8 @@ for (const type of ['pointerover', 'pointerout'] as const) {
   })
 }
 
-// The editors: the code, and the Ting class at the top of the objects pane. Both are saved for what is open.
-const itemNames = () => [...world.roots.map((p) => p.key), 'Ting', 'vis', ...world.items.map((_, i) => label(i))]
+// The editors: the code, and the Monster class at the top of the objects pane. Both are saved for what is open.
+const itemNames = () => [...world.roots.map((p) => p.key), 'Monster', 'vis', ...world.items.map((_, i) => label(i))]
 let saveTimer = 0
 function saveNow(): void {
   window.clearTimeout(saveTimer)
@@ -103,7 +103,7 @@ function saveNow(): void {
     const task = mode.task
     updateTask(task.id, {
       code: code === opening(task) ? undefined : code,
-      ting: ting === (task.ting ?? TING_CLASS) ? undefined : ting,
+      ting: ting === (task.monster ?? MONSTER_CLASS) ? undefined : ting,
     })
   } else {
     store(PLAY_CODE, code)
@@ -116,7 +116,7 @@ const saveSoon = () => {
 }
 const codeView = createEditor($('editor'), { doc: '', onRun: () => run('code'), onChange: saveSoon, itemNames })
 const classView = createEditor($('class-editor'), { doc: '', onRun: () => run('class'), onChange: saveSoon, itemNames })
-const views: Record<Where, EditorView> = { kode: codeView, ting: classView }
+const views: Record<Where, EditorView> = { kode: codeView, klasse: classView }
 const leaving = () => {
   saveNow()
   flushProgress()
@@ -162,14 +162,14 @@ function formatMs(ms: number): string {
 }
 
 /*
- * The class editor folds to a one-line summary (`class Ting { value, color, next }`): open in the playground, in
+ * The class editor folds to a one-line summary (`class Monster { value, color, next }`): open in the playground, in
  * tasks about the class, and when the visitor has changed the class; folded otherwise, to leave room for the items.
  */
 function classSummaryText(source: string): string {
   const fields = [...source.matchAll(/^\s*(#?[A-Za-z_$][\w$]*)\s*=/gm)].map((m) => m[1])
   const methods = [...source.matchAll(/^\s*(?:static\s+|get\s+|set\s+|async\s+)?\*?\s*([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{/gm)]
     .map((m) => m[1]).filter((name) => name !== 'constructor')
-  const name = /class\s+([A-Za-z_$][\w$]*)/.exec(source)?.[1] ?? 'Ting'
+  const name = /class\s+([A-Za-z_$][\w$]*)/.exec(source)?.[1] ?? 'Monster'
   return `class ${name} { ${[...fields, ...methods.map((n) => `${n}()`)].join(', ')} }`
 }
 
@@ -189,11 +189,11 @@ classSummary.addEventListener('click', () => {
 /** A button that jumps to a line in an editor, and the line marked there. */
 function lineLink(where: Where, at: number): HTMLButtonElement {
   const view = views[where]
-  if (where === 'ting') setClassOpen(true)
+  if (where === 'klasse') setClassOpen(true)
   const go = document.createElement('button')
   go.type = 'button'
   go.className = 'goto'
-  go.textContent = where === 'ting' ? `Ting linje ${at}` : `linje ${at}`
+  go.textContent = where === 'klasse' ? `Monster linje ${at}` : `linje ${at}`
   go.addEventListener('click', () => goToLine(view, at))
   markErrorLine(view, at)
   return go
@@ -204,7 +204,7 @@ function showError(outcome: Extract<Outcome, { kind: 'error' }>): void {
   let { line: at, where } = outcome
   if (at === null && outcome.compile) {
     // The engine gave no line (Chrome): take the first place either editor's parser gives up.
-    for (const w of ['ting', 'kode'] as const) {
+    for (const w of ['klasse', 'kode'] as const) {
       const found = firstSyntaxErrorLine(views[w].state)
       if (found !== null) { at = found; where = w; break }
     }
@@ -212,8 +212,8 @@ function showError(outcome: Extract<Outcome, { kind: 'error' }>): void {
   const div = line('error', `${outcome.name}: ${outcome.message}`)
   if (at !== null && where) div.append(' · ', lineLink(where, at))
   appendLines([div])
-  const place = where === 'ting' ? `Ting linje ${at}` : `linje ${at}`
-  setStatus(at !== null ? `Feil · ${place}` : where === 'ting' ? 'Feil · Ting' : 'Feil', 'error')
+  const place = where === 'klasse' ? `Monster linje ${at}` : `linje ${at}`
+  setStatus(at !== null ? `Feil · ${place}` : where === 'klasse' ? 'Feil · Monster' : 'Feil', 'error')
 }
 
 function finished(outcome: Outcome, kind: 'code' | 'class'): void {
@@ -221,7 +221,7 @@ function finished(outcome: Outcome, kind: 'code' | 'class'): void {
   switch (outcome.kind) {
     case 'done':
       if (!output.childElementCount) {
-        appendLines([line('note', kind === 'class' ? `Klassen Ting er brukt på alle ${world.items.length} tingene.` : 'Ingen utskrift.')])
+        appendLines([line('note', kind === 'class' ? `Klassen Monster er brukt på alle ${world.items.length} monstrene.` : 'Ingen utskrift.')])
       }
       setStatus(`Ferdig · ${formatMs(outcome.ms)}`, 'done')
       break
@@ -231,9 +231,9 @@ function finished(outcome: Outcome, kind: 'code' | 'class'): void {
     case 'stopped':
       if (outcome.reason === 'timeout') {
         appendLines([line('warn', `Stoppet etter ${TIME_LIMIT_MS / 1000} sekunder. Går en løkke uten slutt, `
-          + 'eller i ring rundt tingene? Tingene er som før.')])
+          + 'eller i ring rundt monstrene? Monstrene er som før.')])
       } else {
-        appendLines([line('note', 'Stoppet. Tingene er som før.')])
+        appendLines([line('note', 'Stoppet. Monstrene er som før.')])
       }
       setStatus('Stoppet', 'stopped')
       break
@@ -377,7 +377,7 @@ function showVerdict(task: Task, v: Verdict): void {
   if (v.ok) {
     const first = markSolved(task.id)
     const next = nextOpenTask(task)
-    verdictEl.replaceChildren(strong('Løst!'), ` ${first ? 'Tingene er fornøyde.' : 'Løst igjen, like fint.'} `)
+    verdictEl.replaceChildren(strong('Løst!'), ` ${first ? 'Monstrene er fornøyde.' : 'Løst igjen, like fint.'} `)
     if (next) {
       const link = document.createElement('a')
       link.className = 'btn btn--pink btn--small px'
@@ -454,7 +454,7 @@ function renderSolution(task: Task, open: boolean): void {
   solutionArmed = 0
   solutionEl.hidden = !open
   solutionButton.textContent = open ? 'Skjul løsningen' : 'Løsning'
-  $('solution-code').textContent = task.solutionTing ? `${task.solutionTing}\n\n${task.solution}` : task.solution
+  $('solution-code').textContent = task.solutionMonster ? `${task.solutionMonster}\n\n${task.solution}` : task.solution
 }
 
 function renderTask(task: Task): void {
@@ -479,7 +479,7 @@ function renderPlay(): void {
   $('task-level').replaceChildren()
   $('task-solved').hidden = true
   $('task-title').textContent = 'Lekeplass'
-  $('task-text').replaceChildren(richText(`Her er det ingen oppgave og ingen sjekk: lek med tingene. Hver kjøring fortsetter der den forrige slapp. «Nullstill» går tilbake til starten, og «Nye» gir åtte nye ting.
+  $('task-text').replaceChildren(richText(`Her er det ingen oppgave og ingen sjekk: lek med monstrene. Hver kjøring fortsetter der den forrige slapp. «Nullstill» går tilbake til starten, og «Nye» gir åtte nye monstre.
 
 Vil du ha noe å bryne deg på, trykk «Oppgaver» eller «Tilfeldig» øverst.`))
   $('task-actions').hidden = true
@@ -518,7 +518,7 @@ function openTask(task: Task): void {
   start = task.world(seeded(seed))
   built = null
   replaceDoc(codeView, state.code ?? opening(task))
-  replaceDoc(classView, state.ting ?? task.ting ?? TING_CLASS)
+  replaceDoc(classView, state.ting ?? task.monster ?? MONSTER_CLASS)
   renderTask(task)
   setClassOpen(task.topic === 'objekter' || state.ting !== undefined)
   showWorld(start, false)
@@ -531,7 +531,7 @@ function openPlay(): void {
   start = randomWorld()
   built = null
   replaceDoc(codeView, load(PLAY_CODE, STARTER, OLD_STARTERS))
-  replaceDoc(classView, load(PLAY_CLASS, TING_CLASS))
+  replaceDoc(classView, load(PLAY_CLASS, MONSTER_CLASS, OLD_CLASSES))
   renderPlay()
   setClassOpen(true)
   showWorld(start, false)
@@ -581,8 +581,8 @@ $('use-solution').addEventListener('click', () => {
   const task = currentTask()
   if (!task) return
   setText(codeView, task.solution)
-  if (task.solutionTing) {
-    setText(classView, task.solutionTing)
+  if (task.solutionMonster) {
+    setText(classView, task.solutionMonster)
     setClassOpen(true)
   }
   codeView.focus()
@@ -591,7 +591,7 @@ $('restart-btn').addEventListener('click', () => {
   const task = currentTask()
   if (!task) return
   setText(codeView, opening(task))
-  setText(classView, task.ting ?? TING_CLASS)
+  setText(classView, task.monster ?? MONSTER_CLASS)
   verdictEl.hidden = true
   codeView.focus()
 })
@@ -667,7 +667,7 @@ function merged(ids: string[]): void {
   renderHints(task)
   const code = state.code ?? opening(task)
   if (code !== codeView.state.doc.toString()) replaceDoc(codeView, code)
-  const ting = state.ting ?? task.ting ?? TING_CLASS
+  const ting = state.ting ?? task.monster ?? MONSTER_CLASS
   if (ting !== classView.state.doc.toString()) {
     replaceDoc(classView, ting)
     build()

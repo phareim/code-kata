@@ -5,8 +5,8 @@ import { COLORS, itemValue, label, prop, randomWorld, root, walk, type World } f
 type Obj = Record<string, unknown> & { next?: unknown }
 type Built = { objs: Obj[]; roots: [string, unknown][]; fields: string[] }
 const worker = new Function(`${source}\nreturn { buildWorld, snapshotWorld, label, place }`)() as {
-  buildWorld(world: World, Ting?: new () => object): Built
-  snapshotWorld(known: Obj[], roots: [string, unknown][], fields?: string[], Ting?: unknown, marked?: object[]): World
+  buildWorld(world: World, Monster?: new () => object): Built
+  snapshotWorld(known: Obj[], roots: [string, unknown][], fields?: string[], Monster?: unknown, marked?: object[]): World
   label(i: number): string
   place(line: number | null, classLines: number): { line: number | null; where: string | null }
 }
@@ -23,12 +23,12 @@ function seeded(seed: number): () => number {
 }
 
 describe('randomWorld', () => {
-  it('makes eight Ting with different values, palette colours, all in one list', () => {
+  it('makes eight Monster items with different values, palette colours, all in one list', () => {
     for (let seed = 1; seed < 200; seed++) {
       const world = randomWorld(seeded(seed))
       expect(world.items.length).toBe(8)
       expect(world.fields).toEqual(['value', 'color', 'next'])
-      expect(world.items.every((item) => item.cls === 'Ting')).toBe(true)
+      expect(world.items.every((item) => item.cls === 'Monster')).toBe(true)
       const values = world.items.map((item) => prop(item, 'value')!.raw)
       expect(new Set(values).size).toBe(values.length)
       for (const item of world.items) {
@@ -152,18 +152,18 @@ describe('the world through the worker', () => {
   })
 })
 
-describe('the Ting class', () => {
-  const makeClass = (body: string) => new Function(`return class Ting { ${body} constructor(p) { Object.assign(this, p) } }`)()
+describe('the Monster class', () => {
+  const makeClass = (body: string) => new Function(`return class Monster { ${body} constructor(p) { Object.assign(this, p) } }`)()
 
-  it('builds every item as a Ting, with new fields at their defaults and the data kept', () => {
+  it('builds every item as a Monster, with new fields at their defaults and the data kept', () => {
     const start = randomWorld(seeded(13))
-    const Ting = makeClass("value = 0; color = 'pink'; next = null; size = 1;")
-    const built = worker.buildWorld(start, Ting)
+    const Monster = makeClass("value = 0; color = 'pink'; next = null; size = 1;")
+    const built = worker.buildWorld(start, Monster)
     const { objs, fields } = built
     const head = headOf(built)
     expect(fields).toEqual(['value', 'color', 'next', 'size'])
     objs.forEach((obj, i) => {
-      expect(obj).toBeInstanceOf(Ting)
+      expect(obj).toBeInstanceOf(Monster)
       expect(obj.size).toBe(1)
       expect(obj.value).toBe(prop(start.items[i], 'value')!.raw)
       expect(obj.color).toBe(prop(start.items[i], 'color')!.raw)
@@ -177,7 +177,7 @@ describe('the Ting class', () => {
     first.objs[0].seen = true
     const after = snapHead(first.objs, headOf(first), first.fields)
     expect(after.fields).toEqual(['value', 'color', 'next'])
-    expect(after.items[0].cls).toBe('Ting')
+    expect(after.items[0].cls).toBe('Monster')
 
     const second = worker.buildWorld(after, makeClass('value = 0; next = null;'))
     expect(second.fields).toEqual(['value', 'next'])
@@ -194,8 +194,8 @@ describe('the Ting class', () => {
 
   it('places a line in the class or in the code', () => {
     // A class of 4 lines, then the build line (5), then the code from line 6.
-    expect(worker.place(3, 4)).toEqual({ line: 3, where: 'ting' })
-    expect(worker.place(5, 4)).toEqual({ line: null, where: 'ting' })
+    expect(worker.place(3, 4)).toEqual({ line: 3, where: 'klasse' })
+    expect(worker.place(5, 4)).toEqual({ line: null, where: 'klasse' })
     expect(worker.place(8, 4)).toEqual({ line: 3, where: 'kode' })
     expect(worker.place(null, 4)).toEqual({ line: null, where: null })
     expect(worker.place(2, 0)).toEqual({ line: 2, where: 'kode' })

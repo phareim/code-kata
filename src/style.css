@@ -580,6 +580,7 @@ body.has-sheet { overflow: hidden; }
 .blob .h { fill: color-mix(in srgb, var(--c) 45%, #fff4ff); }
 .blob .w { fill: #fff4ff; }
 .blob .k { fill: #0b0616; }
+.blob .g { fill: var(--gold); }
 .blob .look-down { display: none; }
 .is-loose { opacity: 0.55; }
 .is-loose .blob { animation: none; }
@@ -686,7 +687,7 @@ body.has-sheet { overflow: hidden; }
   .progress-fill { transition: none; }
 }
 
-/* The objects pane: the Ting class (an editor) over the items as code; the two scroll together. */
+/* The objects pane: the Monster class (an editor) over the items as code; the two scroll together. */
 .objects-scroll {
   flex: 1;
   min-height: 0;
@@ -874,6 +875,8 @@ body.has-sheet { overflow: hidden; }
   .console-pane { order: 4; }
   .objects-pane { order: 5; }
   .stage { --px: 3px; overflow: visible; }
+  /* «Monstre», «Nullstill» and «Nye» on one row at 390 px. */
+  .stage-pane .pane-bar { column-gap: 8px; }
   .objects-scroll { overflow: visible; }
   .task-scroll { overflow: visible; }
   .editor .cm-editor { height: auto; }

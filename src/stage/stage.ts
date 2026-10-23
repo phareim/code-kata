@@ -12,7 +12,7 @@
  * it shows its letter. There is one token per item across the panels, so an item glides from one place to the next,
  * even from one panel to another (FLIP: measure, move in the DOM, animate the difference).
  */
-import { creatureSvg } from './creatures'
+import { blobLook, creatureSvg } from './creatures'
 import { COLORS, itemColor, itemValue, label, prop, reachable, walk, type End, type Prop, type World } from '../world/world'
 
 export type ViewKind = 'list' | 'array' | 'stack' | 'queue' | 'pegs' | 'tree' | 'graph' | 'grid' | 'value' | 'pointer'
@@ -62,6 +62,8 @@ type Layout = () => void
 
 export class Stage {
   private tokens = new Map<string, HTMLElement>()
+  /** Each blob's look, from its letter and its value when it first showed; kept until a new world is shown. */
+  private looks = new Map<string, string>()
   private panels = new Map<string, Panel>()
   private claimed = new Set<number>()
   private world: World | null = null
@@ -71,6 +73,7 @@ export class Stage {
   render(world: World, opts: RenderOptions): void {
     if (!opts.animate) {
       this.tokens.clear()
+      this.looks.clear()
       this.panels.clear()
     }
     const motion = opts.animate && !reducedMotion()
@@ -144,8 +147,11 @@ export class Stage {
       node.append(el('span', 'token-flags px'), el('span', 'token-label px', name), el('span', 'token-body'), el('span', 'token-value px'))
       this.tokens.set(name, node)
     }
+    // A shape the item has wins; a blob gets a look of its own, but a disc on a peg is the plain blob.
     const shape = prop(item, 'shape')?.raw
-    const shapeName = typeof shape === 'string' ? shape : 'blob'
+    let look = this.looks.get(name)
+    if (look === undefined) this.looks.set(name, (look = blobLook(name, itemValue(item))))
+    const shapeName = typeof shape === 'string' ? shape : opts.disc ? 'blob' : look
     if (node.dataset.shape !== shapeName) {
       node.dataset.shape = shapeName
       ;(node.children[2] as HTMLElement).innerHTML = creatureSvg(shapeName)
@@ -233,7 +239,7 @@ function ending(end: End): HTMLElement {
     return node
   }
   const node = el('span', 'end end--bad px', '?')
-  node.title = `next er ${end.text}, ikke en ting`
+  node.title = `next er ${end.text}, ikke et monster`
   return node
 }
 

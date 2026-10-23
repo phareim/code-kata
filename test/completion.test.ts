@@ -9,7 +9,7 @@ import { firstSyntaxErrorLine } from '../src/editor/editor'
 async function labels(text: string, explicit = false): Promise<string[]> {
   const pos = text.indexOf('|')
   const doc = text.replace('|', '')
-  const state = EditorState.create({ doc, selection: { anchor: pos }, extensions: [kataJavascript(() => ['head', 'Ting', 'A', 'B'])] })
+  const state = EditorState.create({ doc, selection: { anchor: pos }, extensions: [kataJavascript(() => ['head', 'Monster', 'A', 'B'])] })
   ensureSyntaxTree(state, doc.length, 1000)
   const sources = state.languageDataAt<CompletionSource>('autocomplete', pos)
   const context = new CompletionContext(state, pos, explicit)
@@ -53,7 +53,7 @@ describe('completion', () => {
   it('offers head and the items by letter', async () => {
     expect(await labels('he|')).toContain('head')
     expect(await labels('A|')).toEqual(expect.arrayContaining(['A', 'B', 'head']))
-    expect(await labels('new Ti|')).toContain('Ting')
+    expect(await labels('new Mo|')).toContain('Monster')
   })
 
   it('offers value, color and next after a dot on an item or a plain variable', async () => {

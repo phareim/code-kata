@@ -1,5 +1,5 @@
 import { arrayWorld, listWorld, PALETTE, pick, things } from './build'
-import { PLAIN_TING } from './classes'
+import { PLAIN_MONSTER } from './classes'
 import type { Task } from './types'
 
 export const tasks: Task[] = [
@@ -8,16 +8,16 @@ export const tasks: Task[] = [
     title: 'Si hvem du er',
     level: 'lett',
     topic: 'objekter',
-    text: `Tingene vil kunne presentere seg. Gi klassen \`Ting\` (øverst i Objekter) en metode \`describe()\` som gir tilbake fargen og verdien som tekst, med mellomrom imellom: \`'pink 42'\`.
+    text: `Monstrene vil kunne presentere seg. Gi klassen \`Monster\` (øverst i Objekter) en metode \`describe()\` som gir tilbake fargen og verdien som tekst, med mellomrom imellom: \`'pink 42'\`.
 
-Koden går gjennom lista og spør hver ting. Trykk «Kjør» når klassen har metoden.`,
+Koden går gjennom lista og spør hvert monster. Trykk «Kjør» når klassen har metoden.`,
     hints: [
       'En metode skrives inne i klassen, etter feltene: `describe() { … }`.',
-      'Inne i metoden er tingen selv `this`, så fargen er `this.color`.',
+      'Inne i metoden er monsteret selv `this`, så fargen er `this.color`.',
       "Sett sammen teksten: `return this.color + ' ' + this.value`.",
     ],
     world: (r) => listWorld(things(r, 6)),
-    scaffold: `// Skriv describe() i klassen Ting øverst i Objekter.
+    scaffold: `// Skriv describe() i klassen Monster øverst i Objekter.
 for (let node = head; node; node = node.next) {
   console.log(node.describe())
 }
@@ -26,7 +26,7 @@ for (let node = head; node; node = node.next) {
   console.log(node.describe())
 }
 `,
-    solutionTing: `class Ting {
+    solutionMonster: `class Monster {
   value = 0
   color = 'pink'
   next = null
@@ -35,31 +35,31 @@ for (let node = head; node; node = node.next) {
 }`,
     check: (t) => {
       for (const node of t.slots) {
-        if (typeof node.describe !== 'function') return 'Tingene har ingen metode `describe` ennå. Den skal stå i klassen.'
+        if (typeof node.describe !== 'function') return 'Monstrene har ingen metode `describe` ennå. Den skal stå i klassen.'
         const want = `${node.color} ${node.value}`
         const got = node.describe()
         if (got !== want) return `${t.show(node)}.describe() gav ${t.show(got)}, men skal gi ${t.show(want)}.`
       }
-      const fresh = t.ting({ value: 3, color: 'lime' })
-      if (fresh.describe() !== 'lime 3') return 'En ny Ting skal også kunne si hvem den er.'
+      const fresh = t.monster({ value: 3, color: 'lime' })
+      if (fresh.describe() !== 'lime 3') return 'Et nytt Monster skal også kunne si hvem det er.'
       return true
     },
   },
   {
     id: 'er-den-stor',
-    title: 'Er den stor?',
+    title: 'Er det stort?',
     level: 'lett',
     topic: 'objekter',
-    text: `Gi klassen \`Ting\` en getter \`big\` som er \`true\` når \`value\` er 50 eller mer, og ellers \`false\`. En getter leses som et felt, uten parenteser: \`A.big\`.
+    text: `Gi klassen \`Monster\` en getter \`big\` som er \`true\` når \`value\` er 50 eller mer, og ellers \`false\`. En getter leses som et felt, uten parenteser: \`A.big\`.
 
 Den skal alltid stemme med verdien slik den er nå, også om verdien endres etterpå.`,
     hints: [
       'En getter skrives i klassen som en metode med `get` foran: `get big() { … }`.',
-      'Inne i getteren er tingen `this`.',
-      'Et vanlig felt (`big = …`) regnes ut bare én gang, når tingen lages. En getter regnes ut hver gang noen spør.',
+      'Inne i getteren er monsteret `this`.',
+      'Et vanlig felt (`big = …`) regnes ut bare én gang, når monsteret lages. En getter regnes ut hver gang noen spør.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    scaffold: `// Skriv getteren big i klassen Ting øverst i Objekter.
+    scaffold: `// Skriv getteren big i klassen Monster øverst i Objekter.
 for (let node = head; node; node = node.next) {
   console.log(node.value, node.big)
 }
@@ -68,7 +68,7 @@ for (let node = head; node; node = node.next) {
   console.log(node.value, node.big)
 }
 `,
-    solutionTing: `class Ting {
+    solutionMonster: `class Monster {
   value = 0
   color = 'pink'
   next = null
@@ -84,8 +84,8 @@ for (let node = head; node; node = node.next) {
       for (const node of t.slots) {
         if (node.big !== node.value >= 50) return `${t.show(node)} har value ${node.value}, men big er ${t.show(node.big)}.`
       }
-      const fresh = t.ting({ value: 10 })
-      if (fresh.big !== false) return 'En ny Ting med value 10 skal ha big = false.'
+      const fresh = t.monster({ value: 10 })
+      if (fresh.big !== false) return 'Et nytt Monster med value 10 skal ha big = false.'
       fresh.value = 77
       if (fresh.big !== true) return 'Når value blir 77, skal big bli true.'
       return true
@@ -96,7 +96,7 @@ for (let node = head; node; node = node.next) {
     title: 'Mellom 1 og 99',
     level: 'middels',
     topic: 'objekter',
-    text: `Tingene tåler bare verdier fra 1 til 99. Gi klassen \`Ting\` en getter og en setter for \`value\`: setteren passer på at verdien aldri blir mindre enn 1 eller større enn 99. Settes den til 150, blir den 99; settes den til -3, blir den 1.
+    text: `Monstrene tåler bare verdier fra 1 til 99. Gi klassen \`Monster\` en getter og en setter for \`value\`: setteren passer på at verdien aldri blir mindre enn 1 eller større enn 99. Settes den til 150, blir den 99; settes den til -3, blir den 1.
 
 Verdien må lagres i et annet felt, for eksempel det private \`#value\`.`,
     hints: [
@@ -105,7 +105,7 @@ Verdien må lagres i et annet felt, for eksempel det private \`#value\`.`,
       'Fjern feltet `value = 0`! Et vanlig felt med samme navn legger seg oppå getteren og setteren, så de aldri blir brukt.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    scaffold: `// Lag getter og setter for value i klassen Ting.
+    scaffold: `// Lag getter og setter for value i klassen Monster.
 A.value = 150
 B.value = -3
 console.log(A.value, B.value)
@@ -114,7 +114,7 @@ console.log(A.value, B.value)
 B.value = -3
 console.log(A.value, B.value)
 `,
-    solutionTing: `class Ting {
+    solutionMonster: `class Monster {
   #value = 1
   color = 'pink'
   next = null
@@ -125,8 +125,8 @@ console.log(A.value, B.value)
     check: (t) => {
       const cases: [number, number][] = [[150, 99], [-3, 1], [42, 42], [99, 99], [1, 1], [0, 1], [100, 99]]
       for (const [set, want] of cases) {
-        const node = t.ting({ value: set })
-        if (node.value !== want) return `En ny Ting med value ${set} skal få ${want}, men fikk ${t.show(node.value)}.`
+        const node = t.monster({ value: set })
+        if (node.value !== want) return `Et nytt Monster med value ${set} skal få ${want}, men fikk ${t.show(node.value)}.`
         node.value = set
         if (node.value !== want) return `Når value settes til ${set}, skal den bli ${want}, men ble ${t.show(node.value)}.`
       }
@@ -136,37 +136,37 @@ console.log(A.value, B.value)
   },
   {
     id: 'ting-compare',
-    title: 'Ting.compare',
+    title: 'Monster.compare',
     level: 'lett',
     topic: 'objekter',
-    text: `Gi klassen \`Ting\` en statisk metode \`compare(a, b)\` som sammenligner to ting etter \`value\`: et negativt tall når \`a\` er minst, et positivt når \`b\` er minst. Da kan koden sortere med \`items.sort(Ting.compare)\`.
+    text: `Gi klassen \`Monster\` en statisk metode \`compare(a, b)\` som sammenligner to monstre etter \`value\`: et negativt tall når \`a\` er minst, et positivt når \`b\` er minst. Da kan koden sortere med \`items.sort(Monster.compare)\`.
 
-Statisk betyr at metoden hører til klassen, ikke til hver ting: den kalles \`Ting.compare\`, ikke \`A.compare\`.`,
+Statisk betyr at metoden hører til klassen, ikke til hvert monster: den kalles \`Monster.compare\`, ikke \`A.compare\`.`,
     hints: [
       'Skriv `static compare(a, b) { … }` i klassen.',
       'Forskjellen `a.value - b.value` er negativ når `a` er minst, og positiv når `b` er minst.',
       'Koden i editoren sorterer allerede med den: trykk «Kjør» når klassen har den.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
-    scaffold: `// Skriv static compare(a, b) i klassen Ting.
-items.sort(Ting.compare)
+    monster: PLAIN_MONSTER,
+    scaffold: `// Skriv static compare(a, b) i klassen Monster.
+items.sort(Monster.compare)
 `,
-    solution: `items.sort(Ting.compare)
+    solution: `items.sort(Monster.compare)
 `,
-    solutionTing: `class Ting {
+    solutionMonster: `class Monster {
   value = 0
   color = 'pink'
   constructor(props) { Object.assign(this, props) }
   static compare(a, b) { return a.value - b.value }
 }`,
     check: (t) => {
-      const compare = t.Ting.compare
+      const compare = t.Monster.compare
       if (typeof compare !== 'function') return 'Klassen har ingen statisk metode `compare` ennå.'
-      if (typeof t.slots[0].compare === 'function') return '`compare` skal være statisk (`static compare`), ikke en metode på hver ting.'
-      const row = [40, 7, 93, 7, 12].map((value) => t.ting({ value }))
+      if (typeof t.slots[0].compare === 'function') return '`compare` skal være statisk (`static compare`), ikke en metode på hvert monster.'
+      const row = [40, 7, 93, 7, 12].map((value) => t.monster({ value }))
       const sorted = [...row].sort(compare).map((n) => n.value)
-      if (!t.same(sorted, [7, 7, 12, 40, 93])) return `Sortert med Ting.compare ble raden ${t.show(sorted)}.`
+      if (!t.same(sorted, [7, 7, 12, 40, 93])) return `Sortert med Monster.compare ble raden ${t.show(sorted)}.`
       const want = t.before('items').sort((a, b) => a.value - b.value)
       if (!want.every((n, i) => t.items[i] === n)) return '`items` er ikke sortert etter value ennå.'
       return true
@@ -177,33 +177,33 @@ items.sort(Ting.compare)
     title: 'Katter og spøkelser',
     level: 'middels',
     topic: 'objekter',
-    text: `Noen ting vil være katter, og noen spøkelser. Skriv \`class Cat extends Ting\` og \`class Ghost extends Ting\` i koden:
+    text: `Noen monstre vil være katter, og noen spøkelser. Skriv \`class Cat extends Monster\` og \`class Ghost extends Monster\` i koden:
 - en \`Cat\` har \`shape = 'cat'\` og en metode \`speak()\` som gir \`'mjau'\`
 - et \`Ghost\` har \`shape = 'ghost'\` og en \`speak()\` som gir \`'bø!'\`
 
 Lag så én ny katt og ett nytt spøkelse, og sett dem først i lista: katten først, så spøkelset, så resten som før.`,
     hints: [
-      'En underklasse får alt fra `Ting` og legger til sitt eget: `class Cat extends Ting { shape = \'cat\' … }`.',
-      'Felt i underklassen settes etter at `Ting` er ferdig, så `shape` overstyrer det `Ting` ga tingen.',
+      'En underklasse får alt fra `Monster` og legger til sitt eget: `class Cat extends Monster { shape = \'cat\' … }`.',
+      'Felt i underklassen settes etter at `Monster` er ferdig, så `shape` overstyrer det `Monster` ga monsteret.',
       'Lenk dem inn foran: `const ghost = new Ghost({ value: 13, next: head })`, så `head = new Cat({ value: 9, next: ghost })`.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    scaffold: `class Cat extends Ting {
+    scaffold: `class Cat extends Monster {
   // shape og speak()
 }
 
-class Ghost extends Ting {
+class Ghost extends Monster {
   // shape og speak()
 }
 
 // Lag en katt og et spøkelse, og sett dem først i lista
 `,
-    solution: `class Cat extends Ting {
+    solution: `class Cat extends Monster {
   shape = 'cat'
   speak() { return 'mjau' }
 }
 
-class Ghost extends Ting {
+class Ghost extends Monster {
   shape = 'ghost'
   speak() { return 'bø!' }
 }
@@ -220,10 +220,10 @@ console.log(head.speak(), head.next.speak())
       const Ghost = t.fn('Ghost')
       const cat = new Cat({ value: 3 })
       const ghost = new Ghost({ value: 4 })
-      if (!(cat instanceof t.Ting) || !(ghost instanceof t.Ting)) return 'Cat og Ghost skal være underklasser av Ting (`extends Ting`).'
+      if (!(cat instanceof t.Monster) || !(ghost instanceof t.Monster)) return 'Cat og Ghost skal være underklasser av Monster (`extends Monster`).'
       if (cat.shape !== 'cat') return `En ny Cat skal ha shape 'cat', men har ${t.show(cat.shape)}.`
       if (ghost.shape !== 'ghost') return `Et nytt Ghost skal ha shape 'ghost', men har ${t.show(ghost.shape)}.`
-      if (cat.value !== 3) return 'En Cat skal få verdien den lages med, som andre ting.'
+      if (cat.value !== 3) return 'En Cat skal få verdien den lages med, som andre monstre.'
       if (cat.speak?.() !== 'mjau') return `Cat sin speak() skal gi 'mjau'.`
       if (ghost.speak?.() !== 'bø!') return `Ghost sin speak() skal gi 'bø!'.`
       const list = t.chain(t.head)
@@ -239,7 +239,7 @@ console.log(head.speak(), head.next.speak())
     title: 'Roboten teller i det skjulte',
     level: 'middels',
     topic: 'objekter',
-    text: `Skriv \`class Bot extends Ting\`: en robot (\`shape = 'bot'\`) som teller skrittene sine i et privat felt \`#steps\`. Metoden \`step()\` legger til ett skritt, og getteren \`steps\` viser hvor mange det er blitt. Ingen utenfor klassen skal kunne endre tallet: \`bot.steps = 100\` skal ikke virke.
+    text: `Skriv \`class Bot extends Monster\`: en robot (\`shape = 'bot'\`) som teller skrittene sine i et privat felt \`#steps\`. Metoden \`step()\` legger til ett skritt, og getteren \`steps\` viser hvor mange det er blitt. Ingen utenfor klassen skal kunne endre tallet: \`bot.steps = 100\` skal ikke virke.
 
 La så en ny robot ta tre skritt, og sett den først i lista.`,
     hints: [
@@ -248,7 +248,7 @@ La så en ny robot ta tre skritt, og sett den først i lista.`,
       '`step() { this.#steps++ }`. Lag roboten med `new Bot({ value: 1, next: head })`.',
     ],
     world: (r) => listWorld(things(r, 6)),
-    scaffold: `class Bot extends Ting {
+    scaffold: `class Bot extends Monster {
   shape = 'bot'
   // #steps, step() og getteren steps
 }
@@ -256,7 +256,7 @@ La så en ny robot ta tre skritt, og sett den først i lista.`,
 const bot = new Bot({ value: 1, color: 'cyan', next: head })
 // Tre skritt, og så først i lista
 `,
-    solution: `class Bot extends Ting {
+    solution: `class Bot extends Monster {
   shape = 'bot'
   #steps = 0
   step() { this.#steps++ }
@@ -296,23 +296,23 @@ console.log(bot.steps)
     title: 'Tekst og tall',
     level: 'middels',
     topic: 'objekter',
-    text: `Gi klassen \`Ting\` to metoder som JavaScript bruker av seg selv:
-- \`toString()\` gir tingen som tekst, farge og verdi med mellomrom: \`'pink 42'\`. Da virker \`\${A}\` i en mal-streng.
+    text: `Gi klassen \`Monster\` to metoder som JavaScript bruker av seg selv:
+- \`toString()\` gir monsteret som tekst, farge og verdi med mellomrom: \`'pink 42'\`. Da virker \`\${A}\` i en mal-streng.
 - \`valueOf()\` gir verdien som tall. Da virker \`A < B\` og \`A - B\` på verdiene.
 
-Koden skriver ut tingene og sorterer en rad med \`(a, b) => a - b\`.`,
+Koden skriver ut monstrene og sorterer en rad med \`(a, b) => a - b\`.`,
     hints: [
       'Begge er vanlige metoder i klassen: `toString() { … }` og `valueOf() { … }`.',
       "`toString` kan sette sammen `this.color + ' ' + this.value`.",
-      '`valueOf` gir bare `this.value`. JavaScript kaller den når tingen brukes som et tall.',
+      '`valueOf` gir bare `this.value`. JavaScript kaller det når monsteret brukes som et tall.',
     ],
     world: (r) => listWorld(things(r, 5)),
-    scaffold: `// Skriv toString() og valueOf() i klassen Ting.
+    scaffold: `// Skriv toString() og valueOf() i klassen Monster.
 for (let node = head; node; node = node.next) console.log(\`\${node}\`)
 `,
     solution: `for (let node = head; node; node = node.next) console.log(\`\${node}\`)
 `,
-    solutionTing: `class Ting {
+    solutionMonster: `class Monster {
   value = 0
   color = 'pink'
   next = null
@@ -326,10 +326,10 @@ for (let node = head; node; node = node.next) console.log(\`\${node}\`)
         if (text !== `${node.color} ${node.value}`) return `${t.show(node)} som tekst blir ${t.show(text)}, men skal bli ${t.show(`${node.color} ${node.value}`)}.`
         if (+node !== node.value) return `${t.show(node)} som tall gir ${t.show(+node)}, men skal gi ${node.value}.`
       }
-      const row = [30, 5, 77, 12].map((value) => t.ting({ value }))
+      const row = [30, 5, 77, 12].map((value) => t.monster({ value }))
       const sorted = [...row].sort((a: any, b: any) => a - b).map((n) => n.value)
       if (!t.same(sorted, [5, 12, 30, 77])) return `Sortert med (a, b) => a - b ble raden ${t.show(sorted)}.`
-      if (!((row[1] as any) < (row[0] as any))) return 'En ting med 5 skal være mindre enn en med 30.'
+      if (!((row[1] as any) < (row[0] as any))) return 'Et monster med 5 skal være mindre enn ett med 30.'
       return true
     },
   },
@@ -338,12 +338,12 @@ for (let node = head; node; node = node.next) console.log(\`\${node}\`)
     title: 'Fargetelling',
     level: 'lett',
     topic: 'objekter',
-    text: `Skriv \`function tally(items)\` som teller hvor mange ting det er av hver farge, og gir tilbake en \`Map\` fra farge til antall: \`Map { 'pink' => 3, 'cyan' => 1, … }\`.
+    text: `Skriv \`function tally(items)\` som teller hvor mange monstre det er av hver farge, og gir tilbake en \`Map\` fra farge til antall: \`Map { 'pink' => 3, 'cyan' => 1, … }\`.
 
 Bare farger som finnes, skal være med.`,
     hints: [
       'Begynn med `const counts = new Map()`.',
-      'For hver ting: `counts.set(color, (counts.get(color) ?? 0) + 1)`.',
+      'For hvert monster: `counts.set(color, (counts.get(color) ?? 0) + 1)`.',
       'Gi tilbake `counts` til slutt.',
     ],
     world: (r) => {
@@ -352,7 +352,7 @@ Bare farger som finnes, skal være med.`,
       items.forEach((s) => { s.color = pick(r, colors) })
       return arrayWorld(items)
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function tally(items) {
   const counts = new Map()
   // Tell fargene
@@ -376,7 +376,7 @@ console.log(tally(items))
       for (const colors of rows) {
         const want = new Map()
         for (const c of colors) want.set(c, (want.get(c) ?? 0) + 1)
-        const got = tally(colors.map((color, i) => t.ting({ value: i + 1, color })))
+        const got = tally(colors.map((color, i) => t.monster({ value: i + 1, color })))
         if (!(got instanceof Map)) return `tally skal gi en Map, men gav ${t.show(got)}.`
         if (!t.same(got, want)) return `For fargene ${t.show(colors)} gav tally ${t.show(got)}.`
       }
@@ -388,7 +388,7 @@ console.log(tally(items))
     title: 'Hvor mange farger?',
     level: 'lett',
     topic: 'objekter',
-    text: `Skriv \`function colorCount(items)\` som gir tilbake hvor mange forskjellige farger tingene har.
+    text: `Skriv \`function colorCount(items)\` som gir tilbake hvor mange forskjellige farger monstrene har.
 
 En \`Set\` holder hver verdi bare én gang, så den gjør det meste av jobben.`,
     hints: [
@@ -397,7 +397,7 @@ En \`Set\` holder hver verdi bare én gang, så den gjør det meste av jobben.`,
       'En tom array har 0 farger.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function colorCount(items) {
   // Hvor mange forskjellige farger?
   return 0
@@ -416,7 +416,7 @@ console.log(colorCount(items))
       const colorCount = t.fn('colorCount')
       for (const colors of [['pink', 'pink', 'cyan'], ['gold'], ['red', 'teal', 'lime', 'violet', 'red'], ['cyan', 'cyan']]) {
         const want = new Set(colors).size
-        const got = colorCount(colors.map((color, i) => t.ting({ value: i + 1, color })))
+        const got = colorCount(colors.map((color, i) => t.monster({ value: i + 1, color })))
         if (got !== want) return `For fargene ${t.show(colors)} gav colorCount ${t.show(got)}, men det er ${want}.`
       }
       if (colorCount([]) !== 0) return 'For en tom array skal colorCount gi 0.'
@@ -428,11 +428,11 @@ console.log(colorCount(items))
     title: 'Grupper etter farge',
     level: 'middels',
     topic: 'objekter',
-    text: `Skriv \`function groupByColor(items)\` som gir tilbake en \`Map\` fra farge til en array med tingene som har den fargen, i den rekkefølgen de står i \`items\`.
+    text: `Skriv \`function groupByColor(items)\` som gir tilbake en \`Map\` fra farge til en array med monstrene som har den fargen, i den rekkefølgen de står i \`items\`.
 
-Det er tingene selv som skal i arrayene, ikke bare verdiene.`,
+Det er monstrene selv som skal i arrayene, ikke bare verdiene.`,
     hints: [
-      'For hver ting: finnes fargen ikke i Map-en ennå, legg inn en tom array for den.',
+      'For hvert monster: finnes fargen ikke i Map-en ennå, legg inn en tom array for den.',
       'Så `groups.get(color).push(thing)`.',
       'Rekkefølgen kommer av seg selv når du går gjennom `items` fra start til slutt.',
     ],
@@ -442,10 +442,10 @@ Det er tingene selv som skal i arrayene, ikke bare verdiene.`,
       items.forEach((s) => { s.color = pick(r, colors) })
       return arrayWorld(items)
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function groupByColor(items) {
   const groups = new Map()
-  // Legg hver ting i gruppen for fargen sin
+  // Legg hvert monster i gruppen for fargen sin
   return groups
 }
 
@@ -466,7 +466,7 @@ console.log(groupByColor(items))
     check: (t) => {
       const groupByColor = t.fn('groupByColor')
       const colors = ['pink', 'cyan', 'pink', 'gold', 'cyan', 'pink']
-      const row = colors.map((color, i) => t.ting({ value: i + 1, color }))
+      const row = colors.map((color, i) => t.monster({ value: i + 1, color }))
       const got = groupByColor(row)
       if (!(got instanceof Map)) return `groupByColor skal gi en Map, men gav ${t.show(got)}.`
       for (const color of new Set(colors)) {
@@ -474,7 +474,7 @@ console.log(groupByColor(items))
         const group = got.get(color)
         if (!Array.isArray(group)) return `Map-en har ingen array for ${t.show(color)}.`
         if (group.length !== want.length || group.some((n: unknown, i: number) => n !== want[i])) {
-          return `Gruppen for ${t.show(color)} skal ha tingene med verdiene ${t.show(want.map((n) => n.value))}, i den rekkefølgen.`
+          return `Gruppen for ${t.show(color)} skal ha monstrene med verdiene ${t.show(want.map((n) => n.value))}, i den rekkefølgen.`
         }
       }
       if (got.size !== new Set(colors).size) return `Map-en har ${got.size} farger, men raden har ${new Set(colors).size}.`
@@ -487,13 +487,13 @@ console.log(groupByColor(items))
     title: 'En liste du kan gå gjennom',
     level: 'middels',
     topic: 'objekter',
-    text: `Skriv \`class Chain\` som pakker inn en lenket liste: \`new Chain(head)\`. Gi den en generator-metode \`*[Symbol.iterator]()\` som gir tingene én etter én langs \`next\`.
+    text: `Skriv \`class Chain\` som pakker inn en lenket liste: \`new Chain(head)\`. Gi den en generator-metode \`*[Symbol.iterator]()\` som gir monstrene ett etter ett langs \`next\`.
 
 Da virker \`for (const thing of new Chain(head))\` og \`[...new Chain(head)]\` som på en array. Lista selv skal ikke endres.`,
     hints: [
       'Konstruktøren husker starten: `constructor(head) { this.head = head }`.',
       'En generator skrives med stjerne og bruker `yield`: `*[Symbol.iterator]() { … }`.',
-      'Gå gjennom lista og `yield node` for hver ting.',
+      'Gå gjennom lista og `yield node` for hvert monster.',
     ],
     world: (r) => listWorld(things(r, 6)),
     scaffold: `class Chain {
@@ -527,7 +527,7 @@ for (const thing of new Chain(head)) console.log(thing.value)
       } catch {
         return 'new Chain(head) kan ikke spres med [...]; den trenger *[Symbol.iterator]().'
       }
-      if (got.length !== nodes.length || got.some((n, i) => n !== nodes[i])) return 'Spredt ut skal Chain gi tingene i lista, én etter én.'
+      if (got.length !== nodes.length || got.some((n, i) => n !== nodes[i])) return 'Spredt ut skal Chain gi monstrene i lista, ett etter ett.'
       let seen = 0
       for (const node of new Chain(head)) {
         seen++
@@ -535,7 +535,7 @@ for (const thing of new Chain(head)) console.log(thing.value)
       }
       if (seen !== 3) return 'Med break skal for … of stoppe der; Chain gav for mange.'
       if (!t.same(t.values(head), [3, 1, 4, 1, 5])) return 'Lista ble endret.'
-      if ([...new Chain(null)].length !== 0) return 'new Chain(null) skal ikke gi noen ting.'
+      if ([...new Chain(null)].length !== 0) return 'new Chain(null) skal ikke gi noen monstre.'
       return true
     },
   },
@@ -544,18 +544,18 @@ for (const thing of new Chain(head)) console.log(thing.value)
     title: 'Husk de tre siste',
     level: 'vanskelig',
     topic: 'objekter',
-    text: `Skriv \`class Shelf\`: en hylle med plass til et fast antall ting, \`new Shelf(3)\`.
+    text: `Skriv \`class Shelf\`: en hylle med plass til et fast antall verdier, \`new Shelf(3)\`.
 - \`put(key, value)\` legger noe på hylla.
 - \`get(key)\` gir det tilbake, eller \`undefined\`.
 
-Er hylla full når noe nytt skal på, må den som har ligget lengst uten å bli brukt, vike. Både \`get\` og \`put\` teller som å bruke noe.`,
+Er hylla full når noe nytt skal på, må det som har ligget lengst uten å bli brukt, vike. Både \`get\` og \`put\` teller som å bruke noe.`,
     hints: [
-      'En `Map` husker rekkefølgen ting ble lagt inn i. Den første nøkkelen er den eldste.',
+      'En `Map` husker rekkefølgen nøklene ble lagt inn i. Den første nøkkelen er den eldste.',
       'Når noe brukes, flytter du det bakerst: `delete` og `set` på nytt.',
       'Når hylla er full, kaster du den første nøkkelen: `this.map.keys().next().value`.',
     ],
     world: (r) => arrayWorld(things(r, 5)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `class Shelf {
   constructor(size) {
     this.size = size

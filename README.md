@@ -1,8 +1,8 @@
 # Kodekata
 
-Small JavaScript tasks where pixel creatures ask you to sort, tidy and move them: reverse a list, bubble-sort a row,
+Small JavaScript tasks where pixel monsters («monstre») ask you to sort, tidy and move them: reverse a list, bubble-sort a row,
 build a Tower of Hanoi, mirror a tree, find the way through a graph, flood-fill a grid. Write a few lines, run them in
-the browser, and watch the creatures do what the code says. Neon Coast's pixel look from phareim.no (the night
+the browser, and watch the monsters do what the code says. Neon Coast's pixel look from phareim.no (the night
 palette, Neon Shrine's 5×7 font, notched boxes).
 
 Live: https://kata.phareim.no (public; signing in is optional and only carries the progress along; 131 tasks, every one solved in Chrome and WebKit against the built site 2026-10-23).
@@ -11,7 +11,7 @@ Live: https://kata.phareim.no (public; signing in is optional and only carries t
 
 - **Tasks** (`#/<id>`): a bank of tasks, each with a text, hints one at a time, a level (lett, middels, vanskelig) and
   a topic (lister, sortering, rydding og flytting, stabler og køer, trær, grafer, rutenett, objekter og klassen,
-  klassikere). «Kjør» runs the code and checks it: «Løst!» with confetti, a stamp and the creatures jumping, or
+  klassikere). «Kjør» runs the code and checks it: «Løst!» with confetti, a stamp and the monsters jumping, or
   «Ikke ennå» with what is still wrong. The editor opens with a comment that names the variables (`head`, `items` …)
   and, when the task asks for functions, the code below that runs them on the stage, but no skeleton of the answer:
   hint 1 has a button that puts one in («Sett inn et skjelett», asking first over the visitor's own code). The
@@ -23,16 +23,16 @@ Live: https://kata.phareim.no (public; signing in is optional and only carries t
   kept in localStorage (`code-kata:progress`). The header counts what is solved.
 - **On your account**: signed in at auth.phareim.no (the «Logg inn» link in the header, which becomes your name),
   the progress is kept on your account too and follows you to another browser (below).
-- **Lekeplass** (`#/lekeplass`): the free playground, eight creatures in a list and no task (below).
+- **Lekeplass** (`#/lekeplass`): the free playground, eight monsters in a list and no task (below).
 - **Editor**: CodeMirror 6 with JavaScript highlighting, bracket matching, search and undo, and autocomplete as you
-  type (Tab or Enter): the code's own names, the roots (`head`, `items`, `root` …), `Ting`, `vis` and the items'
+  type (Tab or Enter): the code's own names, the roots (`head`, `items`, `root` …), `Monster`, `vis` and the items'
   letters, keywords and snippets, the runner's globals with their members, and common members after any other dot.
 - **Run** with «Kjør» or Cmd/Ctrl + Enter. Output is printed the way Node prints it (`{ a: 1 }`, `[ 1, 'x' ]`,
   `Map(1) { 'a' => 1 }`). An uncaught error shows its line and marks it in the editor.
 
 ## The stage
 
-The creatures stand on the stage above the code. They are the task's items, each a `Ting` (a class the code can see
+The monsters stand on the stage above the code. They are the task's items, each a `Monster` (a class the code can see
 and change, at the top of the objects pane), held by named globals, the roots. Each root gets a panel drawn by its
 shape:
 
@@ -48,32 +48,38 @@ shape:
 | anything else | `name = value` |
 
 - An item appears once on the stage; a second panel that holds it shows its letter. Items no panel draws come last,
-  dimmed when no root reaches them. One token per item across the panels, so a creature glides (and hops, if it goes
+  dimmed when no root reaches them. One token per item across the panels, so a monster glides (and hops, if it goes
   far) from where it was to where it is, even from one panel to another.
 - An item's `shape` picks its creature: `blob` (the default), `ghost`, `cat` or `bot`. `color` is a palette name
   (`pink`, `cyan`, `gold`, `lime`, `violet`, `orange`, `red`, `teal`) or any CSS colour.
+- A blob with no `shape` of its own gets a look from its letter and its value when it first shows (`blobLook` in
+  `src/stage/creatures.ts`): the same face on all of them, with a dome or a lower head with horns, an antenna, a
+  sprout, a tuft or ears, and drippy, two-footed or round feet, now and then spots. About one in eleven stands out (a
+  gold crown, a gold antenna, one big eye). The look is the stage's alone: it is not in the item's data, a given
+  `shape` wins, a disc on a peg is the plain blob, and a blob keeps its look while the world is the same (a value
+  changing in a run doesn't change it; «Nye» or opening a task draws afresh).
 - **`vis()`** takes a snapshot. After the run the stage plays the snapshots, then the end, with a frame counter;
   «Hopp over» skips to the end and the speed button plays at 1x, 2x, 4x or 0,5x (remembered per browser). Strings
   and numbers in the call make the snapshot's caption, items (or arrays of them) light up gold:
   `vis('bytter', items[i], items[i + 1])`. At most 240 per run; a long run plays faster.
 - A root with the `pointer` view (`slow`, `fast`, `guest` …) is a flag over the item it names, not a panel of its own.
 - The objects pane writes the roots and the items as code, in slot order: `head = D`,
-  `A = Ting { value: 7, color: 'pink', next: C }`. Pointing at an item lights it up everywhere.
+  `A = Monster { value: 7, color: 'pink', next: C }`. Pointing at an item lights it up everywhere.
 - Letters are memory slots: A is the first item made, B the second. Items the code makes and links in (from a root,
-  along `next`/`prev`/`left`/`right`/`parent`, or in an array of Ting) get the next letters. `A.next = C` works;
+  along `next`/`prev`/`left`/`right`/`parent`, or in an array of Monster) get the next letters. `A.next = C` works;
   `A = …` throws, because the letter names the item, not a variable.
 
 In a task, every run starts from the task's items as they started (the same until «Nye» rolls new ones), so a run
 can be tried again and again. In the playground each run starts from where the last one left the items, «Nullstill»
 goes back and «Nye» makes eight new ones.
 
-### The Ting class
+### The Monster class
 
 The class the items are made of stands at the top of the objects pane. A task brings the class its shape needs
 (`next` for a list, `left`/`right` for a tree, `neighbors` for a graph):
 
 ```js
-class Ting {
+class Monster {
   value = 0
   color = 'pink'
   next = null
@@ -83,9 +89,15 @@ class Ting {
 
 Add a field and press «Bruk» (or Cmd/Ctrl + Enter in the class): every item gets it at its default. In the
 playground, taking a field out takes it off every item. Methods in the class work on every item, and
-`new Ting({ value: 5, color: 'gold', next: head })` makes a new one in the code. A `value`, `color` or `shape` that
+`new Monster({ value: 5, color: 'gold', next: head })` makes a new one in the code. A `value`, `color` or `shape` that
 comes from a getter is drawn like a field. In a task the class folds to a one-line summary
-(`class Ting { value, color, next }`) unless the task is about the class or the visitor has changed it.
+(`class Monster { value, color, next }`) unless the task is about the class or the visitor has changed it.
+
+Until 2026-10-23 the class was `Ting` (and the creatures «ting»), and visitors have code and classes saved from then.
+The worker builds the items from the class the class editor declares, `Monster`, or else `Ting`, and gives the other
+name to the same class as a global (`classNames()` in `worker.js`), so `new Ting(…)` keeps working and code that
+declares its own `Ting` keeps its own. The playground's unchanged old class (`OLD_CLASSES` in `src/starter.ts`) gives
+way to the new one. The storage keys (`code-kata:ting`, the `ting` field of a task's progress) keep their names.
 
 ## How code runs
 
@@ -97,8 +109,8 @@ comes from a getter is drawn like a field. In a task the class folds to a one-li
 - The code is the body of an async function in strict mode, so `await` works at the top level. A run ends when the
   code has returned and no `setTimeout`/`setInterval` is left, or at an uncaught error.
 - The class and the code run as one source: the class, a line that builds the items from it, then the code. So
-  `Ting` in the code is the class the items are made of, and an error's line is placed back in the editor it came
-  from (`linje 3` or `Ting linje 4`). A task that asks for functions gets a last line that returns them.
+  `Monster` in the code is the class the items are made of, and an error's line is placed back in the editor it came
+  from (`linje 3` or `Monster linje 4`). A task that asks for functions gets a last line that returns them.
 - The items go in and out as data (`src/world/world.ts`, and the comment at the top of the world section in
   `worker.js`): each property is another item by slot, an array of items, a value that survives a structured clone,
   or, for a function or a symbol, only its text.
@@ -146,8 +158,8 @@ A task is an object in one of the topic files in `src/tasks/` (`types.ts` has th
   starting with "- " make a list), and two or more `hints`, from a nudge to nearly the answer.
 - `world(random)`: the items, from the builders in `src/tasks/build.ts` (`listWorld`, `arrayWorld`, `bstWorld`,
   `treeWorld`, `graphWorld`, `makeWorld`), with the seeded `random` it gets.
-- `ting`: the class (`src/tasks/classes.ts`), when the items aren't a list.
-- `scaffold`: a skeleton of the answer, behind hint 1's button, and `solution` (and `solutionTing` when the task is
+- `monster`: the class (`src/tasks/classes.ts`), when the items aren't a list.
+- `scaffold`: a skeleton of the answer, behind hint 1's button, and `solution` (and `solutionMonster` when the task is
   about the class). The editor opens with less (`src/tasks/opening.ts`): a comment that names the roots, and, for a
   task with `exports`, the scaffold without their declarations (a declaration runs from `function name` or
   `class Name` at column 0 to a `}` at column 0); a class task keeps its whole scaffold. `opening` overrides the code
@@ -171,7 +183,7 @@ the built site in Chrome and WebKit, which also covers the checks as minified so
 - `src/app/`: the bank (`bank.ts`), progress and its sync with the account (`progress.ts`), the merge the page and
   the Worker share (`merge.ts`), the success effect (`celebrate.ts`), task text (`text.ts`).
 - `src/tasks/`: the task bank: one file per topic, `index.ts` (the order they are numbered in), `build.ts`
-  (start worlds), `classes.ts` (the Ting classes), `opening.ts` (what the editor opens with), `types.ts`.
+  (start worlds), `classes.ts` (the Monster classes), `opening.ts` (what the editor opens with), `types.ts`.
 - `src/stage/`: the stage (`stage.ts`: panels, views, tokens, glides) and the creatures (`creatures.ts`).
 - `src/world/world.ts`: the items' data, the palette, letters, random sets, walking a list, what the roots reach.
 - `src/world/objects.ts`: the objects pane.

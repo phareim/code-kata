@@ -1,5 +1,5 @@
 import { arrayWorld, at, int, makeWorld, PALETTE, pick, shuffled, things, type Spec } from './build'
-import { PLAIN_TING } from './classes'
+import { PLAIN_MONSTER } from './classes'
 import type { Task } from './types'
 
 const descending = (row: Spec[]) => row.every((s, i) => i === 0 || (row[i - 1].value as number) >= (s.value as number))
@@ -18,19 +18,19 @@ export const tasks: Task[] = [
     title: 'Snu køen med en stabel',
     level: 'lett',
     topic: 'stabler',
-    text: `Tingene står i kø i \`queue\`: den første i arrayen er først i køen. Ved siden av står en tom stabel, \`stack\`, der den som legges på sist, tas av først.
+    text: `Monstrene står i kø i \`queue\`: det første i arrayen er først i køen. Ved siden av står en tom stabel, \`stack\`, der det som legges på sist, tas av først.
 
-Snu køen ved hjelp av stabelen: ta én og én fra fronten av køen (\`shift()\`) og legg dem på stabelen (\`push()\`). Ta dem så av stabelen igjen (\`pop()\`) og still dem bakerst i køen (\`push()\`).`,
+Snu køen ved hjelp av stabelen: ta ett og ett fra fronten av køen (\`shift()\`) og legg dem på stabelen (\`push()\`). Ta dem så av stabelen igjen (\`pop()\`) og still dem bakerst i køen (\`push()\`).`,
     hints: [
       '`while (queue.length) stack.push(queue.shift())` flytter hele køen over.',
-      'Den som ble lagt sist på stabelen, kommer først av. Det er det som snur rekkefølgen.',
-      'Kall `vis()` i løkkene for å se tingene vandre.',
+      'Det som ble lagt sist på stabelen, kommer først av. Det er det som snur rekkefølgen.',
+      'Kall `vis()` i løkkene for å se monstrene vandre.',
     ],
     world: (r) => {
       const items = things(r, 6)
       return makeWorld(items, { queue: items.map((_, i) => at(i)), stack: [] })
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `while (queue.length) {
   stack.push(queue.shift())
   vis()
@@ -49,8 +49,8 @@ while (stack.length) {
     check: (t) => {
       const want = t.before('queue').reverse()
       if (!Array.isArray(t.queue) || !Array.isArray(t.stack)) return '`queue` og `stack` skal fortsatt være arrayer.'
-      if (t.stack.length) return `Stabelen har ${t.stack.length} ting igjen; den skal være tom til slutt.`
-      if (t.queue.length !== want.length) return `Køen har ${t.queue.length} ting, men skal ha ${want.length}.`
+      if (t.stack.length) return `Stabelen har ${t.stack.length} monstre igjen; den skal være tom til slutt.`
+      if (t.queue.length !== want.length) return `Køen har ${t.queue.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.queue[i] !== want[i]) return `Plass ${i} i køen skal ha ${t.show(want[i])}, men har ${t.show(t.queue[i])}.`
       }
@@ -62,22 +62,22 @@ while (stack.length) {
     title: 'Hanois tårn',
     level: 'vanskelig',
     topic: 'stabler',
-    text: `Tårnet på \`pegs[0]\` skal flyttes til \`pegs[2]\`. Du kan flytte én ting av gangen, fra toppen av en pinne (\`pop()\`) til toppen av en annen (\`push()\`), og en ting kan aldri stå oppå en som er mindre. \`value\` er størrelsen.
+    text: `Tårnet på \`pegs[0]\` skal flyttes til \`pegs[2]\`. Du kan flytte ett monster av gangen, fra toppen av en pinne (\`pop()\`) til toppen av en annen (\`push()\`), og et monster kan aldri stå oppå et som er mindre. \`value\` er størrelsen.
 
 Skriv \`function hanoi(n, from, to, via, move)\` som flytter de \`n\` øverste fra \`from\` til \`to\`, og kaller \`move(from, to)\` for hvert flytt. Koden nederst kjører den på tårnet.`,
     hints: [
-      'Tenk deg at du kan flytte `n - 1` ting på én gang. Hvordan får du da den største over?',
-      'Flytt `n - 1` fra `from` til `via`, flytt den største fra `from` til `to`, og flytt `n - 1` fra `via` til `to`.',
+      'Tenk deg at du kan flytte `n - 1` monstre på én gang. Hvordan får du da det største over?',
+      'Flytt `n - 1` fra `from` til `via`, flytt det største fra `from` til `to`, og flytt `n - 1` fra `via` til `to`.',
       'Det er tre kall: `hanoi(n - 1, from, via, to, move)`, `move(from, to)` og `hanoi(n - 1, via, to, from, move)`. Stopp når `n === 0`.',
     ],
     world: () => {
       const items = [5, 4, 3, 2, 1].map((value, i) => ({ value, color: PALETTE[i] }))
       return makeWorld(items, { pegs: [items.map((_, i) => at(i)), [], []] })
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function hanoi(n, from, to, via, move) {
   if (n === 0) return
-  // Flytt n - 1 til via, den største til to, og n - 1 fra via til to
+  // Flytt n - 1 til via, det største til to, og n - 1 fra via til to
 }
 
 hanoi(pegs[0].length, pegs[0], pegs[2], pegs[1], (from, to) => {
@@ -112,9 +112,9 @@ hanoi(pegs[0].length, pegs[0], pegs[2], pegs[1], (from, to) => {
           if (to.length && to[to.length - 1] < disc) { bad = `${disc} ble lagt oppå ${to[to.length - 1]}`; return }
           to.push(from.pop()!)
         })
-        if (bad) return `Med ${n} ting: ${bad}.`
-        if (pegs[2].length !== n) return `Med ${n} ting står bare ${pegs[2].length} på målpinnen til slutt.`
-        if (moves !== 2 ** n - 1) return `Med ${n} ting brukte du ${moves} flytt; det går på ${2 ** n - 1}.`
+        if (bad) return `Med ${n} monstre: ${bad}.`
+        if (pegs[2].length !== n) return `Med ${n} monstre står bare ${pegs[2].length} på målpinnen til slutt.`
+        if (moves !== 2 ** n - 1) return `Med ${n} monstre brukte du ${moves} flytt; det går på ${2 ** n - 1}.`
       }
       const target = t.pegs?.[2]
       if (!Array.isArray(target) || target.length !== t.slots.length) return 'Tårnet på scenen står ikke på `pegs[2]` ennå.'
@@ -124,21 +124,21 @@ hanoi(pegs[0].length, pegs[0], pegs[2], pegs[1], (from, to) => {
   },
   {
     id: 'tre-pa-en-av',
-    title: 'Tre på, én av',
+    title: 'Tre på, ett av',
     level: 'lett',
     topic: 'stabler',
-    text: `Tre ting, A, B og C, står i \`items\`, og ved siden av står en tom stabel, \`stack\`. På en stabel legger du til øverst med \`push\` og tar bort øverst med \`pop\`.
+    text: `Tre monstre, A, B og C, står i \`items\`, og ved siden av står en tom stabel, \`stack\`. På en stabel legger du til øverst med \`push\` og tar bort øverst med \`pop\`.
 
-Legg A, B og C på stabelen, i den rekkefølgen, så de ikke lenger står i \`items\`. Ta så den øverste av stabelen igjen og legg den tilbake i \`items\`. Til slutt skal \`stack\` ha A og B, med B øverst, og \`items\` bare C.`,
+Legg A, B og C på stabelen, i den rekkefølgen, så de ikke lenger står i \`items\`. Ta så det øverste av stabelen igjen og legg det tilbake i \`items\`. Til slutt skal \`stack\` ha A og B, med B øverst, og \`items\` bare C.`,
     hints: [
-      '`stack.push(x)` legger `x` øverst. `items.shift()` tar den første ut av `items` og gir den tilbake.',
+      '`stack.push(x)` legger `x` øverst. `items.shift()` tar det første ut av `items` og gir det tilbake.',
       'Gjør `stack.push(items.shift())` tre ganger. Da ligger C øverst, og `items` er tom.',
-      '`stack.pop()` tar den øverste av og gir den tilbake. Legg den i `items` med `items.push(…)`.',
+      '`stack.pop()` tar det øverste av og gir det tilbake. Legg det i `items` med `items.push(…)`.',
     ],
     world: (r) => arrayWorld(things(r, 3), undefined, 'items', { stack: [] }),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `// 1. Flytt A, B og C fra items til stack, i den rekkefølgen
-// 2. Ta den øverste av stack og legg den tilbake i items
+// 2. Ta det øverste av stack og legg det tilbake i items
 console.log(items.length, stack.length)
 `,
     solution: `while (items.length) {
@@ -164,18 +164,18 @@ vis()
     title: 'Titt på toppen',
     level: 'lett',
     topic: 'stabler',
-    text: `Tingene i \`stack\` er en stabel: den øverste er den siste i arrayen, den som ble lagt på sist. Noen ganger vil du bare se hvem som ligger øverst, uten å ta den av.
+    text: `Monstrene i \`stack\` er en stabel: det øverste er det siste i arrayen, det som ble lagt på sist. Noen ganger vil du bare se hvem som ligger øverst, uten å ta det av.
 
-Skriv \`function peek(stack)\` som gir tilbake den øverste tingen uten å fjerne den. Er stabelen tom, gir den tilbake \`undefined\`. Stabelen skal ha de samme tingene etterpå som før.`,
+Skriv \`function peek(stack)\` som gir tilbake det øverste monsteret uten å fjerne det. Er stabelen tom, gir den tilbake \`undefined\`. Stabelen skal ha de samme monstrene etterpå som før.`,
     hints: [
-      'Den øverste er den siste i arrayen, på plass `stack.length - 1`.',
-      '`stack[stack.length - 1]` er tingen. `pop()` ville tatt den av, så den skal du ikke bruke her.',
+      'Det øverste er det siste i arrayen, på plass `stack.length - 1`.',
+      '`stack[stack.length - 1]` er monsteret. `pop()` ville tatt det av, så den skal du ikke bruke her.',
       'En tom array har ingen siste plass, og `stack[-1]` er `undefined`. Den samme linjen klarer altså også en tom stabel. `stack.at(-1)` gjør det samme.',
     ],
     world: (r) => arrayWorld(things(r, 5), undefined, 'stack'),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function peek(stack) {
-  // Hvem ligger øverst? Ikke ta den av.
+  // Hvem ligger øverst? Ikke ta det av.
 }
 
 console.log(peek(stack))
@@ -193,14 +193,14 @@ console.log(peek(stack))
       const peek = t.fn('peek')
       const cases: number[][] = [[], [4], [3, 8, 1], [5, 5]]
       for (const values of cases) {
-        const stack = values.map((value) => t.ting({ value }))
+        const stack = values.map((value) => t.monster({ value }))
         const copy = [...stack]
         const got = peek(stack)
         const shown = `[${values.join(', ')}]`
         if (!values.length) {
           if (got !== undefined) return `peek gav ${t.show(got?.value)} for en tom stabel, men skal gi undefined.`
         } else if (got !== copy[copy.length - 1]) {
-          return `peek(${shown}) gav ${got === undefined ? 'undefined' : t.show(got.value)}, men den øverste har ${values[values.length - 1]}.`
+          return `peek(${shown}) gav ${got === undefined ? 'undefined' : t.show(got.value)}, men det øverste har ${values[values.length - 1]}.`
         }
         if (stack.length !== copy.length || stack.some((x, i) => x !== copy[i])) return `peek(${shown}) endret stabelen. Den skal bare se, ikke ta bort noe.`
       }
@@ -212,11 +212,11 @@ console.log(peek(stack))
     title: 'Spøkelset vil bakerst',
     level: 'lett',
     topic: 'stabler',
-    text: `Tingene står i kø i \`queue\`: den første i arrayen er først i køen, og nye stiller seg bakerst. Spøkelset (\`shape: 'ghost'\`) står først, men vil heller stå bakerst.
+    text: `Monstrene står i kø i \`queue\`: det første i arrayen er først i køen, og nye stiller seg bakerst. Spøkelset (\`shape: 'ghost'\`) står først, men vil heller stå bakerst.
 
-Flytt spøkelset bakerst i køen. Bruk \`shift()\` til å ta ut den første, og \`push()\` til å stille den bakerst. De andre skal stå i samme rekkefølge som før.`,
+Flytt spøkelset bakerst i køen. Bruk \`shift()\` til å ta ut det første, og \`push()\` til å stille det bakerst. De andre skal stå i samme rekkefølge som før.`,
     hints: [
-      '`queue.shift()` tar den første ut av køen og gir den tilbake.',
+      '`queue.shift()` tar det første ut av køen og gir det tilbake.',
       '`queue.push(x)` stiller `x` bakerst i køen.',
       'Sett de to sammen: `queue.push(queue.shift())`.',
     ],
@@ -224,7 +224,7 @@ Flytt spøkelset bakerst i køen. Bruk \`shift()\` til å ta ut den første, og 
       const items = things(r, 6).map((spec, i) => ({ ...spec, shape: i === 0 ? 'ghost' : pick(r, ['blob', 'cat', 'bot']) }))
       return arrayWorld(items, undefined, 'queue')
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `// Spøkelset står først i køen. Send det bakerst.
 console.log(queue[0].shape)
 `,
@@ -235,7 +235,7 @@ vis()
       const before = t.before('queue')
       const want = [...before.slice(1), before[0]]
       if (!Array.isArray(t.queue)) return '`queue` er ikke en array lenger.'
-      if (t.queue.length !== want.length) return `Køen har ${t.queue.length} ting, men skal ha ${want.length}.`
+      if (t.queue.length !== want.length) return `Køen har ${t.queue.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.queue[i] !== want[i]) return `Plass ${i} i køen skal ha ${t.show(want[i])}, men har ${t.show(t.queue[i])}.`
       }
@@ -247,22 +247,22 @@ vis()
     title: 'Runde for runde',
     level: 'middels',
     topic: 'stabler',
-    text: `Tingene står i kø i \`queue\`, og hver har en \`value\` fra 1 til 4 som sier hvor mange runder den har igjen. Ved siden av står en tom array, \`removed\`, til de som blir ferdige.
+    text: `Monstrene står i kø i \`queue\`, og hvert har en \`value\` fra 1 til 4 som sier hvor mange runder det har igjen. Ved siden av står en tom array, \`removed\`, til de som blir ferdige.
 
-Gjør runder til køen er tom. I hver runde tar du den første ut av køen og trekker 1 fra \`value\`. Er \`value\` fortsatt over 0, stiller tingen seg bakerst i køen igjen. Er den 0, er den ferdig, og den legges bakerst i \`removed\`.
+Gjør runder til køen er tom. I hver runde tar du det første ut av køen og trekker 1 fra \`value\`. Er \`value\` fortsatt over 0, stiller monsteret seg bakerst i køen igjen. Er den 0, er monsteret ferdig, og det legges bakerst i \`removed\`.
 
-Til slutt er \`queue\` tom, og \`removed\` har alle tingene i den rekkefølgen de ble ferdige. Alle har da \`value\` 0.`,
+Til slutt er \`queue\` tom, og \`removed\` har alle monstrene i den rekkefølgen de ble ferdige. Alle har da \`value\` 0.`,
     hints: [
-      '`while (queue.length)` går så lenge køen har noe i seg. Ta den første med `const thing = queue.shift()`.',
+      '`while (queue.length)` går så lenge køen har noe i seg. Ta det første med `const thing = queue.shift()`.',
       'Trekk fra én med `thing.value--`.',
-      'Er `thing.value > 0`, stiller du den bakerst med `queue.push(thing)`. Ellers legger du den i `removed` med `removed.push(thing)`.',
+      'Er `thing.value > 0`, stiller du det bakerst med `queue.push(thing)`. Ellers legger du det i `removed` med `removed.push(thing)`.',
     ],
     world: (r) => {
       const values = shuffled(r, [1, 4, int(r, 1, 4), int(r, 1, 4), int(r, 1, 4), int(r, 1, 4)])
       const items = things(r, 6).map((spec, i) => ({ ...spec, value: values[i] }))
       return arrayWorld(items, undefined, 'queue', { removed: [] })
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `while (queue.length) {
   const thing = queue.shift()
   // Trekk 1 fra value. Bakerst i køen igjen, eller ferdig?
@@ -289,15 +289,15 @@ Til slutt er \`queue\` tom, og \`removed\` har alle tingene i den rekkefølgen d
         else want.push(i)
       }
       if (!Array.isArray(t.queue) || !Array.isArray(t.removed)) return '`queue` og `removed` skal fortsatt være arrayer.'
-      if (t.queue.length) return `Køen har ${t.queue.length} ting igjen; den skal være tom til slutt.`
-      if (t.removed.length !== want.length) return `\`removed\` har ${t.removed.length} ting, men skal ha ${want.length}.`
+      if (t.queue.length) return `Køen har ${t.queue.length} monstre igjen; den skal være tom til slutt.`
+      if (t.removed.length !== want.length) return `\`removed\` har ${t.removed.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.removed[i] !== live[want[i]]) {
           return `Som nummer ${i + 1} skal ${t.show(live[want[i]])} bli ferdig, men det ble ${t.show(t.removed[i])}.`
         }
       }
       for (const thing of live) {
-        if (thing.value !== 0) return `${t.show(thing)} har \`value\` ${t.show(thing.value)}, men skal ha 0 når den er ferdig.`
+        if (thing.value !== 0) return `${t.show(thing)} har \`value\` ${t.show(thing.value)}, men skal ha 0 når det er ferdig.`
       }
       return true
     },
@@ -308,19 +308,19 @@ Til slutt er \`queue\` tom, og \`removed\` har alle tingene i den rekkefølgen d
     title: 'Går parentesene opp?',
     level: 'middels',
     topic: 'stabler',
-    text: `Tingene i \`items\` er tegn i en rekke: violet er \`(\`, teal er \`)\`, pink er \`[\` og cyan er \`]\`. Rekka går opp hvis hver åpning blir lukket av riktig slags lukking, og de lukkes i motsatt rekkefølge av hvordan de ble åpnet: \`([])\` går opp, men \`([)]\` gjør det ikke.
+    text: `Monstrene i \`items\` er tegn i en rekke: violet er \`(\`, teal er \`)\`, pink er \`[\` og cyan er \`]\`. Rekka går opp hvis hver åpning blir lukket av riktig slags lukking, og de lukkes i motsatt rekkefølge av hvordan de ble åpnet: \`([])\` går opp, men \`([)]\` gjør det ikke.
 
 Skriv \`function balanced(items)\` som gir tilbake \`true\` hvis rekka går opp, ellers \`false\`. En tom rekke går opp. Du ser bare på \`color\`, og funksjonen skal ikke endre rekka. Koden nederst prøver den på \`items\`.`,
     hints: [
       'Den som åpnet sist, må lukkes først. Det er akkurat slik en stabel oppfører seg.',
       'Gå gjennom rekka. Kommer en åpning (violet eller pink), legger du på stabelen hvilken lukking du venter på (teal eller cyan). Kommer en lukking, må den være den samme som øverst på stabelen: `pop()` den og sammenlign.',
-      'Er stabelen tom når en lukking kommer, går ikke rekka opp. Er stabelen ikke tom etter siste ting, mangler det lukkinger. Ellers går den opp.',
+      'Er stabelen tom når en lukking kommer, går ikke rekka opp. Er stabelen ikke tom etter det siste monsteret, mangler det lukkinger. Ellers går den opp.',
     ],
     world: (r) => {
       const pattern = pick(r, ['([])()[]', '(()[]())', '[()][()]', '[[]]()()', '([)]()[]', '(()[]()[', ')(()[])]'])
       return arrayWorld(Array.from(pattern, (ch, i) => ({ value: i + 1, color: BRACKETS[ch] })))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function balanced(items) {
   const waiting = [] // lukkingene vi venter på
   for (const thing of items) {
@@ -370,7 +370,7 @@ console.log(balanced(items))
         ['[[]]]', false],
       ]
       for (const [text, want] of cases) {
-        const row = Array.from(text, (ch, i) => t.ting({ value: i + 1, color: colorOf[ch] }))
+        const row = Array.from(text, (ch, i) => t.monster({ value: i + 1, color: colorOf[ch] }))
         const got = balanced(row)
         const shown = text ? `«${text}»` : 'den tomme rekka'
         if (got !== want) return `balanced gav ${t.show(got)} for ${shown}, men svaret skal være ${want}.`
@@ -385,13 +385,13 @@ console.log(balanced(items))
     title: 'Sorter stabelen',
     level: 'middels',
     topic: 'stabler',
-    text: `Tingene i \`stack\` ligger i tilfeldig rekkefølge. Ved siden av står en tom stabel, \`spare\`. Sorter \`stack\` så den minste (\`value\`) ligger øverst, altså sist i arrayen, og den største nederst.
+    text: `Monstrene i \`stack\` ligger i tilfeldig rekkefølge. Ved siden av står en tom stabel, \`spare\`. Sorter \`stack\` så det minste (\`value\`) ligger øverst, altså sist i arrayen, og det største nederst.
 
-Bruk bare \`push\` og \`pop\` til å flytte tingene mellom de to stablene. Å titte på toppen, \`stack[stack.length - 1]\`, er greit. Ikke bruk \`sort\`, \`splice\` eller \`shift\`. Til slutt skal \`stack\` være sortert, og \`spare\` tom.`,
+Bruk bare \`push\` og \`pop\` til å flytte monstrene mellom de to stablene. Å titte på toppen, \`stack[stack.length - 1]\`, er greit. Ikke bruk \`sort\`, \`splice\` eller \`shift\`. Til slutt skal \`stack\` være sortert, og \`spare\` tom.`,
     hints: [
-      'La `spare` være sortert hele tiden, med den største øverst. Ta én ting om gangen fra `stack`.',
-      'Ta `const thing = stack.pop()`. Så lenge den øverste i `spare` er større enn `thing`, flytter du den tilbake til `stack`. Legg så `thing` på `spare`.',
-      'Når `stack` er tom, ligger alt sortert i `spare`, med den største øverst. Flytt alt tilbake til `stack` med `pop` og `push`: da snur rekkefølgen, og den minste havner øverst.',
+      'La `spare` være sortert hele tiden, med det største øverst. Ta ett monster om gangen fra `stack`.',
+      'Ta `const thing = stack.pop()`. Så lenge det øverste i `spare` er større enn `thing`, flytter du det tilbake til `stack`. Legg så `thing` på `spare`.',
+      'Når `stack` er tom, ligger alt sortert i `spare`, med det største øverst. Flytt alt tilbake til `stack` med `pop` og `push`: da snur rekkefølgen, og det minste havner øverst.',
     ],
     world: (r) => {
       let items = shuffled(r, things(r))
@@ -399,7 +399,7 @@ Bruk bare \`push\` og \`pop\` til å flytte tingene mellom de to stablene. Å ti
       if (descending(items)) items.reverse()
       return arrayWorld(items, undefined, 'stack', { spare: [] })
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     views: { spare: 'stack' },
     scaffold: `while (stack.length) {
   const thing = stack.pop()
@@ -424,11 +424,11 @@ while (spare.length) {
     check: (t) => {
       const want = t.before('stack').sort((a, b) => b.value - a.value)
       if (!Array.isArray(t.stack) || !Array.isArray(t.spare)) return '`stack` og `spare` skal fortsatt være arrayer.'
-      if (t.spare.length) return `\`spare\` har ${t.spare.length} ting igjen; den skal være tom til slutt.`
-      if (t.stack.length !== want.length) return `\`stack\` har ${t.stack.length} ting, men skal ha ${want.length}.`
+      if (t.spare.length) return `\`spare\` har ${t.spare.length} monstre igjen; den skal være tom til slutt.`
+      if (t.stack.length !== want.length) return `\`stack\` har ${t.stack.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.stack[i] !== want[i]) {
-          return `Plass ${i} i stabelen skal ha ${t.show(want[i])} (${want[i].value}), men har ${t.show(t.stack[i])} (${t.stack[i]?.value}). Den minste skal ligge sist, øverst.`
+          return `Plass ${i} i stabelen skal ha ${t.show(want[i])} (${want[i].value}), men har ${t.show(t.stack[i])} (${t.stack[i]?.value}). Det minste skal ligge sist, øverst.`
         }
       }
       return true
@@ -439,21 +439,21 @@ while (spare.length) {
     title: 'Stabelen som vet minst',
     level: 'middels',
     topic: 'stabler',
-    text: `Tingene i \`items\` trenger en stabel som alltid vet hvilken verdi som er minst. Skriv \`class MinStack\` med disse:
+    text: `Monstrene i \`items\` trenger en stabel som alltid vet hvilken verdi som er minst. Skriv \`class MinStack\` med disse:
 
 - \`push(x)\` legger \`x\` øverst
 - \`pop()\` tar den øverste av og gir den tilbake, eller \`undefined\` hvis stabelen er tom
 - \`min()\` gir den minste verdien som ligger i stabelen akkurat nå, eller \`undefined\` hvis den er tom
 - \`size\` er hvor mange det er i stabelen, en egenskap og ikke en metode: \`stack.size\`, skrevet som \`get size() { … }\`
 
-Det vanskelige er \`min()\`: den skal svare med én gang og ikke lete gjennom alle verdiene hver gang. Sjekken passer på det, og prøver tilfeldige rekker med \`push\` og \`pop\`, også med like verdier. Koden nederst legger verdiene til tingene i \`items\` på en \`MinStack\`.`,
+Det vanskelige er \`min()\`: den skal svare med én gang og ikke lete gjennom alle verdiene hver gang. Sjekken passer på det, og prøver tilfeldige rekker med \`push\` og \`pop\`, også med like verdier. Koden nederst legger verdiene til monstrene i \`items\` på en \`MinStack\`.`,
     hints: [
-      'Legger du en ting på toppen, er den nye minste enten den nye tingen eller den som var minst fra før. Og tar du den av igjen, er den minste tilbake til det den var da: det kan du ha husket.',
+      'Legger du en verdi på toppen, er den nye minste enten den nye verdien eller den som var minst fra før. Og tar du den av igjen, er den minste tilbake til det den var da: det kan du ha husket.',
       'Hold en parallell stabel, `mins`, der plass `i` husker den minste av de `i + 1` nederste. Ved `push(x)` legger du `Math.min(x, mins.at(-1))` på `mins` (eller `x` selv hvis den er tom).',
-      '`pop()` tar da av begge stablene, og `min()` er bare toppen av `mins`. Ingen løkker, så det går like fort med en million ting.',
+      '`pop()` tar da av begge stablene, og `min()` er bare toppen av `mins`. Ingen løkker, så det går like fort med en million verdier.',
     ],
     world: (r) => arrayWorld(things(r, 6)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `class MinStack {
   items = []
 
@@ -575,16 +575,16 @@ Skriv \`class TwoStackQueue\` med disse:
 - \`dequeue()\` tar den fremste ut og gir den tilbake, eller \`undefined\` hvis køen er tom
 - \`size\` er hvor mange som står i køen, en egenskap og ikke en metode: \`queue.size\`, skrevet som \`get size() { … }\`
 
-Bruk to arrayer som stabler, og bare \`push\` og \`pop\` på dem: \`shift\`, \`unshift\`, \`splice\` og \`reverse\` er forbudt. Sjekken prøver tilfeldige rekker med \`enqueue\` og \`dequeue\`, og passer også på at du ikke flytter alt fram og tilbake for hver ting. Koden nederst stiller tingene i \`items\` i køen.`,
+Bruk to arrayer som stabler, og bare \`push\` og \`pop\` på dem: \`shift\`, \`unshift\`, \`splice\` og \`reverse\` er forbudt. Sjekken prøver tilfeldige rekker med \`enqueue\` og \`dequeue\`, og passer også på at du ikke flytter alt fram og tilbake for hvert monster. Koden nederst stiller monstrene i \`items\` i køen.`,
     hints: [
       'En stabel snur rekkefølgen: det som legges inn først, kommer ut sist. Legger du alt over på en annen stabel, snur den igjen, og da kommer det første ut først.',
       '`inbox` tar imot alt fra `enqueue` med `push`. `dequeue` tar fra `outbox` med `pop`. Er `outbox` tom, flytter du først alt fra `inbox` over til `outbox`, med `pop` og `push`.',
-      'Flytt bare over når `outbox` er tom, aldri ellers. Da blir hver ting flyttet høyst én gang, og alt går fort. `size` er lengden på begge stablene lagt sammen.',
+      'Flytt bare over når `outbox` er tom, aldri ellers. Da blir hvert monster flyttet høyst én gang, og alt går fort. `size` er lengden på begge stablene lagt sammen.',
     ],
     world: (r) => arrayWorld(things(r, 6)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `class TwoStackQueue {
-  inbox = [] // nye ting havner her
+  inbox = [] // nye monstre havner her
   outbox = [] // herfra tar du ut
 
   enqueue(x) {
@@ -606,7 +606,7 @@ for (const thing of items) line.enqueue(thing)
 console.log(line.dequeue())
 `,
     solution: `class TwoStackQueue {
-  inbox = [] // nye ting havner her
+  inbox = [] // nye monstre havner her
   outbox = [] // herfra tar du ut
 
   enqueue(x) {
@@ -705,7 +705,7 @@ console.log(line.dequeue())
       const res = run(long)
       if (res.banned) return 'Du bruker `shift`, `unshift`, `splice` eller `reverse`. Her er bare `push` og `pop` lov, på to arrayer.'
       if (res.calls > 6 * long.length + 20) {
-        return `Med 600 ting inn og 600 ut brukte køen ${res.calls} kall til push og pop. Flytt bare mellom stablene når outbox er tom, så blir hver ting flyttet høyst én gang.`
+        return `Med 600 monstre inn og 600 ut brukte køen ${res.calls} kall til push og pop. Flytt bare mellom stablene når outbox er tom, så blir hvert monster flyttet høyst én gang.`
       }
       return true
     },
@@ -716,16 +716,16 @@ console.log(line.dequeue())
     title: 'Neste som er større',
     level: 'middels',
     topic: 'stabler',
-    text: `Hver ting i \`items\` vil vite hvem som er den første større tingen til høyre for den. Skriv \`function nextGreater(items)\` som gir tilbake en ny array med like mange tall: for hver plass \`value\` til den første tingen lenger til høyre som har større \`value\`, eller \`-1\` hvis ingen er større. Like verdier regnes ikke som større.
+    text: `Hvert monster i \`items\` vil vite hvem som er det første større monsteret til høyre for det. Skriv \`function nextGreater(items)\` som gir tilbake en ny array med like mange tall: for hver plass \`value\` til det første monsteret lenger til høyre som har større \`value\`, eller \`-1\` hvis ingen er større. Like verdier regnes ikke som større.
 
-For verdiene 2, 7, 3, 5, 4, 6 er svaret 7, -1, 5, 6, 6, -1. Funksjonen skal ikke endre \`items\`. Det går an med én gjennomgang og en stabel, og sjekken prøver en lang rad, så det holder ikke å lete til høyre for hver eneste ting.`,
+For verdiene 2, 7, 3, 5, 4, 6 er svaret 7, -1, 5, 6, 6, -1. Funksjonen skal ikke endre \`items\`. Det går an med én gjennomgang og en stabel, og sjekken prøver en lang rad, så det holder ikke å lete til høyre for hvert eneste monster.`,
     hints: [
-      'Gå fra venstre mot høyre, og la en stabel holde plassene som fortsatt venter på en større ting.',
-      'Kommer en ny ting, er den svaret for alle på stabelen som er mindre enn den: `pop` dem og skriv `result[plass] = items[i].value`.',
-      'Legg så plassen til den nye tingen på stabelen. De som er igjen når løkka er ferdig, får `-1`: fyll `result` med `-1` på forhånd.',
+      'Gå fra venstre mot høyre, og la en stabel holde plassene som fortsatt venter på et større monster.',
+      'Kommer et nytt monster, er det svaret for alle på stabelen som er mindre enn det: `pop` dem og skriv `result[plass] = items[i].value`.',
+      'Legg så plassen til det nye monsteret på stabelen. De som er igjen når løkka er ferdig, får `-1`: fyll `result` med `-1` på forhånd.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function nextGreater(items) {
   const result = items.map(() => -1)
   const waiting = [] // plassene som venter på en større
@@ -762,7 +762,7 @@ console.log(nextGreater(items))
         })
       const cases: number[][] = [[], [5], [1, 2, 3, 4], [4, 3, 2, 1], [2, 7, 3, 5, 4, 6], [3, 3, 3], [5, 1, 5, 1, 6], [1, 3, 2, 4, 2]]
       for (const values of cases) {
-        const row = values.map((value) => t.ting({ value }))
+        const row = values.map((value) => t.monster({ value }))
         const got = nextGreater(row)
         const want = expected(values)
         if (!Array.isArray(got) || got.length !== want.length || got.some((g: unknown, i: number) => g !== want[i])) {
@@ -774,15 +774,15 @@ console.log(nextGreater(items))
       const n = 3000
       let reads = 0
       const falling = Array.from({ length: n }, (_, i) => {
-        const o = t.ting({ value: 0 })
+        const o = t.monster({ value: 0 })
         Object.defineProperty(o, 'value', { get() { reads++; return n - i } })
         return o
       })
       const got = nextGreater(falling)
       if (reads > 12 * n) {
-        return `nextGreater så på verdiene ${reads} ganger blant ${n} ting. Med en stabel og én gjennomgang holder det med noen få per ting.`
+        return `nextGreater så på verdiene ${reads} ganger blant ${n} monstre. Med en stabel og én gjennomgang holder det med noen få per monster.`
       }
-      if (!Array.isArray(got) || got.length !== n || got.some((g: unknown) => g !== -1)) return 'I en rad som bare synker, er ingen ting etterfulgt av en større. Svaret skal være -1 for alle.'
+      if (!Array.isArray(got) || got.length !== n || got.some((g: unknown) => g !== -1)) return 'I en rad som bare synker, er ingen monstre etterfulgt av et større. Svaret skal være -1 for alle.'
       return true
     },
     source: 'https://en.wikipedia.org/wiki/All_nearest_smaller_values',
@@ -801,7 +801,7 @@ Skriv \`function solve(move)\` som kaller \`move(from, to)\` med pinnenummer 0, 
       'Til slutt skal de to minste fra pinne 1 over på den største. Det er det samme tricket baklengs, med pinne 0 som hjelper.',
     ],
     world: () => tower(3),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function solve(move) {
   // Skriv flyttene her, ett per linje: move(0, 2) flytter øverste skive fra pinne 0 til pinne 2
 }
@@ -881,7 +881,7 @@ Skriv \`function hanoiMoves(n)\` som gir tilbake det minste antallet flytt for \
       'Skriv det som en rekursiv funksjon som stopper på `n === 0`. Eller regn ut at svaret alltid er `2 ** n - 1`.',
     ],
     world: () => tower(4),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function hanoiMoves(n) {
   if (n === 0) return 0
   // Hvor mange flytt går det på å flytte n - 1 skiver, én skive og så n - 1 skiver igjen?
@@ -925,7 +925,7 @@ Skriv \`function neighborHanoi(n, move)\` som flytter et tårn på \`n\` skiver 
       const items = [4, 3, 2, 1].map((value, i) => ({ value, color: PALETTE[i + 3] }))
       return makeWorld(items, { pegs: [items.map((_, i) => at(i)), [], []] })
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function neighborHanoi(n, move) {
   // Flytt n skiver fra 0 til 2, bare mellom naboer
 }

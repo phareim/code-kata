@@ -78,7 +78,7 @@ function encode(key: string, v: unknown): Prop {
 /** A World from specs: an item's props and the roots may hold at(slot), arrays of them, and plain values. */
 export function makeWorld(items: Spec[], roots: Record<string, unknown>): World {
   return {
-    items: items.map((spec) => ({ cls: 'Ting', props: Object.entries(spec).map(([k, v]) => encode(k, v)) })),
+    items: items.map((spec) => ({ cls: 'Monster', props: Object.entries(spec).map(([k, v]) => encode(k, v)) })),
     roots: Object.entries(roots).map(([k, v]) => encode(k, v)),
   }
 }

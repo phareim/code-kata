@@ -1,5 +1,5 @@
 import { arrayWorld, at, distinct, int, makeWorld, PALETTE, pick, shuffled, things } from './build'
-import { PLAIN_TING } from './classes'
+import { PLAIN_MONSTER } from './classes'
 import type { Task } from './types'
 
 export const tasks: Task[] = [
@@ -8,16 +8,16 @@ export const tasks: Task[] = [
     title: 'Binærsøk',
     level: 'middels',
     topic: 'klassikere',
-    text: `Tingene i \`items\` står sortert etter \`value\`, minst først. Skriv \`function find(items, value)\` som gir tilbake plassen til tingen med den verdien, eller \`-1\` hvis ingen har den.
+    text: `Monstrene i \`items\` står sortert etter \`value\`, minst først. Skriv \`function find(items, value)\` som gir tilbake plassen til monsteret med den verdien, eller \`-1\` hvis ingen har den.
 
-Del på midten hver gang: se på tingen i midten, og let videre bare i den halvdelen verdien må være i. Sjekken prøver med 1000 ting, og da skal du klare deg med rundt ti titt.`,
+Del på midten hver gang: se på monsteret i midten, og let videre bare i den halvdelen verdien må være i. Sjekken prøver med 1000 monstre, og da skal du klare deg med rundt ti titt.`,
     hints: [
       'Hold styr på et område med `lo = 0` og `hi = items.length - 1`.',
       'Så lenge `lo <= hi`: se på `mid = Math.floor((lo + hi) / 2)`. Er verdien der, er du ferdig.',
       'Er `items[mid].value` for liten, let videre fra `mid + 1`; er den for stor, let til `mid - 1`.',
     ],
     world: (r) => arrayWorld(things(r).sort((a, b) => (a.value as number) - (b.value as number))),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function find(items, value) {
   let lo = 0
   let hi = items.length - 1
@@ -46,7 +46,7 @@ console.log(find(items, items[3].value))
     check: (t) => {
       const find = t.fn('find')
       for (const n of [1, 2, 7, 100, 1000]) {
-        const sorted = Array.from({ length: n }, (_, i) => t.ting({ value: i * 3 + 1 }))
+        const sorted = Array.from({ length: n }, (_, i) => t.monster({ value: i * 3 + 1 }))
         // The places find looks at, each counted once.
         const looked = new Set<string>()
         const watched = new Proxy(sorted, {
@@ -58,10 +58,10 @@ console.log(find(items, items[3].value))
         for (const i of [0, n - 1, Math.floor(n / 2), Math.floor(n / 3)]) {
           looked.clear()
           const got = find(watched, i * 3 + 1)
-          if (got !== i) return `find gav ${t.show(got)} for verdien ${i * 3 + 1} blant ${n} ting; den står på plass ${i}.`
+          if (got !== i) return `find gav ${t.show(got)} for verdien ${i * 3 + 1} blant ${n} monstre; den står på plass ${i}.`
           const most = Math.ceil(Math.log2(n + 1)) + 2
           if (n >= 100 && looked.size > most) {
-            return `find så på ${looked.size} ting blant ${n}. Med binærsøk holder det med rundt ${Math.ceil(Math.log2(n))}.`
+            return `find så på ${looked.size} monstre blant ${n}. Med binærsøk holder det med rundt ${Math.ceil(Math.log2(n))}.`
           }
         }
         const missing = find(watched, 2)
@@ -77,16 +77,16 @@ console.log(find(items, items[3].value))
     title: 'To som blir målet',
     level: 'lett',
     topic: 'klassikere',
-    text: `Skriv \`function twoSum(items, target)\` som finner to forskjellige ting i \`items\` der verdiene til sammen blir \`target\`. Gi tilbake plassene deres som \`[i, j]\` med \`i < j\`, eller \`null\` hvis ingen to passer.
+    text: `Skriv \`function twoSum(items, target)\` som finner to forskjellige monstre i \`items\` der verdiene til sammen blir \`target\`. Gi tilbake plassene deres som \`[i, j]\` med \`i < j\`, eller \`null\` hvis ingen to passer.
 
 To løkker inni hverandre virker. Med en \`Map\` over verdiene du har sett, holder det å gå gjennom raden én gang.`,
     hints: [
-      'For hver ting på plass `j`: hvilken verdi måtte en tidligere ting ha hatt? `target - items[j].value`.',
+      'For hvert monster på plass `j`: hvilken verdi måtte et tidligere monster ha hatt? `target - items[j].value`.',
       'Husk plassen til hver verdi du har sett i en `Map`: `seen.set(value, j)`.',
       'Finnes den verdien du mangler i `seen`, er svaret `[seen.get(need), j]`.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function twoSum(items, target) {
   // Finn i og j der verdiene blir target til sammen
   return null
@@ -118,7 +118,7 @@ console.log(twoSum(items, items[1].value + items[4].value))
         [[], 3, false],
       ]
       for (const [values, target, exists] of cases) {
-        const got = twoSum(values.map((value) => t.ting({ value })), target)
+        const got = twoSum(values.map((value) => t.monster({ value })), target)
         if (!exists) {
           if (got !== null) return `For ${t.show(values)} og målet ${target} finnes ingen to; twoSum skal gi null, men gav ${t.show(got)}.`
           continue
@@ -137,14 +137,14 @@ console.log(twoSum(items, items[1].value + items[4].value))
     title: 'Kjøp lavt, selg høyt',
     level: 'lett',
     topic: 'klassikere',
-    text: `Verdiene i \`items\` er prisen på en ting, dag for dag. Du får kjøpe én gang og selge én gang, og salget må komme etter kjøpet. Skriv \`function bestProfit(items)\` som gir den største gevinsten du kan få, eller 0 hvis prisen bare går ned.`,
+    text: `Verdiene i \`items\` er prisen på et monster, dag for dag. Du får kjøpe én gang og selge én gang, og salget må komme etter kjøpet. Skriv \`function bestProfit(items)\` som gir den største gevinsten du kan få, eller 0 hvis prisen bare går ned.`,
     hints: [
       'Gå gjennom dagene og husk den laveste prisen så langt.',
       'Hver dag: hvor mye ville du tjent på å selge i dag, kjøpt på den billigste dagen før?',
       'Ta vare på den største gevinsten du har sett. Start på 0.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function bestProfit(items) {
   let lowest = Infinity
   let best = 0
@@ -176,7 +176,7 @@ console.log(bestProfit(items))
       }
       const rows = [[7, 1, 5, 3, 6, 4], [7, 6, 4, 3, 1], [2, 4, 1, 9], [5], [], [3, 3, 3], [10, 1, 2, 30, 4, 40]]
       for (const values of rows) {
-        const got = bestProfit(values.map((value) => t.ting({ value })))
+        const got = bestProfit(values.map((value) => t.monster({ value })))
         if (got !== want(values)) return `For prisene ${t.show(values)} gav bestProfit ${t.show(got)}, men det beste er ${want(values)}.`
       }
       return true
@@ -188,12 +188,12 @@ console.log(bestProfit(items))
     title: 'Den som mangler',
     level: 'lett',
     topic: 'klassikere',
-    text: `Tingene skulle hatt verdiene 1 til 9, én hver, men én av dem er borte. Skriv \`function missing(items)\` som finner ut hvilken verdi som mangler.
+    text: `Monstrene skulle hatt verdiene 1 til 9, én hver, men ett av dem er borte. Skriv \`function missing(items)\` som finner ut hvilken verdi som mangler.
 
 Raden er ikke sortert. Lengden forteller hvor mange det skulle vært: én mer enn det er.`,
     hints: [
       'Summen av 1 til n er `n * (n + 1) / 2`.',
-      'Her er n én mer enn antall ting: `items.length + 1`.',
+      'Her er n én mer enn antall monstre: `items.length + 1`.',
       'Trekk fra summen av verdiene som er der. Det som blir igjen, mangler.',
     ],
     world: (r) => {
@@ -201,7 +201,7 @@ Raden er ikke sortert. Lengden forteller hvor mange det skulle vært: én mer en
       const values = shuffled(r, [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((v) => v !== gone))
       return arrayWorld(values.map((value) => ({ value, color: pick(r, PALETTE) })))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function missing(items) {
   // Hvilken verdi fra 1 til items.length + 1 er borte?
   return 0
@@ -224,7 +224,7 @@ console.log(missing(items))
       for (const n of [9, 5, 2, 12]) {
         for (let gone = 1; gone <= n; gone++) {
           const values = t.shuffle(Array.from({ length: n }, (_, i) => i + 1).filter((v) => v !== gone))
-          const got = missing(values.map((value) => t.ting({ value })))
+          const got = missing(values.map((value) => t.monster({ value })))
           if (got !== gone) return `For ${t.show(values)} gav missing ${t.show(got)}, men det er ${gone} som mangler.`
         }
       }
@@ -236,7 +236,7 @@ console.log(missing(items))
     title: 'Balansepunktet',
     level: 'lett',
     topic: 'klassikere',
-    text: `Skriv \`function balance(items)\` som finner plassen der summen av verdiene til venstre er like stor som summen til høyre. Tingen på plassen selv teller ikke med på noen av sidene.
+    text: `Skriv \`function balance(items)\` som finner plassen der summen av verdiene til venstre er like stor som summen til høyre. Monsteret på plassen selv teller ikke med på noen av sidene.
 
 Gi tilbake den første slike plassen, eller \`-1\` hvis det ikke finnes noen. For den første plassen er summen til venstre 0.`,
     hints: [
@@ -254,7 +254,7 @@ Gi tilbake den første slike plassen, eller \`-1\` hvis det ikke finnes noen. Fo
       const values = [...left, int(r, 1, 99), ...right]
       return arrayWorld(values.map((value) => ({ value, color: pick(r, PALETTE) })))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function balance(items) {
   // Finn plassen der venstre og høyre er like tunge
   return -1
@@ -287,7 +287,7 @@ console.log(balance(items))
       }
       const rows = [[1, 7, 3, 6, 5, 6], [1, 2, 3], [2, 1, -1], [5], [], [0, 0, 0], [3, 1, 2, 9, 6]]
       for (const values of rows) {
-        const got = balance(values.map((value) => t.ting({ value })))
+        const got = balance(values.map((value) => t.monster({ value })))
         if (got !== want(values)) return `For ${t.show(values)} gav balance ${t.show(got)}, men svaret er ${want(values)}.`
       }
       return true
@@ -299,16 +299,16 @@ console.log(balance(items))
     title: 'Tre på rad',
     level: 'lett',
     topic: 'klassikere',
-    text: `Skriv \`function bestThree(items)\` som finner den største summen av tre ting som står ved siden av hverandre i \`items\`. Har raden færre enn tre ting, skal den gi \`null\`.
+    text: `Skriv \`function bestThree(items)\` som finner den største summen av tre monstre som står ved siden av hverandre i \`items\`. Har raden færre enn tre monstre, skal den gi \`null\`.
 
-Tips: når vinduet på tre flytter seg ett hakk, går én ting ut og én kommer inn.`,
+Tips: når vinduet på tre flytter seg ett hakk, går ett monster ut og ett kommer inn.`,
     hints: [
       'Regn ut summen av de tre første. Det er det beste så langt.',
       'For hver neste plass `i`: legg til `items[i].value` og trekk fra `items[i - 3].value`.',
       'Hold på den største summen du har sett.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function bestThree(items) {
   if (items.length < 3) return null
   // Flytt et vindu på tre gjennom raden
@@ -341,7 +341,7 @@ console.log(bestThree(items))
       }
       const rows = [[1, 9, 9, 9, 1], [5, 1, 1, 1, 6, 6, 6], [4, 4, 4], [10, 20], [], [3, 50, 2, 1, 70, 1]]
       for (const values of rows) {
-        const got = bestThree(values.map((value) => t.ting({ value })))
+        const got = bestThree(values.map((value) => t.monster({ value })))
         if (got !== want(values)) return `For ${t.show(values)} gav bestThree ${t.show(got)}, men svaret er ${t.show(want(values))}.`
       }
       return true
@@ -352,7 +352,7 @@ console.log(bestThree(items))
     title: 'FizzBuzz i farger',
     level: 'lett',
     topic: 'klassikere',
-    text: `Den gamle leken, med farger: gå gjennom \`items\` og gi tingene ny farge etter verdien:
+    text: `Den gamle leken, med farger: gå gjennom \`items\` og gi monstrene ny farge etter verdien:
 - delelig med både 3 og 5: \`'gold'\`
 - bare med 3: \`'pink'\`
 - bare med 5: \`'cyan'\`
@@ -372,7 +372,7 @@ Rekkefølgen i \`items\` skal være som før.`,
       const values = shuffled(r, [...threes, ...fives, fifteen, ...others])
       return arrayWorld(values.map((value) => ({ value, color: 'teal' })))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `for (const thing of items) {
   // Gi thing riktig farge
 }
@@ -402,21 +402,21 @@ Rekkefølgen i \`items\` skal være som før.`,
     title: 'Josefus-ringen',
     level: 'middels',
     topic: 'klassikere',
-    text: `Tingene står i ring i \`queue\`, og teller: én, to, tre. Den som sier tre, går ut av ringen og over i \`removed\`. Tellingen fortsetter fra den neste, og slik går det til bare én er igjen i \`queue\`.
+    text: `Monstrene står i ring i \`queue\`, og teller: én, to, tre. Det som sier tre, går ut av ringen og over i \`removed\`. Tellingen fortsetter fra det neste, og slik går det til bare ett er igjen i \`queue\`.
 
-Bruk køen som en ring: den som ikke går ut, stilles bakerst med \`queue.push(queue.shift())\`.`,
+Bruk køen som en ring: det som ikke går ut, stilles bakerst med \`queue.push(queue.shift())\`.`,
     hints: [
-      'Så lenge det er mer enn én i køen: flytt de to første bakerst, én om gangen.',
-      'Den som nå står først, er nummer tre: `removed.push(queue.shift())`.',
-      'Kall `vis()` etter hver som går ut, så ser du ringen krympe.',
+      'Så lenge det er mer enn ett i køen: flytt de to første bakerst, ett om gangen.',
+      'Det som nå står først, er nummer tre: `removed.push(queue.shift())`.',
+      'Kall `vis()` hver gang et monster går ut, så ser du ringen krympe.',
     ],
     world: (r) => {
       const items = things(r)
       return makeWorld(items, { queue: items.map((_, i) => at(i)), removed: [] })
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `while (queue.length > 1) {
-  // Tell én, to, tre: de to første går bakerst, den tredje går ut
+  // Tell én, to, tre: de to første går bakerst, det tredje går ut
   break
 }
 `,
@@ -435,9 +435,9 @@ Bruk køen som en ring: den som ikke går ut, stilles bakerst med \`queue.push(q
         ring.push(ring.shift()!)
         want.push(ring.shift()!)
       }
-      if (!Array.isArray(t.queue) || t.queue.length !== 1) return `Det skal være én igjen i \`queue\`, men det er ${Array.isArray(t.queue) ? t.queue.length : t.show(t.queue)}.`
-      if (t.queue[0] !== ring[0]) return `Den som blir igjen, skal være ${t.show(ring[0])}, men det er ${t.show(t.queue[0])}.`
-      if (!Array.isArray(t.removed) || t.removed.length !== want.length) return `\`removed\` skal ha ${want.length} ting.`
+      if (!Array.isArray(t.queue) || t.queue.length !== 1) return `Det skal være ett igjen i \`queue\`, men det er ${Array.isArray(t.queue) ? t.queue.length : t.show(t.queue)}.`
+      if (t.queue[0] !== ring[0]) return `Det som blir igjen, skal være ${t.show(ring[0])}, men det er ${t.show(t.queue[0])}.`
+      if (!Array.isArray(t.removed) || t.removed.length !== want.length) return `\`removed\` skal ha ${want.length} monstre.`
       for (let i = 0; i < want.length; i++) {
         if (t.removed[i] !== want[i]) return `Nummer ${i + 1} ut skal være ${t.show(want[i])}, men er ${t.show(t.removed[i])}.`
       }
@@ -450,7 +450,7 @@ Bruk køen som en ring: den som ikke går ut, stilles bakerst med \`queue.push(q
     title: 'Flertallet',
     level: 'middels',
     topic: 'klassikere',
-    text: `Skriv \`function majority(items)\` som finner fargen som mer enn halvparten av tingene har, eller \`null\` hvis ingen farge har så mange.
+    text: `Skriv \`function majority(items)\` som finner fargen som mer enn halvparten av monstrene har, eller \`null\` hvis ingen farge har så mange.
 
 Det går med en \`Map\` som teller. Men det finnes en lur måte som klarer seg med én kandidat og én teller: Boyer og Moores avstemning.`,
     hints: [
@@ -464,7 +464,7 @@ Det går med en \`Map\` som teller. Men det finnes en lur måte som klarer seg m
       items.forEach((s, i) => { s.color = i < 4 ? winner : pick(r, PALETTE.filter((c) => c !== winner)) })
       return arrayWorld(shuffled(r, items))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function majority(items) {
   // Hvilken farge har mer enn halvparten?
   return null
@@ -498,7 +498,7 @@ console.log(majority(items))
         [['pink', 'cyan', 'cyan', 'gold', 'cyan', 'cyan'], 'cyan'],
       ]
       for (const [colors, want] of rows) {
-        const got = majority(colors.map((color, i) => t.ting({ value: i + 1, color })))
+        const got = majority(colors.map((color, i) => t.monster({ value: i + 1, color })))
         if (got !== want) return `For ${t.show(colors)} gav majority ${t.show(got)}, men svaret er ${t.show(want)}.`
       }
       return true
@@ -510,7 +510,7 @@ console.log(majority(items))
     title: 'Den gladeste strekningen',
     level: 'middels',
     topic: 'klassikere',
-    text: `Humøret til en ting er \`value - 50\`: over 50 er den glad, under er den sur. Skriv \`function happiest(items)\` som finner den største summen av humør du kan få fra tingene på en strekning der de står ved siden av hverandre. Strekningen må ha minst én ting.
+    text: `Humøret til et monster er \`value - 50\`: over 50 er det glad, under er det surt. Skriv \`function happiest(items)\` som finner den største summen av humør du kan få fra monstrene på en strekning der de står ved siden av hverandre. Strekningen må ha minst ett monster.
 
 Er alle sure, er svaret det minst sure humøret. En tom rad gir \`null\`.`,
     hints: [
@@ -519,7 +519,7 @@ Er alle sure, er svaret det minst sure humøret. En tom rad gir \`null\`.`,
       'Det beste svaret er den største av disse summene underveis (Kadanes algoritme).',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function happiest(items) {
   if (!items.length) return null
   // Finn den gladeste strekningen
@@ -559,7 +559,7 @@ console.log(happiest(items))
       }
       const rows = [[60, 40, 90, 10, 70], [10, 20, 30], [99], [], [55, 45, 55, 45, 99], [1, 99, 1, 99, 1], [50, 50]]
       for (const values of rows) {
-        const got = happiest(values.map((value) => t.ting({ value })))
+        const got = happiest(values.map((value) => t.monster({ value })))
         if (got !== want(values)) return `For verdiene ${t.show(values)} gav happiest ${t.show(got)}, men svaret er ${t.show(want(values))}.`
       }
       return true
@@ -573,14 +573,14 @@ console.log(happiest(items))
     topic: 'klassikere',
     text: `Skriv \`function shuffle(items)\` som stokker \`items\` på stedet, så hver mulige rekkefølge er like sannsynlig. Bruk \`Math.random()\`.
 
-Sjekken stokker tre ting mange tusen ganger og teller rekkefølgene. Det populære trikset \`items.sort(() => Math.random() - 0.5)\` er ikke rettferdig og blir avslørt. Bruk Fisher og Yates' metode.`,
+Sjekken stokker tre monstre mange tusen ganger og teller rekkefølgene. Det populære trikset \`items.sort(() => Math.random() - 0.5)\` er ikke rettferdig og blir avslørt. Bruk Fisher og Yates' metode.`,
     hints: [
       'Gå baklengs fra den siste plassen `i` ned til 1.',
       'Velg en tilfeldig plass `j` fra 0 til og med `i`: `Math.floor(Math.random() * (i + 1))`.',
       'Bytt `items[i]` og `items[j]`.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function shuffle(items) {
   // Stokk items rettferdig
 }
@@ -608,14 +608,14 @@ shuffle(items)
         counts.set(key, (counts.get(key) ?? 0) + 1)
       }
       for (const key of counts.keys()) {
-        if (key.length !== 3 || new Set(key).size !== 3) return 'shuffle skal bare flytte på tingene, ikke ta bort eller legge til.'
+        if (key.length !== 3 || new Set(key).size !== 3) return 'shuffle skal bare flytte på monstrene, ikke ta bort eller legge til.'
       }
       if (counts.size !== 6) return `Av 6 mulige rekkefølger kom bare ${counts.size} ut. Alle skal kunne skje.`
       for (const [key, n] of counts) {
         if (n < runs / 6 * 0.8 || n > runs / 6 * 1.2) return `Rekkefølgen ${key} kom ${n} ganger av ${runs}, men skulle kommet rundt ${runs / 6}. Stokkingen er ikke rettferdig.`
       }
       const before = t.before('items')
-      if (!Array.isArray(t.items) || t.items.length !== before.length || !before.every((n) => t.items.includes(n))) return '`items` skal ha de samme tingene etter stokkingen.'
+      if (!Array.isArray(t.items) || t.items.length !== before.length || !before.every((n) => t.items.includes(n))) return '`items` skal ha de samme monstrene etter stokkingen.'
       return true
     },
     source: 'https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle',
@@ -634,7 +634,7 @@ Over hver søyle står vannet like høyt som den laveste av de høyeste søylene
       'Med to pekere fra hver ende går det uten de to arrayene: flytt alltid fra den siden som har den laveste maksen.',
     ],
     world: (r) => arrayWorld(Array.from({ length: 8 }, () => ({ value: int(r, 1, 9), color: 'cyan' }))),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function rain(items) {
   // Hvor mye vann blir liggende?
   return 0
@@ -679,7 +679,7 @@ console.log(rain(items))
       }
       const rows = [[0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1], [4, 2, 0, 3, 2, 5], [1, 2, 3], [3, 2, 1], [5], [], [2, 0, 2], [5, 1, 1, 9, 1, 1, 5]]
       for (const values of rows) {
-        const got = rain(values.map((value) => t.ting({ value })))
+        const got = rain(values.map((value) => t.monster({ value })))
         if (got !== want(values)) return `For høydene ${t.show(values)} gav rain ${t.show(got)}, men det blir ${want(values)} ruter vann.`
       }
       return true
@@ -691,19 +691,19 @@ console.log(rain(items))
     title: 'Én fra strømmen',
     level: 'vanskelig',
     topic: 'klassikere',
-    text: `Tingene kommer én og én fra \`next()\`, som gir \`null\` når det ikke kommer flere. Ingen vet på forhånd hvor mange det blir. Skriv \`function pickOne(next)\` som velger én av dem, slik at alle har like stor sjanse, og som husker bare én kandidat om gangen.
+    text: `Monstrene kommer ett og ett fra \`next()\`, som gir \`null\` når det ikke kommer flere. Ingen vet på forhånd hvor mange det blir. Skriv \`function pickOne(next)\` som velger ett av dem, slik at alle har like stor sjanse, og som husker bare én kandidat om gangen.
 
 Sjekken kjører den mange tusen ganger på strømmer av ulik lengde og teller hvem som blir valgt.`,
     hints: [
-      'Den første tingen blir kandidat med en gang.',
-      'Ting nummer `i` (fra 1) skal ta over som kandidat med sjanse `1 / i`: `Math.random() < 1 / i`.',
-      'Da ender hver ting med sjanse `1 / n` til slutt (reservoir sampling).',
+      'Det første monsteret blir kandidat med en gang.',
+      'Monster nummer `i` (fra 1) skal ta over som kandidat med sjanse `1 / i`: `Math.random() < 1 / i`.',
+      'Da ender hvert monster med sjanse `1 / n` til slutt (reservoir sampling).',
     ],
     world: (r) => arrayWorld(things(r, 6)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function pickOne(next) {
   let chosen = null
-  // Les strømmen og velg én
+  // Les strømmen og velg ett
   return chosen
 }
 
@@ -729,7 +729,7 @@ console.log(pickOne(() => items[i++] ?? null))
       for (const n of [1, 2, 5]) {
         const counts = new Array(n).fill(0)
         const runs = 5000
-        const stream = Array.from({ length: n }, (_, j) => t.ting({ value: j + 1 }))
+        const stream = Array.from({ length: n }, (_, j) => t.monster({ value: j + 1 }))
         for (let k = 0; k < runs; k++) {
           let i = 0
           let ended = false
@@ -739,12 +739,12 @@ console.log(pickOne(() => items[i++] ?? null))
             return null
           })
           const at = stream.indexOf(got)
-          if (at < 0) return `Med ${n} ting i strømmen gav pickOne ${t.show(got)}, ikke en av tingene.`
+          if (at < 0) return `Med ${n} monstre i strømmen gav pickOne ${t.show(got)}, ikke ett av monstrene.`
           if (!ended) return 'pickOne må lese hele strømmen, til next() gir null.'
           counts[at]++
         }
         for (let j = 0; j < n; j++) {
-          if (counts[j] < runs / n * 0.85 || counts[j] > runs / n * 1.15) return `Med ${n} ting ble nummer ${j + 1} valgt ${counts[j]} ganger av ${runs}; det skulle vært rundt ${Math.round(runs / n)}.`
+          if (counts[j] < runs / n * 0.85 || counts[j] > runs / n * 1.15) return `Med ${n} monstre ble nummer ${j + 1} valgt ${counts[j]} ganger av ${runs}; det skulle vært rundt ${Math.round(runs / n)}.`
         }
       }
       return true
@@ -756,19 +756,19 @@ console.log(pickOne(() => items[i++] ?? null))
     title: 'Josefus uten å telle',
     level: 'vanskelig',
     topic: 'klassikere',
-    text: `I Josefus-ringen med \`n\` ting går annenhver ut: nummer 2 går først, så nummer 4, og så videre rundt og rundt til én står igjen. Skriv \`function survivor(n)\` som gir tilbake nummeret (fra 1) til den som står igjen.
+    text: `I Josefus-ringen med \`n\` monstre går annethvert ut: nummer 2 går først, så nummer 4, og så videre rundt og rundt til ett står igjen. Skriv \`function survivor(n)\` som gir tilbake nummeret (fra 1) til det som står igjen.
 
-Sjekken spør om ringer med opptil en milliard ting, så du kan ikke telle deg gjennom. Prøv små ringer for hånd, og se etter mønsteret.`,
+Sjekken spør om ringer med opptil en milliard monstre, så du kan ikke telle deg gjennom. Prøv små ringer for hånd, og se etter mønsteret.`,
     hints: [
       'Skriv opp svaret for n = 1 til 16. Hva skjer hver gang n er en potens av 2?',
-      'Når n er en potens av 2, står nummer 1 igjen. Er n litt større, må `n - 2^m` ting ut først (der `2^m` er den største toerpotensen som ikke er større enn n), og da er det den neste i ringen som står for tur.',
+      'Når n er en potens av 2, står nummer 1 igjen. Er n litt større, må `n - 2^m` monstre ut først (der `2^m` er den største toerpotensen som ikke er større enn n), og da er det det neste i ringen som står for tur.',
       'Svaret er `2 * (n - 2^m) + 1`. Den største toerpotensen finner du med en løkke som dobler, eller med `2 ** Math.floor(Math.log2(n))`.',
     ],
     world: (r) => {
       const items = things(r, 7)
       return makeWorld(items, { queue: items.map((_, i) => at(i)) })
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function survivor(n) {
   // Hvem står igjen når annenhver går ut?
   return 1

@@ -10,7 +10,7 @@ const and = (names: string[]) => (names.length < 2 ? names.join('') : `${names.s
 
 const lines = new WeakMap<Task, string>()
 
-/** «// Variabelen head er klar til bruk, og tingene heter A–H.» Every seed gives a task the same roots. */
+/** «// Variabelen head er klar til bruk, og monstrene heter A–H.» Every seed gives a task the same roots. */
 export function variables(task: Task): string {
   let line = lines.get(task)
   if (line !== undefined) return line
@@ -18,10 +18,10 @@ export function variables(task: Task): string {
   const roots = world.roots.map((p) => p.key)
   const n = world.items.length
   const letters = n ? `${label(0)}–${label(n - 1)}` : ''
-  if (!roots.length) line = `// Tingene heter ${letters}.`
+  if (!roots.length) line = `// Monstrene heter ${letters}.`
   else {
     line = roots.length === 1 ? `// Variabelen ${roots[0]} er klar til bruk` : `// Variablene ${and(roots)} er klare til bruk`
-    line += n ? `, og tingene heter ${letters}.` : '.'
+    line += n ? `, og monstrene heter ${letters}.` : '.'
   }
   lines.set(task, line)
   return line
@@ -33,7 +33,7 @@ export function variables(task: Task): string {
  */
 export function runCode(task: Task): string {
   if (task.opening !== undefined) return task.opening.trim()
-  if (task.solutionTing) return task.scaffold.trim()
+  if (task.solutionMonster) return task.scaffold.trim()
   const exports = task.exports ?? []
   if (!exports.length) return ''
   const source = task.scaffold.split('\n')

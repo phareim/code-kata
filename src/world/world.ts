@@ -1,6 +1,6 @@
 /*
  * The items above the editor and the globals that hold them (roots: `head` for a list, `items` for an array, `root`
- * for a tree …). Each item is a Ting such as { value, color, next }. The page never changes a World: each run returns
+ * for a tree …). Each item is a Monster such as { value, color, next }. The page never changes a World: each run returns
  * a new one from the worker (src/run/worker.js describes the format, slots and labels).
  */
 
@@ -17,7 +17,7 @@ export interface Prop {
   lossy?: boolean
 }
 export interface Item {
-  /** The constructor's name: 'Ting' for the items the class builds, 'Object' for a plain {}. */
+  /** The constructor's name: 'Monster' for the items the class builds, 'Object' for a plain {}. */
   cls?: string | null
   props: Prop[]
 }
@@ -25,7 +25,7 @@ export interface World {
   items: Item[]
   /** The globals the code reads the items through, in the order the stage shows them. */
   roots: Prop[]
-  /** The fields a new Ting had when these items were built; the next build drops the ones the class lost. */
+  /** The fields a new Monster had when these items were built; the next build drops the ones the class lost. */
   fields?: string[]
   /** More items than the worker tracks; the rest are not shown. */
   truncated?: boolean
@@ -81,7 +81,7 @@ export function randomWorld(random: () => number = Math.random): World {
     const color = names[Math.floor(random() * names.length)]
     const next = nextOf.get(slot)
     return {
-      cls: 'Ting',
+      cls: 'Monster',
       props: [
         { key: 'value', raw: value, text: String(value) },
         { key: 'color', raw: color, text: `'${color}'` },

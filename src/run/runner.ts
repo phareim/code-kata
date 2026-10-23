@@ -8,8 +8,8 @@ const WORKER_URL = `data:text/javascript;charset=utf-8,${encodeURIComponent(work
 export const TIME_LIMIT_MS = 10_000
 
 export type Level = 'log' | 'info' | 'warn' | 'error'
-/** Which editor a line belongs to: the kata code or the Ting class. */
-export type Where = 'kode' | 'ting'
+/** Which editor a line belongs to: the kata code or the Monster class. */
+export type Where = 'kode' | 'klasse'
 export interface Entry { level: Level; text: string }
 
 /** A task's check: solved, or what is still wrong; `broken` when the check itself failed. */
@@ -62,7 +62,7 @@ export class Runner {
   }
 
   /**
-   * Runs the Ting class, builds the items from it, then runs the code (empty: only rebuild the items); with a task,
+   * Runs the Monster class, builds the items from it, then runs the code (empty: only rebuild the items); with a task,
    * then its check.
    */
   run(code: string, classSource: string, world: World, handlers: RunHandlers, task?: TaskRun): void {

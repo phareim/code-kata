@@ -12,10 +12,34 @@ mkdirSync(shots, { recursive: true })
 
 const KEY = 'code-kata:code'
 const CLASS_KEY = 'code-kata:ting'
-const tingClass = (fields) => `class Ting {\n${fields.map((f) => `  ${f}\n`).join('')}\n  constructor(props) {\n    Object.assign(this, props)\n  }\n}\n`
-const WITH_SIZE = tingClass(['value = 0', "color = 'pink'", 'next = null', 'size = 1'])
-const WITHOUT_COLOR = tingClass(['value = 0', 'next = null', 'size = 1'])
-const BROKEN_CLASS = 'class Ting {\n  value = 0\n  next = null\n  constructor() { null.boom() }\n}\n'
+const monsterClass = (fields, name = 'Monster') => `class ${name} {\n${fields.map((f) => `  ${f}\n`).join('')}\n  constructor(props) {\n    Object.assign(this, props)\n  }\n}\n`
+const WITH_SIZE = monsterClass(['value = 0', "color = 'pink'", 'next = null', 'size = 1'])
+const WITHOUT_COLOR = monsterClass(['value = 0', 'next = null', 'size = 1'])
+const BROKEN_CLASS = 'class Monster {\n  value = 0\n  next = null\n  constructor() { null.boom() }\n}\n'
+// The playground's class until 2026-10-23, as visitors have it saved, and one they changed.
+const OLD_CLASS = `// Legg til eller ta bort et felt og trykk «Bruk».
+class Ting {
+  value = 0
+  color = 'pink'
+  next = null
+  constructor(props) { Object.assign(this, props) }
+}`
+const OLD_CLASS_CHANGED = monsterClass(['value = 0', "color = 'pink'", 'next = null', 'size = 2'], 'Ting')
+const OLD_CODE = "head = new Ting({ value: 5, color: 'gold', next: head })"
+// The starter from before the items were monsters (until 2026-10-23).
+const TING_STARTER = `// Tingene over koden er en lenket liste av Ting: klassen står over tingene.
+// Hver har value, color og next, og next peker på neste. head peker på den første.
+// Bokstavene A, B, C … er tingene selv; head kan du flytte.
+
+let node = head
+while (node) {
+  console.log(node.value, node.color)
+  node = node.next
+}
+
+// Prøv: head = head.next, A.color = 'gold'
+// eller head = new Ting({ value: 5, color: 'lime', next: head })
+`
 // A traversal with a named function, for the autocomplete check.
 const STARTER_LIKE = 'function walkAll(node) {\n  while (node) node = node.next\n}'
 // The starter kata.phareim.no had before the items (October 2026).
@@ -177,6 +201,8 @@ async function suite(name, browser) {
       }],
     ['an old starter gives way to the new one', OLD_STARTER,
       async (r, page) => (await page.innerText('#editor .cm-content')).includes('lenket liste')],
+    ['the Ting starter gives way to the Monster one', TING_STARTER,
+      async (r, page) => (await page.innerText('#editor .cm-content')).includes('Monstrene over koden')],
     ['console levels and inspect', "console.warn('w')\nconsole.error(new RangeError('r'))\nconsole.log([1, 'a', { b: null }])", (r) => r.output.includes("[ 1, 'a', { b: null } ]") && r.output.includes('RangeError: r')],
   ]
   for (const [label, code, ok] of cases) {
@@ -190,9 +216,9 @@ async function suite(name, browser) {
     await page.close()
   }
 
-  // The Ting class: a new field reaches every item, a dropped one leaves them all, new Ting works in the code,
+  // The Monster class: a new field reaches every item, a dropped one leaves them all, new Monster works in the code,
   // and an error in the class points at the class.
-  page = await open(desktop, "head = new Ting({ value: 5, color: 'gold', next: head })")
+  page = await open(desktop, "head = new Monster({ value: 5, color: 'gold', next: head })")
   await page.waitForFunction(() => document.querySelectorAll('#objects .o-class').length === 8)
   await setClass(page, WITH_SIZE)
   r = await runAndWait(page, undefined, undefined, '#apply')
@@ -206,12 +232,28 @@ async function suite(name, browser) {
     (await countLines(page, 'color')) === 0 && (await page.locator('#stage .token.no-color').count()) === 8, JSON.stringify(r))
   r = await runAndWait(page)
   const withNew = await rowLabels(page)
-  check(`${name}: new Ting in the code joins the list`, withNew.length === 9 && withNew[0] === 'I'
-    && (await countLines(page, 'I = Ting {')) === 1, withNew.join(' '))
+  check(`${name}: new Monster in the code joins the list`, withNew.length === 9 && withNew[0] === 'I'
+    && (await countLines(page, 'I = Monster {')) === 1, withNew.join(' '))
   await setClass(page, BROKEN_CLASS)
   r = await runAndWait(page, undefined, undefined, '#apply')
-  check(`${name}: an error in the class points at the class`, /Feil · Ting linje 4/i.test(r.status)
+  check(`${name}: an error in the class points at the class`, /Feil · Monster linje 4/i.test(r.status)
     && (await page.locator('#class-editor .cm-errorLine').count()) === 1, JSON.stringify(r))
+  await page.close()
+
+  // Saved from when the class was Ting: the unchanged class gives way to Monster and `new Ting` still works; a
+  // changed one stays, and its items are Ting.
+  page = await open(desktop, OLD_CODE, OLD_CLASS)
+  r = await runAndWait(page)
+  const classText = await page.innerText('#class-editor .cm-content')
+  check(`${name}: an old unchanged class gives way to Monster, and new Ting still works`,
+    /Ferdig/i.test(r.status) && classText.includes('class Monster') && (await rowLabels(page))[0] === 'I'
+    && (await countLines(page, 'I = Monster {')) === 1, `${JSON.stringify(r)} ${classText.split('\n')[1]}`)
+  await page.close()
+  page = await open(desktop, `${OLD_CODE}\nconsole.log(head instanceof Monster)`, OLD_CLASS_CHANGED)
+  r = await runAndWait(page)
+  check(`${name}: an old changed class stays, with Monster as its other name`,
+    /Ferdig/i.test(r.status) && r.output.trim() === 'true' && (await countLines(page, 'I = Ting {')) === 1
+    && (await countLines(page, 'size: 2')) === 9, JSON.stringify(r))
   await page.close()
 
   // A loop that never ends: Stop works, the page stays responsive, and the time limit catches it otherwise.

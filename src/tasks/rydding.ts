@@ -1,5 +1,5 @@
 import { arrayWorld, at, distinct, int, makeWorld, PALETTE, pick, shuffled, things } from './build'
-import { PLAIN_TING } from './classes'
+import { PLAIN_MONSTER } from './classes'
 import type { Task } from './types'
 
 export const tasks: Task[] = [
@@ -8,7 +8,7 @@ export const tasks: Task[] = [
     title: 'De rosa vil stå sammen',
     level: 'middels',
     topic: 'rydding',
-    text: `De rosa tingene vil stå sammen, først i \`items\`. Flytt alle rosa fram.
+    text: `De rosa monstrene vil stå sammen, først i \`items\`. Flytt alle rosa fram.
 
 Både de rosa og de andre skal beholde rekkefølgen de hadde seg imellom.`,
     hints: [
@@ -23,7 +23,7 @@ Både de rosa og de andre skal beholde rekkefølgen de hadde seg imellom.`,
       items.forEach((s, i) => { s.color = colors[i] })
       return arrayWorld(items)
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `const pink = []
 const rest = []
 for (const thing of items) {
@@ -38,7 +38,7 @@ items = [...pink, ...rest]
       const before = t.before('items')
       const want = [...before.filter((n) => n.color === 'pink'), ...before.filter((n) => n.color !== 'pink')]
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
-      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} ting, men skal ha ${want.length}.`
+      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.items[i] !== want[i]) return `Plass ${i} skal ha ${t.show(want[i])}, men har ${t.show(t.items[i])}.`
       }
@@ -50,11 +50,11 @@ items = [...pink, ...rest]
     title: 'Små til venstre',
     level: 'lett',
     topic: 'rydding',
-    text: `Tingene i \`items\` har hver sin \`value\`. De små, med verdi under 50, vil stå til venstre, og de store, med 50 eller mer, til høyre.
+    text: `Monstrene i \`items\` har hver sin \`value\`. De små, med verdi under 50, vil stå til venstre, og de store, med 50 eller mer, til høyre.
 
-Flytt tingene så alle de små står foran alle de store. Rekkefølgen inni hver gruppe spiller ingen rolle. Det skal være de samme tingene i \`items\`, ikke nye.`,
+Flytt monstrene så alle de små står foran alle de store. Rekkefølgen inni hver gruppe spiller ingen rolle. Det skal være de samme monstrene i \`items\`, ikke nye.`,
     hints: [
-      'Hold styr på hvor neste lille ting skal stå: `let place = 0`. Alt til venstre for `place` er allerede små.',
+      'Hold styr på hvor neste lille monster skal stå: `let place = 0`. Alt til venstre for `place` er allerede små.',
       'Gå gjennom `items` med `i`. Er `items[i].value` under 50, bytt `items[i]` med `items[place]`.',
       'Etter byttet øker du `place` med én, så området med små vokser mot høyre.',
     ],
@@ -66,10 +66,10 @@ Flytt tingene så alle de små står foran alle de store. Rekkefølgen inni hver
       const values = [big[0], ...middle, small[0]]
       return arrayWorld(values.map((value) => ({ value, color: value < 50 ? 'cyan' : 'gold' })))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `let place = 0
 for (let i = 0; i < items.length; i++) {
-  // Er items[i] liten (under 50)? Bytt den med items[place], og øk place.
+  // Er items[i] lite (under 50)? Bytt det med items[place], og øk place.
 }
 `,
     solution: `let place = 0
@@ -86,7 +86,7 @@ for (let i = 0; i < items.length; i++) {
       const items = t.items
       if (!Array.isArray(items)) return '`items` er ikke en array lenger.'
       if (items.length !== before.length || before.some((n) => !items.includes(n))) {
-        return 'Det skal være de samme tingene i `items` som før, ikke flere eller færre.'
+        return 'Det skal være de samme monstrene i `items` som før, ikke flere eller færre.'
       }
       let big: any = null
       for (const thing of items) {
@@ -102,12 +102,12 @@ for (let i = 0; i < items.length; i++) {
     title: 'Spøkelsene bakerst',
     level: 'lett',
     topic: 'rydding',
-    text: `Noen av tingene i \`items\` er spøkelser: de har \`shape === 'ghost'\`. Spøkelser hører hjemme bakerst.
+    text: `Noen av monstrene i \`items\` er spøkelser: de har \`shape === 'ghost'\`. Spøkelser hører hjemme bakerst.
 
 Flytt alle spøkelsene til slutten av \`items\`. De andre rykker fram. Både spøkelsene og de andre skal beholde rekkefølgen de hadde seg imellom.`,
     hints: [
-      'Del tingene i to grupper: spøkelsene og de andre. `thing.shape === \'ghost\'` sier hvem som er hva.',
-      'Gå gjennom `items` fra start til slutt og legg hver ting i riktig liste. Da holder rekkefølgen seg.',
+      'Del monstrene i to grupper: spøkelsene og de andre. `thing.shape === \'ghost\'` sier hvem som er hva.',
+      'Gå gjennom `items` fra start til slutt og legg hvert monster i riktig liste. Da holder rekkefølgen seg.',
       'Sett dem sammen til slutt, de andre først: `items = [...others, ...ghosts]`.',
     ],
     world: (r) => {
@@ -119,11 +119,11 @@ Flytt alle spøkelsene til slutten av \`items\`. De andre rykker fram. Både sp�
       for (const i of ghosts) items[i].shape = 'ghost'
       return arrayWorld(items)
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `const others = []
 const ghosts = []
 for (const thing of items) {
-  // Er thing et spøkelse? Legg den i ghosts, ellers i others.
+  // Er thing et spøkelse? Legg det i ghosts, ellers i others.
 }
 `,
     solution: `const others = []
@@ -140,7 +140,7 @@ vis(ghosts)
       const before = t.before('items')
       const want = [...before.filter((n) => n.shape !== 'ghost'), ...before.filter((n) => n.shape === 'ghost')]
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
-      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} ting, men skal ha ${want.length}.`
+      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.items[i] !== want[i]) {
           return `Plass ${i} skal ha ${t.show(want[i])}, men har ${t.show(t.items[i])}. Spøkelsene skal bakerst, og alle beholder rekkefølgen i sin gruppe.`
@@ -154,12 +154,12 @@ vis(ghosts)
     title: 'Tett hullene',
     level: 'lett',
     topic: 'rydding',
-    text: `I \`items\` står det ting, og innimellom er det hull: plasser som er \`null\`. Tingene vil stå tett i tett.
+    text: `I \`items\` står det monstre, og innimellom er det hull: plasser som er \`null\`. Monstrene vil stå tett i tett.
 
-Skyv alle tingene mot venstre, i samme rekkefølge som før, så alle hullene havner bakerst. \`items\` skal ha like mange plasser som før.`,
+Skyv alle monstrene mot venstre, i samme rekkefølge som før, så alle hullene havner bakerst. \`items\` skal ha like mange plasser som før.`,
     hints: [
-      'Bruk to indekser: `read` går gjennom hele arrayen, og `write` er plassen neste ting skal stå på.',
-      'Er `items[read]` ikke `null`, skal den til plass `write`. Øk så `write` med én.',
+      'Bruk to indekser: `read` går gjennom hele arrayen, og `write` er plassen neste monster skal stå på.',
+      'Er `items[read]` ikke `null`, skal det til plass `write`. Øk så `write` med én.',
       'Bytt plass på dem: `[items[write], items[read]] = [items[read], items[write]]`. Da blir hullene liggende igjen bakerst av seg selv.',
     ],
     world: (r) => {
@@ -171,10 +171,10 @@ Skyv alle tingene mot venstre, i samme rekkefølge som før, så alle hullene ha
       let next = 0
       return makeWorld(things(r, 8 - holes), { items: kinds.map((item) => (item ? at(next++) : null)) })
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `let write = 0
 for (let read = 0; read < items.length; read++) {
-  // Er items[read] en ting (ikke null)? Flytt den til plass write, og øk write.
+  // Er items[read] et monster (ikke null)? Flytt det til plass write, og øk write.
 }
 `,
     solution: `let write = 0
@@ -204,16 +204,16 @@ for (let read = 0; read < items.length; read++) {
     title: 'Snu raden på stedet',
     level: 'lett',
     topic: 'rydding',
-    text: `Skriv \`function reverseInPlace(items)\` som snur en array på stedet: den første tingen havner bakerst, den siste først, og så videre. Du skal endre arrayen du får inn, ikke lage en ny.
+    text: `Skriv \`function reverseInPlace(items)\` som snur en array på stedet: det første monsteret havner bakerst, det siste først, og så videre. Du skal endre arrayen du får inn, ikke lage en ny.
 
-Sjekken stenger \`reverse()\`, \`toReversed()\`, \`slice()\`, \`splice()\` og \`sort()\` på arrayen den gir deg, så du må bytte plass på tingene selv. En tom array og en med én ting skal også gå bra. Koden nederst snur tingene på scenen.`,
+Sjekken stenger \`reverse()\`, \`toReversed()\`, \`slice()\`, \`splice()\` og \`sort()\` på arrayen den gir deg, så du må bytte plass på monstrene selv. En tom array og en med ett monster skal også gå bra. Koden nederst snur monstrene på scenen.`,
     hints: [
-      'Bytt den første og den siste, så den nest første og nest siste, og slik innover mot midten.',
+      'Bytt det første og det siste, så det nest første og nest siste, og slik innover mot midten.',
       'Bruk to indekser: `i` fra start og `j` fra slutt. Bytt `items[i]` og `items[j]`, øk `i` og minsk `j`.',
-      'Løkka går så lenge `i < j`. Da stopper den i midten, og en ting alene i midten trenger ikke flyttes.',
+      'Løkka går så lenge `i < j`. Da stopper den i midten, og et monster alene i midten trenger ikke flyttes.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function reverseInPlace(items) {
   // Bytt første og siste, så nest første og nest siste, helt til du møter midten
 }
@@ -233,26 +233,26 @@ reverseInPlace(items)
     check: (t) => {
       const reverseInPlace = t.fn('reverseInPlace')
       for (const n of [0, 1, 2, 5, 8]) {
-        const original = Array.from({ length: n }, (_, i) => t.ting({ value: i + 1 }))
+        const original = Array.from({ length: n }, (_, i) => t.monster({ value: i + 1 }))
         const arr = [...original]
         for (const name of ['reverse', 'toReversed', 'slice', 'splice', 'sort']) {
           Object.defineProperty(arr, name, {
             value() {
-              throw new Error(`${name}() er stengt i denne oppgaven: bytt plass på tingene selv.`)
+              throw new Error(`${name}() er stengt i denne oppgaven: bytt plass på monstrene selv.`)
             },
           })
         }
         const got = reverseInPlace(arr)
-        if (arr.length !== n) return `Arrayen skulle fortsatt ha ${n} ting, men har ${arr.length}.`
+        if (arr.length !== n) return `Arrayen skulle fortsatt ha ${n} monstre, men har ${arr.length}.`
         for (let i = 0; i < n; i++) {
           if (arr[i] !== original[n - 1 - i]) {
             const hint = Array.isArray(got) && got !== arr ? ' Du ga tilbake en ny array; endre den du fikk inn.' : ''
-            return `Med ${n} ting skal plass ${i} ha tingen med verdi ${n - i}, men har ${t.show(arr[i]?.value)}.${hint}`
+            return `Med ${n} monstre skal plass ${i} ha monsteret med verdi ${n - i}, men har ${t.show(arr[i]?.value)}.${hint}`
           }
         }
       }
       const before = t.before('items')
-      if (!Array.isArray(t.items) || t.items.length !== before.length) return '`items` på scenen skal ha like mange ting som før.'
+      if (!Array.isArray(t.items) || t.items.length !== before.length) return '`items` på scenen skal ha like mange monstre som før.'
       for (let i = 0; i < before.length; i++) {
         const want = before[before.length - 1 - i]
         if (t.items[i] !== want) return `På scenen skal plass ${i} ha ${t.show(want)}, men har ${t.show(t.items[i])}. Kall funksjonen på \`items\` også.`
@@ -262,15 +262,15 @@ reverseInPlace(items)
   },
   {
     id: 'en-av-hver-farge',
-    title: 'Én av hver farge',
+    title: 'Ett av hver farge',
     level: 'lett',
     topic: 'rydding',
-    text: `Flere av tingene i \`items\` har samme \`color\`. Nå vil bare én av hver farge være med videre: den som står først.
+    text: `Flere av monstrene i \`items\` har samme \`color\`. Nå vil bare ett av hver farge være med videre: det som står først.
 
-La \`items\` bare holde den første tingen av hver farge, i samme rekkefølge som før. De andre skal ut av \`items\`.`,
+La \`items\` bare holde det første monsteret av hver farge, i samme rekkefølge som før. De andre skal ut av \`items\`.`,
     hints: [
       'Du må huske hvilke farger du allerede har sett. Et `Set` passer: `seen.has(farge)` og `seen.add(farge)`.',
-      'Gå gjennom `items` fra venstre. Er `thing.color` ikke i `seen` ennå, er det den første av sin farge.',
+      'Gå gjennom `items` fra venstre. Er `thing.color` ikke i `seen` ennå, er monsteret det første av sin farge.',
       'Legg de første i en ny array, `first`, og sett `items = first` etter løkka.',
     ],
     world: (r) => {
@@ -281,7 +281,7 @@ La \`items\` bare holde den første tingen av hver farge, i samme rekkefølge so
       items.forEach((s, i) => { s.color = list[i] })
       return arrayWorld(items)
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `const seen = new Set()
 const first = []
 for (const thing of items) {
@@ -311,9 +311,9 @@ items = first
         }
       }
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
-      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} ting, men det er ${want.length} farger, så det skal være ${want.length}.`
+      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} monstre, men det er ${want.length} farger, så det skal være ${want.length}.`
       for (let i = 0; i < want.length; i++) {
-        if (t.items[i] !== want[i]) return `Plass ${i} skal ha ${t.show(want[i])}, den første av sin farge, men har ${t.show(t.items[i])}.`
+        if (t.items[i] !== want[i]) return `Plass ${i} skal ha ${t.show(want[i])}, det første av sin farge, men har ${t.show(t.items[i])}.`
       }
       return true
     },
@@ -323,16 +323,16 @@ items = first
     title: 'Roter raden',
     level: 'middels',
     topic: 'rydding',
-    text: `Skriv \`function rotate(items, k)\` som flytter de siste \`k\` tingene fram foran de andre, på stedet. Med \`[A, B, C, D, E]\` og \`k = 2\` blir det \`[D, E, A, B, C]\`. Rekkefølgen skal ellers holde seg.
+    text: `Skriv \`function rotate(items, k)\` som flytter de siste \`k\` monstrene fram foran de andre, på stedet. Med \`[A, B, C, D, E]\` og \`k = 2\` blir det \`[D, E, A, B, C]\`. Rekkefølgen skal ellers holde seg.
 
-\`k\` kan være større enn antall ting (da går du rundt igjen) og den kan være 0. Sjekken prøver også en tom array. Endre arrayen du får inn, ikke lag en ny. Koden nederst roterer tingene på scenen med 3.`,
+\`k\` kan være større enn antall monstre (da går du rundt igjen) og den kan være 0. Sjekken prøver også en tom array. Endre arrayen du får inn, ikke lag en ny. Koden nederst roterer monstrene på scenen med 3.`,
     hints: [
       'Å rotere med `k` er det samme som å rotere med `k % items.length`, så store tall går bare rundt. Pass på den tomme arrayen: der finnes ikke noe å dele på.',
       'Det går an uten ekstra array: snu hele raden, snu så de første `k`, og snu til slutt resten. Skriv en hjelpefunksjon `reverse(a, i, j)` som snur plassene `i` til `j`.',
       'Etter at hele raden er snudd, ligger de siste `k` først, men baklengs. Snu plassene `0` til `k - 1` og så `k` til `n - 1`, så står hver del rett vei igjen.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function rotate(items, k) {
   const n = items.length
   // k kan være større enn n, og n kan være 0
@@ -365,20 +365,20 @@ rotate(items, 3)
       const rotate = t.fn('rotate')
       const cases = [[0, 3], [1, 5], [2, 1], [5, 0], [5, 2], [5, 5], [5, 7], [8, 3], [8, 19], [8, 8]]
       for (const [n, k] of cases) {
-        const original = Array.from({ length: n }, (_, i) => t.ting({ value: i + 1 }))
+        const original = Array.from({ length: n }, (_, i) => t.monster({ value: i + 1 }))
         const arr = [...original]
         rotate(arr, k)
         const shift = n ? k % n : 0
         const want = [...original.slice(n - shift), ...original.slice(0, n - shift)]
-        if (arr.length !== n) return `Med ${n} ting og k = ${k} har arrayen ${arr.length} ting etterpå.`
+        if (arr.length !== n) return `Med ${n} monstre og k = ${k} har arrayen ${arr.length} monstre etterpå.`
         for (let i = 0; i < n; i++) {
-          if (arr[i] !== want[i]) return `Med ${n} ting og k = ${k} skal plass ${i} ha tingen med verdi ${want[i].value}, men har ${t.show(arr[i]?.value)}.`
+          if (arr[i] !== want[i]) return `Med ${n} monstre og k = ${k} skal plass ${i} ha monsteret med verdi ${want[i].value}, men har ${t.show(arr[i]?.value)}.`
         }
       }
       const before = t.before('items')
       const cut = before.length - (3 % before.length)
       const onStage = [...before.slice(cut), ...before.slice(0, cut)]
-      if (!Array.isArray(t.items) || t.items.length !== onStage.length) return '`items` på scenen skal ha like mange ting som før.'
+      if (!Array.isArray(t.items) || t.items.length !== onStage.length) return '`items` på scenen skal ha like mange monstre som før.'
       for (let i = 0; i < onStage.length; i++) {
         if (t.items[i] !== onStage[i]) return `På scenen skal plass ${i} ha ${t.show(onStage[i])}, men har ${t.show(t.items[i])}. Kall \`rotate(items, 3)\` også.`
       }
@@ -390,13 +390,13 @@ rotate(items, 3)
     title: 'Tre farger på rad',
     level: 'middels',
     topic: 'rydding',
-    text: `Tingene i \`items\` er røde (\`'red'\`), gule (\`'gold'\`) eller cyan (\`'cyan'\`). De vil stå i tre blokker: de røde først, så de gule, og til slutt de cyan.
+    text: `Monstrene i \`items\` er røde (\`'red'\`), gule (\`'gold'\`) eller cyan (\`'cyan'\`). De vil stå i tre blokker: de røde først, så de gule, og til slutt de cyan.
 
-Skriv \`function flag(items, swap)\` som ordner dem i én gjennomgang, med tre pekere. Du bytter plass med \`swap(i, j)\`, som du får inn; ikke skriv direkte i \`items\`. Sjekken teller byttene, og du skal klare deg med høyst like mange bytter som det er ting. Koden nederst kjører funksjonen på tingene på scenen.`,
+Skriv \`function flag(items, swap)\` som ordner dem i én gjennomgang, med tre pekere. Du bytter plass med \`swap(i, j)\`, som du får inn; ikke skriv direkte i \`items\`. Sjekken teller byttene, og du skal klare deg med høyst like mange bytter som det er monstre. Koden nederst kjører funksjonen på monstrene på scenen.`,
     hints: [
-      'Tenk deg tre områder: røde fremst, gule i midten, cyan bakerst. Hold styr på tre indekser: `low` (der neste røde skal stå), `mid` (den du ser på) og `high` (der neste cyan skal stå).',
-      'Se på `items[mid]`. Er den rød: bytt den med `low`, og øk både `low` og `mid`. Er den gul: øk bare `mid`.',
-      'Er den cyan: bytt den med `high` og minsk `high`, men ikke øk `mid`, for tingen du fikk fra `high` er ikke sett på ennå. Løkka går så lenge `mid <= high`.',
+      'Tenk deg tre områder: røde fremst, gule i midten, cyan bakerst. Hold styr på tre indekser: `low` (der neste røde skal stå), `mid` (monsteret du ser på) og `high` (der neste cyan skal stå).',
+      'Se på `items[mid]`. Er det rødt: bytt det med `low`, og øk både `low` og `mid`. Er det gult: øk bare `mid`.',
+      'Er det cyan: bytt det med `high` og minsk `high`, men ikke øk `mid`, for monsteret du fikk fra `high` er ikke sett på ennå. Løkka går så lenge `mid <= high`.',
     ],
     world: (r) => {
       const items = things(r)
@@ -411,7 +411,7 @@ Skriv \`function flag(items, swap)\` som ordner dem i én gjennomgang, med tre p
       items.forEach((s, i) => { s.color = colors[i] })
       return arrayWorld(items)
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function flag(items, swap) {
   let low = 0
   let mid = 0
@@ -466,7 +466,7 @@ flag(items, (i, j) => {
       }
       const frozen = (e: unknown) => { throw new Error(`Bytt plass med swap(i, j), ikke ved å skrive i arrayen (${String(e)}).`) }
       for (const s of cases) {
-        const original = [...s].map((ch, i) => Object.freeze(t.ting({ value: i + 1, color: names[ch] })))
+        const original = [...s].map((ch, i) => Object.freeze(t.monster({ value: i + 1, color: names[ch] })))
         const arr = [...original]
         const view = new Proxy(arr, {
           set: (_, key) => frozen(String(key)),
@@ -475,7 +475,7 @@ flag(items, (i, j) => {
         let swaps = 0
         const swap = (i: number, j: number) => {
           if (!Number.isInteger(i) || !Number.isInteger(j) || i < 0 || j < 0 || i >= arr.length || j >= arr.length) {
-            throw new Error(`swap(${t.show(i)}, ${t.show(j)}) peker utenfor arrayen med ${arr.length} ting.`)
+            throw new Error(`swap(${t.show(i)}, ${t.show(j)}) peker utenfor arrayen med ${arr.length} monstre.`)
           }
           swaps++
           ;[arr[i], arr[j]] = [arr[j], arr[i]]
@@ -487,12 +487,12 @@ flag(items, (i, j) => {
             return `Med fargene [${original.map((x) => x.color).join(', ')}] ble det [${colors}]. Rødt skal først, så gull, så cyan.`
           }
         }
-        if (swaps > arr.length) return `Antall bytter ble ${swaps} på ${arr.length} ting, men i én gjennomgang holder det med høyst ${arr.length}.`
+        if (swaps > arr.length) return `Antall bytter ble ${swaps} på ${arr.length} monstre, men i én gjennomgang holder det med høyst ${arr.length}.`
       }
       const before = t.before('items')
       const items = t.items
       if (!Array.isArray(items) || items.length !== before.length || before.some((n) => !items.includes(n))) {
-        return 'Det skal være de samme tingene i `items` som før.'
+        return 'Det skal være de samme monstrene i `items` som før.'
       }
       for (let i = 1; i < items.length; i++) {
         if (rank[items[i].color] < rank[items[i - 1].color]) {
@@ -507,9 +507,9 @@ flag(items, (i, j) => {
     title: 'Bølgen',
     level: 'middels',
     topic: 'rydding',
-    text: `Tingene i \`items\` vil stå som en bølge, store og små om hverandre: \`items[0]\` ≥ \`items[1]\` ≤ \`items[2]\` ≥ \`items[3]\` ≤ … Annenhver ting er en topp, og de i mellom er daler. Det går bra at to naboer er like store.
+    text: `Monstrene i \`items\` vil stå som en bølge, store og små om hverandre: \`items[0]\` ≥ \`items[1]\` ≤ \`items[2]\` ≥ \`items[3]\` ≤ … Annethvert monster er en topp, og de i mellom er daler. Det går bra at to naboer er like store.
 
-Du trenger ikke sortere. Bare bytt plass til hver ting passer med naboene sine. Det skal være de samme tingene i \`items\` etterpå.`,
+Du trenger ikke sortere. Bare bytt plass til hvert monster passer med naboene sine. Det skal være de samme monstrene i \`items\` etterpå.`,
     hints: [
       'Se på ett par naboer om gangen: plassene 1, 3, 5 … skal ikke ha større verdi enn naboen foran, og plassene 2, 4, 6 … ikke mindre.',
       'Gå gjennom `items` fra plass 1. Står `items[i]` og `items[i - 1]` feil vei for plassen `i`, bytter du dem.',
@@ -521,7 +521,7 @@ Du trenger ikke sortere. Bare bytt plass til hver ting passer med naboene sine. 
       for (let tries = 0; tries < 50 && wave(values); tries++) values = shuffled(r, values)
       return arrayWorld(values.map((value) => ({ value, color: pick(r, PALETTE) })))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `for (let i = 1; i < items.length; i++) {
   // Oddetall-plasser skal ikke være større enn plassen foran,
   // partall-plasser skal ikke være mindre. Står de feil vei? Bytt.
@@ -542,7 +542,7 @@ Du trenger ikke sortere. Bare bytt plass til hver ting passer med naboene sine. 
       const items = t.items
       if (!Array.isArray(items)) return '`items` er ikke en array lenger.'
       if (items.length !== before.length || before.some((n) => !items.includes(n))) {
-        return 'Det skal være de samme tingene i `items` som før, ikke flere eller færre.'
+        return 'Det skal være de samme monstrene i `items` som før, ikke flere eller færre.'
       }
       for (let i = 1; i < items.length; i++) {
         const a = items[i - 1]
@@ -558,12 +558,12 @@ Du trenger ikke sortere. Bare bytt plass til hver ting passer med naboene sine. 
     title: 'Like naboer slår seg sammen',
     level: 'middels',
     topic: 'rydding',
-    text: `Når to naboer i \`items\` har samme \`color\`, slår de seg sammen: den til venstre får summen av de to \`value\`, og den til høyre forlater \`items\`.
+    text: `Når to naboer i \`items\` har samme \`color\`, slår de seg sammen: det til venstre får summen av de to \`value\`, og det til høyre forlater \`items\`.
 
-Gjenta til ingen naboer har samme farge. Tre like på rad blir altså til én ting med summen av alle tre. Alle som blir igjen, skal beholde rekkefølgen og fargen sin.`,
+Gjenta til ingen naboer har samme farge. Tre like på rad blir altså til ett monster med summen av alle tre. Alle som blir igjen, skal beholde rekkefølgen og fargen sin.`,
     hints: [
       'Gå gjennom `items` med en indeks `i`, og sammenlign `items[i]` med `items[i + 1]`.',
-      'Har de samme `color`: legg verdien til den fremste, `items[i].value += items[i + 1].value`, og ta den bakerste ut med `items.splice(i + 1, 1)`.',
+      'Har de samme `color`: legg verdien til det fremste, `items[i].value += items[i + 1].value`, og ta det bakerste ut med `items.splice(i + 1, 1)`.',
       'Etter en sammenslåing flytter du ikke `i`: den nye naboen kan ha samme farge også. Øk `i` bare når de to har ulik farge.',
     ],
     world: (r) => {
@@ -580,7 +580,7 @@ Gjenta til ingen naboer har samme farge. Tre like på rad blir altså til én ti
       }
       return arrayWorld(items)
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `let i = 0
 while (i + 1 < items.length) {
   // Har items[i] og items[i + 1] samme farge? Slå dem sammen.
@@ -609,11 +609,11 @@ while (i + 1 < items.length) {
       }
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
       if (t.items.length !== groups.length) {
-        return `\`items\` har ${t.items.length} ting, men skal ha ${groups.length}: én for hver gruppe av samme farge på rad.`
+        return `\`items\` har ${t.items.length} monstre, men skal ha ${groups.length}: ett for hver gruppe av samme farge på rad.`
       }
       for (let i = 0; i < groups.length; i++) {
         const got = t.items[i]
-        if (got !== groups[i].first) return `Plass ${i} skal ha ${t.show(groups[i].first)}, den fremste i sin gruppe, men har ${t.show(got)}.`
+        if (got !== groups[i].first) return `Plass ${i} skal ha ${t.show(groups[i].first)}, det fremste i sin gruppe, men har ${t.show(got)}.`
         if (got.value !== groups[i].value) return `${t.show(got)} skal ha verdien ${groups[i].value}, summen av gruppen, men har ${t.show(got.value)}.`
       }
       return true
@@ -624,12 +624,12 @@ while (i + 1 < items.length) {
     title: 'Neste ordning',
     level: 'vanskelig',
     topic: 'rydding',
-    text: `Tingene i \`items\` kan stå i mange rekkefølger. Sorter alle rekkefølgene som i en ordbok, med \`value\` som bokstavene: først \`[1, 2, 3]\`, så \`[1, 3, 2]\`, så \`[2, 1, 3]\`, og slik videre til \`[3, 2, 1]\`.
+    text: `Monstrene i \`items\` kan stå i mange rekkefølger. Sorter alle rekkefølgene som i en ordbok, med \`value\` som bokstavene: først \`[1, 2, 3]\`, så \`[1, 3, 2]\`, så \`[2, 1, 3]\`, og slik videre til \`[3, 2, 1]\`.
 
-Skriv \`function nextPermutation(items)\` som endrer rekkefølgen i \`items\` på stedet, så tingene står i rekkefølgen rett etter den de har nå. Står de i den siste (størst først), skal de gå rundt til den første (minst først). Samme verdi kan forekomme flere ganger, og en tom array eller én ting skal bli som den er. Koden nederst kjører funksjonen på tingene på scenen.`,
+Skriv \`function nextPermutation(items)\` som endrer rekkefølgen i \`items\` på stedet, så monstrene står i rekkefølgen rett etter den de har nå. Står de i den siste (størst først), skal de gå rundt til den første (minst først). Samme verdi kan forekomme flere ganger, og en tom array eller ett monster skal bli som den er. Koden nederst kjører funksjonen på monstrene på scenen.`,
     hints: [
-      'Endre så lite som mulig, helst bare slutten. Les fra høyre og finn den lengste halen som aldri går opp (hver ting er minst like stor som den bak); plassen rett foran den kaller vi `i`.',
-      'Bytt `items[i]` med den minste tingen i halen som er større enn den. Leser du halen fra høyre, er det den første du møter som er større enn `items[i]`.',
+      'Endre så lite som mulig, helst bare slutten. Les fra høyre og finn den lengste halen som aldri går opp (hvert monster er minst like stort som det bak); plassen rett foran den kaller vi `i`.',
+      'Bytt `items[i]` med det minste monsteret i halen som er større enn det. Leser du halen fra høyre, er det det første du møter som er større enn `items[i]`.',
       'Halen går fortsatt nedover; snu den ved å bytte fra endene mot midten, så blir den minst mulig. Fant du ingen `i`, er hele raden den siste, og da snur du alt.',
     ],
     world: (r) => {
@@ -639,7 +639,7 @@ Skriv \`function nextPermutation(items)\` som endrer rekkefølgen i \`items\` p�
       if (values.every((v, i) => i === 0 || values[i - 1] > v)) values = [values[1], values[0], ...values.slice(2)]
       return arrayWorld(values.map((value) => ({ value, color: pick(r, PALETTE) })))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function nextPermutation(items) {
   // 1. Fra slutten: finn siste plass i der items[i] er mindre enn items[i + 1]
   // 2. Fra slutten: finn første j der items[j] er større enn items[i], og bytt dem
@@ -670,7 +670,7 @@ nextPermutation(items)
     check: (t) => {
       const nextPermutation = t.fn('nextPermutation')
       const run = (values: number[]) => {
-        const original = values.map((value) => t.ting({ value }))
+        const original = values.map((value) => t.monster({ value }))
         const arr = [...original]
         nextPermutation(arr)
         return { original, arr, got: arr.map((x) => x?.value) }
@@ -694,7 +694,7 @@ nextPermutation(items)
         if (got.length !== want.length || got.some((v, i) => v !== want[i])) {
           return `Fra [${values.join(', ')}] ble det [${got.join(', ')}], men neste er [${want.join(', ')}].`
         }
-        if (new Set(arr).size !== original.length || arr.some((x) => !original.includes(x))) return 'Det skal være de samme tingene etterpå, bare i en annen rekkefølge.'
+        if (new Set(arr).size !== original.length || arr.some((x) => !original.includes(x))) return 'Det skal være de samme monstrene etterpå, bare i en annen rekkefølge.'
       }
       // Every ordering of 3 and of 4 different values, in dictionary order; the last wraps round to the first.
       const orderings = (list: number[]): number[][] =>
@@ -721,7 +721,7 @@ nextPermutation(items)
       const want = [...v.slice(0, i + 1), ...v.slice(i + 1).reverse()]
       const before = t.before('items')
       if (!Array.isArray(t.items) || t.items.length !== want.length || before.some((n) => !t.items.includes(n))) {
-        return 'Det skal være de samme tingene i `items` som før.'
+        return 'Det skal være de samme monstrene i `items` som før.'
       }
       for (let k = 0; k < want.length; k++) {
         if (t.items[k].value !== want[k]) return `På scenen skal plass ${k} ha verdien ${want[k]}, men har ${t.items[k].value}. Kall funksjonen på \`items\` også.`
@@ -734,13 +734,13 @@ nextPermutation(items)
     title: 'Færrest mulig bytter',
     level: 'vanskelig',
     topic: 'rydding',
-    text: `Noen av tingene i \`items\` er cyan. De vil stå side om side, uten andre ting mellom seg. Hvor de ender, bestemmer du selv, men hvert bytte av to ting koster.
+    text: `Noen av monstrene i \`items\` er cyan. De vil stå side om side, uten andre monstre mellom seg. Hvor de ender, bestemmer du selv, men hvert bytte av to monstre koster.
 
-Skriv \`function groupCyan(items, swap)\` som samler alle cyan med færrest mulig bytter. Du bytter med \`swap(i, j)\`, som du får inn; ikke skriv direkte i \`items\`. Sjekken teller byttene og godtar bare det minste antallet som går an. Er det ingen cyan, eller bare én, eller de allerede står side om side, skal du ikke bytte noe. Koden nederst kjører funksjonen på tingene på scenen.`,
+Skriv \`function groupCyan(items, swap)\` som samler alle cyan med færrest mulig bytter. Du bytter med \`swap(i, j)\`, som du får inn; ikke skriv direkte i \`items\`. Sjekken teller byttene og godtar bare det minste antallet som går an. Er det ingen cyan, eller bare ett, eller de allerede står side om side, skal du ikke bytte noe. Koden nederst kjører funksjonen på monstrene på scenen.`,
     hints: [
       'Tell først hvor mange cyan det er: `k`. De skal ende på `k` plasser på rad. Spørsmålet er hvilke `k` plasser.',
       'Velg stedet der det allerede står flest cyan. Gli et vindu med `k` plasser over `items` og tell cyan i vinduet underveis.',
-      'Hver ting i vinduet som ikke er cyan, må byttes mot en cyan utenfor vinduet. Færrest bytter er altså `k` minus det største antallet cyan i et vindu.',
+      'Hvert monster i vinduet som ikke er cyan, må byttes mot et cyan monster utenfor vinduet. Færrest bytter er altså `k` minus det største antallet cyan i et vindu.',
     ],
     world: (r) => {
       const k = int(r, 3, 4)
@@ -750,7 +750,7 @@ Skriv \`function groupCyan(items, swap)\` som samler alle cyan med færrest muli
       const others = ['pink', 'gold', 'lime', 'violet', 'orange', 'red', 'teal']
       return arrayWorld(things(r).map((spec, i) => ({ ...spec, color: flags[i] ? 'cyan' : pick(r, others) })))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function groupCyan(items, swap) {
   // Hvor mange cyan er det? Hvilke plasser skal de stå på?
 }
@@ -776,7 +776,7 @@ groupCyan(items, (i, j) => {
       start = i - k + 1
     }
   }
-  // Hver ikke-cyan i vinduet byttes mot en cyan utenfor
+  // Hvert monster i vinduet som ikke er cyan, byttes mot et cyan utenfor
   const inWindow = (i) => i >= start && i < start + k
   let from = 0
   for (let to = start; to < start + k; to++) {
@@ -798,7 +798,7 @@ groupCyan(items, (i, j) => {
       const others = ['pink', 'gold', 'lime', 'violet', 'orange', 'red', 'teal']
       const frozen = (e: unknown) => { throw new Error(`Bytt plass med swap(i, j), ikke ved å skrive i arrayen (${String(e)}).`) }
       for (const s of cases) {
-        const original = [...s].map((ch, i) => Object.freeze(t.ting({ value: i + 1, color: ch === 'c' ? 'cyan' : others[i % others.length] })))
+        const original = [...s].map((ch, i) => Object.freeze(t.monster({ value: i + 1, color: ch === 'c' ? 'cyan' : others[i % others.length] })))
         const k = original.filter((x) => x.color === 'cyan').length
         // The fewest swaps: each thing in the best window of k places that isn't cyan needs one swap.
         let inside = 0
@@ -817,7 +817,7 @@ groupCyan(items, (i, j) => {
         let swaps = 0
         const swap = (i: number, j: number) => {
           if (!Number.isInteger(i) || !Number.isInteger(j) || i < 0 || j < 0 || i >= arr.length || j >= arr.length) {
-            throw new Error(`swap(${t.show(i)}, ${t.show(j)}) peker utenfor arrayen med ${arr.length} ting.`)
+            throw new Error(`swap(${t.show(i)}, ${t.show(j)}) peker utenfor arrayen med ${arr.length} monstre.`)
           }
           if (i !== j) swaps++
           ;[arr[i], arr[j]] = [arr[j], arr[i]]
@@ -832,7 +832,7 @@ groupCyan(items, (i, j) => {
       const before = t.before('items')
       const items = t.items
       if (!Array.isArray(items) || items.length !== before.length || before.some((n) => !items.includes(n))) {
-        return 'Det skal være de samme tingene i `items` som før.'
+        return 'Det skal være de samme monstrene i `items` som før.'
       }
       const colors = items.map((x: { color: string }) => x.color)
       const k = colors.filter((c: string) => c === 'cyan').length

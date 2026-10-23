@@ -1,5 +1,5 @@
 import { at, graphWorld, int, makeWorld, pick, shuffled, things, type Random, type Spec } from './build'
-import { GRAPH_TING } from './classes'
+import { GRAPH_MONSTER } from './classes'
 import type { Task } from './types'
 import type { World } from '../world/world'
 
@@ -85,18 +85,18 @@ export const tasks: Task[] = [
     title: 'Hvor mange steg unna?',
     level: 'middels',
     topic: 'grafer',
-    text: `Tingene i \`nodes\` er venner, og vennene til hver ting står i \`neighbors\`. A vil vite hvor langt unna de andre er.
+    text: `Monstrene i \`nodes\` er venner, og vennene til hvert monster står i \`neighbors\`. A vil vite hvor langt unna de andre er.
 
-Gi hver ting et felt \`steps\`: hvor mange vennskap det er fra A til den, den korteste veien. A selv har \`steps = 0\`.
+Gi hvert monster et felt \`steps\`: hvor mange vennskap det er fra A til det, den korteste veien. A selv har \`steps = 0\`.
 
 Gå bredden først: A, så alle vennene til A, så vennene deres, og så videre.`,
     hints: [
       'Bruk en kø: start med `A.steps = 0` og `const queue = [A]`.',
-      'Ta den første ut av køen. For hver venn som ikke har `steps` ennå: sett `steps` én høyere, og still vennen bakerst i køen.',
-      'Gi gjerne tingene farge etter avstanden, for eksempel `node.color = [\'pink\', \'cyan\', \'gold\', \'lime\'][node.steps]`, så ser du lagene.',
+      'Ta det første ut av køen. For hver venn som ikke har `steps` ennå: sett `steps` én høyere, og still vennen bakerst i køen.',
+      'Gi gjerne monstrene farge etter avstanden, for eksempel `node.color = [\'pink\', \'cyan\', \'gold\', \'lime\'][node.steps]`, så ser du lagene.',
     ],
     world: (r) => graphWorld(r, things(r, 8), 3),
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `A.steps = 0
 const queue = [A]
@@ -134,7 +134,7 @@ while (queue.length) {
         }
       }
       for (const [node, want] of dist) {
-        if (node.steps !== want) return `${t.show(node)} har steps ${t.show(node.steps)}, men den er ${want} steg fra A.`
+        if (node.steps !== want) return `${t.show(node)} har steps ${t.show(node.steps)}, men det er ${want} steg fra A.`
       }
       return true
     },
@@ -142,19 +142,19 @@ while (queue.length) {
   },
   {
     id: 'den-mest-populaere',
-    title: 'Den mest populære',
+    title: 'Det mest populære',
     level: 'lett',
     topic: 'grafer',
-    text: `Tingene i \`nodes\` er venner, og vennene til hver ting står i \`neighbors\`. Hvem er mest populær?
+    text: `Monstrene i \`nodes\` er venner, og vennene til hvert monster står i \`neighbors\`. Hvem er mest populær?
 
-Skriv \`function popular(nodes)\` som gir tilbake tingen med flest venner. Er det likt mellom flere, vinner den som står først i \`nodes\`. En tom \`nodes\` gir \`null\`.`,
+Skriv \`function popular(nodes)\` som gir tilbake monsteret med flest venner. Er det likt mellom flere, vinner det som står først i \`nodes\`. En tom \`nodes\` gir \`null\`.`,
     hints: [
-      'Antall venner er `node.neighbors.length`. Hold orden på den beste du har sett så langt.',
-      'Start med `nodes[0]` som den beste, og gå gjennom resten. Bytt bare når en ting har flere venner enn den beste: da vinner den første når det er likt.',
+      'Antall venner er `node.neighbors.length`. Hold orden på det beste du har sett så langt.',
+      'Start med `nodes[0]` som det beste, og gå gjennom resten. Bytt bare når et monster har flere venner enn det beste: da vinner det første når det er likt.',
       'Husk å gi `null` først hvis `nodes` er tom, ellers finnes det ingen `nodes[0]`.',
     ],
     world: (r) => graphWorld(r, things(r, 8), 3),
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `function popular(nodes) {
   if (nodes.length === 0) return null
@@ -181,7 +181,7 @@ console.log(popular(nodes).value)
     check: (t) => {
       const popular = t.fn('popular')
       const make = (n: number, edges: number[][]): any[] => {
-        const list: any[] = Array.from({ length: n }, (_, i) => t.ting({ value: i, neighbors: [] }))
+        const list: any[] = Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
         for (const [a, b] of edges) {
           list[a].neighbors.push(list[b])
           list[b].neighbors.push(list[a])
@@ -193,7 +193,7 @@ console.log(popular(nodes).value)
         for (const node of list) if (!best || node.neighbors.length > best.neighbors.length) best = node
         return best
       }
-      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       const graphs: any[][] = [
         make(5, [[3, 0], [3, 1], [3, 2], [3, 4]]),
         make(4, [[0, 1], [1, 2], [2, 3]]),
@@ -206,7 +206,7 @@ console.log(popular(nodes).value)
       for (const list of graphs) {
         const want = first(list)
         const got = popular(list)
-        if (got !== want) return `For ${list === t.nodes ? 'tingene på scenen' : `${list.length} ting`} ga popular ${name(got)}, men den med flest venner (først i nodes ved likt) er ${name(want)}.`
+        if (got !== want) return `For ${list === t.nodes ? 'monstrene på scenen' : `${list.length} monstre`} ga popular ${name(got)}, men det med flest venner (først i nodes ved likt) er ${name(want)}.`
       }
       if (popular([]) !== null) return 'popular([]) skal gi null.'
       return true
@@ -217,7 +217,7 @@ console.log(popular(nodes).value)
     title: 'Er vi venner?',
     level: 'lett',
     topic: 'grafer',
-    text: `Hver ting har en liste \`neighbors\` med dem den regner som venner. Men et vennskap går ikke alltid begge veier: A kan ha B i lista si uten at B har A i sin. På scenen vises slike som piler.
+    text: `Hvert monster har en liste \`neighbors\` med dem det regner som venner. Men et vennskap går ikke alltid begge veier: A kan ha B i lista si uten at B har A i sin. På scenen vises slike som piler.
 
 Skriv \`function friends(a, b)\` som gir \`true\` bare når de er venner begge veier: \`b\` står i \`a.neighbors\`, og \`a\` står i \`b.neighbors\`. Ellers gir den \`false\`. Sjekken prøver også vennskap som bare går én vei.`,
     hints: [
@@ -237,7 +237,7 @@ Skriv \`function friends(a, b)\` som gir \`true\` bare når de er venner begge v
       }
       return graphOf(things(r, 8), adj)
     },
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `function friends(a, b) {
   // Står b hos a, og a hos b?
@@ -256,8 +256,8 @@ console.log(friends(A, B))
     exports: ['friends'],
     check: (t) => {
       const friends = t.fn('friends')
-      const make = (n: number): any[] => Array.from({ length: n }, (_, i) => t.ting({ value: i, neighbors: [] }))
-      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+      const make = (n: number): any[] => Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
+      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       const [x, y, z, w] = make(4)
       x.neighbors.push(y, z)
       y.neighbors.push(x)
@@ -287,9 +287,9 @@ console.log(friends(A, B))
     title: 'Bli kjent',
     level: 'lett',
     topic: 'grafer',
-    text: `To av tingene, \`a\` og \`b\`, kjenner ikke hverandre ennå. De står som flagg på scenen. Vennene til hver ting står i \`neighbors\`.
+    text: `To av monstrene, \`a\` og \`b\`, kjenner ikke hverandre ennå. De står som flagg på scenen. Vennene til hvert monster står i \`neighbors\`.
 
-Skriv \`function befriend(x, y)\` som gjør \`x\` og \`y\` til venner begge veier: \`y\` kommer inn i \`x.neighbors\`, og \`x\` i \`y.neighbors\`. Står en av dem der fra før, skal ingen komme to ganger. Å kalle funksjonen to ganger skal ikke endre noe.
+Skriv \`function befriend(x, y)\` som gjør \`x\` og \`y\` til venner begge veier: \`y\` kommer inn i \`x.neighbors\`, og \`x\` i \`y.neighbors\`. Står ett av dem der fra før, skal ingen komme to ganger. Å kalle funksjonen to ganger skal ikke endre noe.
 
 Kall den på \`a\` og \`b\`. Alt annet i grafen skal være som før.`,
     hints: [
@@ -305,7 +305,7 @@ Kall den på \`a\` og \`b\`. Alt annet i grafen skal være som før.`,
       const [first, second] = r() < 0.5 ? [i, j] : [j, i]
       return graphOf(things(r, 8), adj, { a: at(first), b: at(second) })
     },
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph', a: 'pointer', b: 'pointer' },
     scaffold: `function befriend(x, y) {
   // Legg y hos x og x hos y, men ikke hvis de står der fra før
@@ -325,9 +325,9 @@ befriend(a, b)
     exports: ['befriend'],
     check: (t) => {
       const befriend = t.fn('befriend')
-      const make = (n: number): any[] => Array.from({ length: n }, (_, i) => t.ting({ value: i, neighbors: [] }))
+      const make = (n: number): any[] => Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
       const same = (p: any[], q: any[]) => p.length === q.length && p.every((item, i) => item === q[i])
-      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       // Fresh items: nothing before, a one-way link, a link that was there, and a call twice.
       const [p, q, r, s, u] = make(5)
       p.neighbors.push(r)
@@ -355,7 +355,7 @@ befriend(a, b)
             if (n === 0) return `${t.show(node)} har ikke ${t.show(other)} som venn ennå.`
             if (n > 1) return `${t.show(other)} står ${n} ganger hos ${t.show(node)}.`
           }
-          return `${t.show(node)} har fått en annen venneliste enn den skulle: ${t.show(node.neighbors)}, men den skal være ${t.show(want)}.`
+          return `${t.show(node)} har fått en annen venneliste enn det skulle: ${t.show(node.neighbors)}, men den skal være ${t.show(want)}.`
         }
       }
       return true
@@ -366,16 +366,16 @@ befriend(a, b)
     title: 'Forlat gjengen',
     level: 'lett',
     topic: 'grafer',
-    text: `Tingen \`gone\` vil ikke være med i gjengen lenger. Den står som flagg på scenen. Vennene til hver ting står i \`neighbors\`, og alle tingene står i \`nodes\`.
+    text: `Monsteret \`gone\` vil ikke være med i gjengen lenger. Det står som flagg på scenen. Vennene til hvert monster står i \`neighbors\`, og alle monstrene står i \`nodes\`.
 
-Ta \`gone\` bort fra \`nodes\` og fra alles \`neighbors\`, og tøm \`gone.neighbors\` så den ikke holder fast i noen. De andre skal ellers være som før, med vennene i samme rekkefølge.`,
+Ta \`gone\` bort fra \`nodes\` og fra alles \`neighbors\`, og tøm \`gone.neighbors\` så det ikke holder fast i noen. De andre skal ellers være som før, med vennene i samme rekkefølge.`,
     hints: [
-      'Gå gjennom alle tingene i `nodes`. `filter` gir en ny liste uten en bestemt ting.',
+      'Gå gjennom alle monstrene i `nodes`. `filter` gir en ny liste uten et bestemt monster.',
       'For hver `node`: `node.neighbors = node.neighbors.filter((friend) => friend !== gone)`.',
       'Gjør `nodes` til en ny liste uten `gone` på samme måte, og sett til slutt `gone.neighbors = []`.',
     ],
     world: (r) => graphWorld(r, things(r, 8), 3, { gone: at(int(r, 0, 7)) }),
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph', gone: 'pointer' },
     scaffold: `for (const node of nodes) {
   // Ta gone ut av node.neighbors
@@ -395,9 +395,9 @@ vis('borte')
       const same = (p: any[], q: any[]) => p.length === q.length && p.every((item, i) => item === q[i])
       const rest = t.before('nodes').filter((n) => n !== gone)
       const starts: any[] = t.start.slots
-      if (!Array.isArray(t.nodes)) return '`nodes` skal fortsatt være en liste med tingene.'
+      if (!Array.isArray(t.nodes)) return '`nodes` skal fortsatt være en liste med monstrene.'
       if (t.nodes.includes(gone)) return `${t.show(gone)} står fortsatt i nodes.`
-      if (!same(t.nodes, rest)) return '`nodes` skal ha alle de andre tingene, i samme rekkefølge som før.'
+      if (!same(t.nodes, rest)) return '`nodes` skal ha alle de andre monstrene, i samme rekkefølge som før.'
       if (!Array.isArray(gone.neighbors) || gone.neighbors.length) return `${t.show(gone)} skal ikke ha noen venner igjen, men har ${t.show(gone.neighbors)}.`
       for (const node of rest as any[]) {
         const old = starts[t.slots.indexOf(node)].neighbors.map((c: any) => t.live(c)).filter((c: any) => c !== gone)
@@ -415,7 +415,7 @@ vis('borte')
     title: 'Dybden først',
     level: 'middels',
     topic: 'grafer',
-    text: `Skriv \`function dfs(start)\` som gir tilbake en array med tingene i den rekkefølgen en rekursiv dybde-først-leting besøker dem. Fra \`start\` går du til første venn i \`neighbors\`, derfra til dens første venn som ikke er besøkt, og så langt det går. Sitter du fast, går du et skritt tilbake og prøver neste venn. Hver ting kommer med bare én gang.
+    text: `Skriv \`function dfs(start)\` som gir tilbake en array med monstrene i den rekkefølgen en rekursiv dybde-først-leting besøker dem. Fra \`start\` går du til første venn i \`neighbors\`, derfra videre til den første av vennens venner som ikke er besøkt, og så langt det går. Sitter du fast, går du et skritt tilbake og prøver neste venn. Hvert monster kommer med bare én gang.
 
 Vennene prøves i den rekkefølgen de står i \`neighbors\`. Sjekken sammenligner med den nøyaktige rekkefølgen, så svaret må bli det samme som med rekursjon.`,
     hints: [
@@ -424,12 +424,12 @@ Vennene prøves i den rekkefølgen de står i \`neighbors\`. Sjekken sammenligne
       'Sjekk `seen.has(friend)` rett før du går til en venn, ikke bare før løkka: vennen kan ha blitt besøkt mens du var på vei dypere.',
     ],
     world: (r) => graphWorld(r, things(r, 8), 3),
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `function dfs(start) {
   const seen = new Set()
   const order = []
-  // Besøk start, og så vennene dens én etter én, dypt først
+  // Besøk start, og så vennene til start én etter én, dypt først
   return order
 }
 
@@ -458,7 +458,7 @@ console.log(dfs(A).map((node) => node.value))
     check: (t) => {
       const dfs = t.fn('dfs')
       const make = (n: number, edges: number[][]): any[] => {
-        const list: any[] = Array.from({ length: n }, (_, i) => t.ting({ value: i, neighbors: [] }))
+        const list: any[] = Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
         for (const [a, b] of edges) {
           list[a].neighbors.push(list[b])
           list[b].neighbors.push(list[a])
@@ -486,14 +486,14 @@ console.log(dfs(A).map((node) => node.value))
         [ring[0], 'en ring'],
         [ring[2], 'en ring'],
         [parts[2], 'to adskilte grupper'],
-        [make(1, [])[0], 'én ting'],
-        [t.slots[0], 'tingene på scenen'],
-        [t.slots[3], 'tingene på scenen'],
+        [make(1, [])[0], 'ett monster'],
+        [t.slots[0], 'monstrene på scenen'],
+        [t.slots[3], 'monstrene på scenen'],
       ]
       for (const [start, what] of cases) {
         const right = want(start)
         const got = dfs(start)
-        if (!Array.isArray(got)) return `dfs skal gi en array med tingene, men gav ${t.show(got)}.`
+        if (!Array.isArray(got)) return `dfs skal gi en array med monstrene, men gav ${t.show(got)}.`
         if (got.length !== right.length || got.some((node, i) => node !== right[i])) {
           return `For ${what}, fra ${name(start)}, gav dfs [${got.map(name).join(', ')}], men rekursiv dybde først går [${right.map(name).join(', ')}].`
         }
@@ -507,16 +507,16 @@ console.log(dfs(A).map((node) => node.value))
     title: 'Korteste vei',
     level: 'middels',
     topic: 'grafer',
-    text: `Hvert steg går fra en ting til en av vennene i \`neighbors\`. Skriv \`function route(a, b)\` som gir tilbake en array med tingene på veien fra \`a\` til \`b\` (begge er med), med så få steg som mulig. Er \`a\` og \`b\` samme ting, er veien bare \`[a]\`. Finnes det ingen vei, gir den \`null\`.
+    text: `Hvert steg går fra et monster til en av vennene i \`neighbors\`. Skriv \`function route(a, b)\` som gir tilbake en array med monstrene på veien fra \`a\` til \`b\` (begge er med), med så få steg som mulig. Er \`a\` og \`b\` samme monster, er veien bare \`[a]\`. Finnes det ingen vei, gir den \`null\`.
 
-Gå bredden først og husk for hver ting hvem du kom fra. Når du er framme, går du baklengs fra \`b\` og snur rekkefølgen.`,
+Gå bredden først og husk for hvert monster hvem du kom fra. Når du er framme, går du baklengs fra \`b\` og snur rekkefølgen.`,
     hints: [
       'Gå bredden først med en kø, som i «Hvor mange steg unna?». Lagre hvem du kom fra i et `Map`: `from.set(friend, node)`.',
-      'Når du har funnet `b`, bygg veien baklengs: start i `b` og følg `from` tilbake til `a`. Legg hver ting først i arrayen, eller snu den til slutt.',
+      'Når du har funnet `b`, bygg veien baklengs: start i `b` og følg `from` tilbake til `a`. Legg hvert monster først i arrayen, eller snu den til slutt.',
       'Står ikke `b` i `from` når køen er tom, finnes det ingen vei: gi `null`.',
     ],
     world: (r) => graphWorld(r, things(r, 8), 3),
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `function route(a, b) {
   const from = new Map([[a, null]])
@@ -554,14 +554,14 @@ console.log(route(A, H)?.map((node) => node.value))
     check: (t) => {
       const route = t.fn('route')
       const make = (n: number, edges: number[][]): any[] => {
-        const list: any[] = Array.from({ length: n }, (_, i) => t.ting({ value: i, neighbors: [] }))
+        const list: any[] = Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
         for (const [a, b] of edges) {
           list[a].neighbors.push(list[b])
           list[b].neighbors.push(list[a])
         }
         return list
       }
-      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       const steps = (from: any): Map<any, number> => {
         const dist = new Map<any, number>([[from, 0]])
         const queue = [from]
@@ -577,8 +577,8 @@ console.log(route(A, H)?.map((node) => node.value))
         const got = route(a, b)
         const way = `fra ${name(a)} til ${name(b)}`
         if (!dist.has(b)) return got === null ? '' : `Det finnes ingen vei ${way}, så route skal gi null, men gav ${t.show(got)}.`
-        if (!Array.isArray(got)) return `route skal gi en array med tingene på veien ${way}, men gav ${t.show(got)}.`
-        if (got.some((n) => !n || typeof n !== 'object' || !Array.isArray(n.neighbors))) return `Veien ${way} skal bare ha ting i seg: ${t.show(got)}.`
+        if (!Array.isArray(got)) return `route skal gi en array med monstrene på veien ${way}, men gav ${t.show(got)}.`
+        if (got.some((n) => !n || typeof n !== 'object' || !Array.isArray(n.neighbors))) return `Veien ${way} skal bare ha monstre i seg: ${t.show(got)}.`
         if (got[0] !== a || got[got.length - 1] !== b) return `Veien ${way} skal begynne med ${name(a)} og slutte med ${name(b)}.`
         for (let i = 1; i < got.length; i++) {
           if (!got[i - 1].neighbors.includes(got[i])) return `Veien ${way} går fra ${name(got[i - 1])} til ${name(got[i])}, men de er ikke venner.`
@@ -615,13 +615,13 @@ console.log(route(A, H)?.map((node) => node.value))
     title: 'Hvor mange gjenger?',
     level: 'middels',
     topic: 'grafer',
-    text: `Tingene i \`nodes\` danner gjenger. To ting hører til samme gjeng hvis de er venner, eller venner av venner, og så videre. Mellom gjengene er det ingen vennskap.
+    text: `Monstrene i \`nodes\` danner gjenger. To monstre hører til samme gjeng hvis de er venner, eller venner av venner, og så videre. Mellom gjengene er det ingen vennskap.
 
-Skriv \`function groups(nodes)\` som gir tilbake hvor mange gjenger det er. En ting uten venner er en gjeng for seg selv, og en tom \`nodes\` gir 0.
+Skriv \`function groups(nodes)\` som gir tilbake hvor mange gjenger det er. Et monster uten venner er en gjeng for seg selv, og en tom \`nodes\` gir 0.
 
 Vil du se dem, kan du gi hver gjeng sin egen \`color\` underveis.`,
     hints: [
-      'Hold orden på de du har sett i et `Set`. Gå gjennom `nodes`: møter du en ting du ikke har sett, har du funnet en ny gjeng.',
+      'Hold orden på de du har sett i et `Set`. Gå gjennom `nodes`: møter du et monster du ikke har sett, har du funnet en ny gjeng.',
       'Når du finner en ny gjeng, besøk alle i den: ta vennene, vennene deres og så videre (med en stabel eller kø), og legg dem i settet.',
       'Tell opp en teller for hver ny gjeng. Vil du farge dem, setter du `color` til en farge fra en liste, valgt med telleren.',
     ],
@@ -635,12 +635,12 @@ Vil du se dem, kan du gi hver gjeng sin egen \`color\` underveis.`,
       const b = int(r, 2, Math.min(4, 9 - a - 2))
       return groupsOf(r, items, [a, b, 9 - a - b])
     },
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `function groups(nodes) {
   const seen = new Set()
   let count = 0
-  // Gå gjennom nodes. En ting du ikke har sett, er en ny gjeng: besøk alle i den.
+  // Gå gjennom nodes. Et monster du ikke har sett, er en ny gjeng: besøk alle i den.
   return count
 }
 
@@ -678,7 +678,7 @@ console.log(groups(nodes))
     check: (t) => {
       const groups = t.fn('groups')
       const make = (n: number, edges: number[][]): any[] => {
-        const list: any[] = Array.from({ length: n }, (_, i) => t.ting({ value: i, neighbors: [] }))
+        const list: any[] = Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
         for (const [a, b] of edges) {
           list[a].neighbors.push(list[b])
           list[b].neighbors.push(list[a])
@@ -700,13 +700,13 @@ console.log(groups(nodes))
         return n
       }
       const cases: [any[], string][] = [
-        [[], 'ingen ting'],
-        [make(1, []), 'én ting'],
-        [make(4, []), 'fire ting uten venner'],
-        [make(6, [[0, 1], [1, 2], [2, 0], [3, 4]]), 'tre gjenger og en ting alene'],
+        [[], 'ingen monstre'],
+        [make(1, []), 'ett monster'],
+        [make(4, []), 'fire monstre uten venner'],
+        [make(6, [[0, 1], [1, 2], [2, 0], [3, 4]]), 'tre gjenger og et monster alene'],
         [make(8, [[0, 4], [4, 1], [2, 5], [5, 3], [3, 2], [6, 7]]).reverse(), 'tre gjenger i blandet rekkefølge'],
         [make(6, [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0]]), 'én stor ring'],
-        [t.nodes, 'tingene på scenen'],
+        [t.nodes, 'monstrene på scenen'],
       ]
       for (const [list, what] of cases) {
         const want = count(list)
@@ -722,15 +722,15 @@ console.log(groups(nodes))
     title: 'To lag',
     level: 'middels',
     topic: 'grafer',
-    text: `Tingene i \`nodes\` skal deles i to lag, rosa og turkis, så ingen står på samme lag som en venn. Skriv \`function twoTeams(nodes)\` som setter \`color\` til \`'pink'\` eller \`'cyan'\` på hver ting, slik at to venner aldri får samme farge, og gir tilbake \`true\`.
+    text: `Monstrene i \`nodes\` skal deles i to lag, rosa og turkis, så ingen står på samme lag som en venn. Skriv \`function twoTeams(nodes)\` som setter \`color\` til \`'pink'\` eller \`'cyan'\` på hvert monster, slik at to venner aldri får samme farge, og gir tilbake \`true\`.
 
-Det går ikke alltid. Danner vennene en ring med et odde antall ting, som tre som alle er venner, kan det ikke lages to lag. Da skal funksjonen gi tilbake \`false\`, og ingen farger skal være endret. En tom \`nodes\` gir \`true\`.
+Det går ikke alltid. Danner vennene en ring med et odde antall monstre, som tre som alle er venner, kan det ikke lages to lag. Da skal funksjonen gi tilbake \`false\`, og ingen farger skal være endret. En tom \`nodes\` gir \`true\`.
 
 \`nodes\` kan ha flere adskilte grupper, og hver av dem må få lag. Sjekken prøver også en trekant.`,
     hints: [
-      'Gå bredden først. Gi første ting en farge, vennene dens den andre, vennene deres den første igjen, og så videre.',
-      'Har en venn allerede fått samme farge som tingen du står på, går det ikke: svaret er `false`.',
-      'Husk fargene tingene hadde (for eksempel i et `Map`) og sett dem tilbake før du gir `false`. Start et nytt søk fra hver ting som ikke har fått lag ennå, for det kan være flere grupper.',
+      'Gå bredden først. Gi det første monsteret en farge, vennene til det den andre, vennene deres den første igjen, og så videre.',
+      'Har en venn allerede fått samme farge som monsteret du står på, går det ikke: svaret er `false`.',
+      'Husk fargene monstrene hadde (for eksempel i et `Map`) og sett dem tilbake før du gir `false`. Start et nytt søk fra hvert monster som ikke har fått lag ennå, for det kan være flere grupper.',
     ],
     world: (r) => {
       const n = 8
@@ -746,10 +746,10 @@ Det går ikke alltid. Danner vennene en ring med et odde antall ting, som tre so
       link(ring[from], ring[(from + (r() < 0.5 ? 3 : 5)) % n])
       return graphOf(things(r, n), adj)
     },
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `function twoTeams(nodes) {
-  // Gi hver ting 'pink' eller 'cyan', så ingen venner får samme farge
+  // Gi hvert monster 'pink' eller 'cyan', så ingen venner får samme farge
   return true
 }
 
@@ -788,14 +788,14 @@ console.log(twoTeams(nodes))
       const twoTeams = t.fn('twoTeams')
       const paint = ['gold', 'lime', 'red', 'orange', 'violet', 'teal', 'gold', 'lime']
       const make = (n: number, edges: number[][]): any[] => {
-        const list: any[] = Array.from({ length: n }, (_, i) => t.ting({ value: i, color: paint[i % paint.length], neighbors: [] }))
+        const list: any[] = Array.from({ length: n }, (_, i) => t.monster({ value: i, color: paint[i % paint.length], neighbors: [] }))
         for (const [a, b] of edges) {
           list[a].neighbors.push(list[b])
           list[b].neighbors.push(list[a])
         }
         return list
       }
-      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       const team = (c: unknown) => c === 'pink' || c === 'cyan'
       const wrong = (list: any[]): string => {
         for (const node of list) {
@@ -811,8 +811,8 @@ console.log(twoTeams(nodes))
       const cases: [any[], boolean, string][] = [
         [make(6, [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [0, 3]]), true, 'en ring på seks med en snarvei'],
         [[mixed[0], mixed[3], mixed[1], mixed[4], mixed[2], mixed[5], mixed[6]], true, 'to adskilte grupper'],
-        [make(1, []), true, 'én ting'],
-        [[], true, 'ingen ting'],
+        [make(1, []), true, 'ett monster'],
+        [[], true, 'ingen monstre'],
         [make(3, [[0, 1], [1, 2], [2, 0]]), false, 'en trekant'],
         [make(5, [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0]]), false, 'en ring på fem'],
         [g, false, 'en gruppe på tre og en ring på fem'],
@@ -839,22 +839,22 @@ console.log(twoTeams(nodes))
     title: 'Hva må gjøres først?',
     level: 'middels',
     topic: 'grafer',
-    text: `Tingene skal gjøres i en bestemt rekkefølge. Pilene på scenen viser hva som må komme først: en pil fra A til B betyr at A må gjøres før B, og \`A.neighbors\` lister dem A peker på. Det er altså ikke venner lenger, bare piler som går én vei.
+    text: `Monstrene skal gjøres i en bestemt rekkefølge. Pilene på scenen viser hva som må komme først: en pil fra A til B betyr at A må gjøres før B, og \`A.neighbors\` lister dem A peker på. Det er altså ikke venner lenger, bare piler som går én vei.
 
-Skriv \`function order(nodes)\` som gir tilbake alle tingene i en rekkefølge der hver pil peker framover: hver ting kommer før alle i sin \`neighbors\`. Det finnes ofte flere riktige rekkefølger, og en av dem holder. En tom \`nodes\` gir \`[]\`.
+Skriv \`function order(nodes)\` som gir tilbake alle monstrene i en rekkefølge der hver pil peker framover: hvert monster kommer før alle i sin \`neighbors\`. Det finnes ofte flere riktige rekkefølger, og en av dem holder. En tom \`nodes\` gir \`[]\`.
 
 Danner pilene en ring, finnes det ingen rekkefølge. Da skal \`order\` gi tilbake \`null\`. Sjekken prøver også det.`,
     hints: [
-      'En ting kan gjøres først når ingen pil peker på den. Tell for hver ting hvor mange piler som peker inn.',
-      'Stil alle med 0 innpiler i en kø. Ta ut en, legg den i svaret, og trekk 1 fra innpilene til hver ting i dens `neighbors`. Blir en av dem 0, stiller du den i køen.',
+      'Et monster kan gjøres først når ingen pil peker på det. Tell for hvert monster hvor mange piler som peker inn.',
+      'Still alle med 0 innpiler i en kø. Ta ut ett, legg det i svaret, og trekk 1 fra innpilene til hvert monster i `neighbors` til det. Blir ett av dem 0, stiller du det i køen.',
       'Er svaret kortere enn `nodes` når køen er tom, står noen igjen i en ring der alle venter på hverandre: gi `null`.',
     ],
     world: (r) => arrowsOf(r, things(r, 8), 3, false),
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `function order(nodes) {
   const result = []
-  // Hvor mange piler peker inn på hver ting? Begynn med dem som ingen peker på.
+  // Hvor mange piler peker inn på hvert monster? Begynn med dem som ingen peker på.
   return result
 }
 
@@ -885,15 +885,15 @@ console.log(order(nodes)?.map((node) => node.value))
     check: (t) => {
       const order = t.fn('order')
       const make = (n: number, arrows: number[][]): any[] => {
-        const list: any[] = Array.from({ length: n }, (_, i) => t.ting({ value: i, neighbors: [] }))
+        const list: any[] = Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
         for (const [a, b] of arrows) list[a].neighbors.push(list[b])
         return list
       }
-      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       const wrong = (list: any[], got: any): string => {
-        if (!Array.isArray(got)) return `order skal gi en array med tingene, men gav ${t.show(got)}.`
+        if (!Array.isArray(got)) return `order skal gi en array med monstrene, men gav ${t.show(got)}.`
         if (got.length !== list.length || new Set(got).size !== got.length || got.some((x) => !list.includes(x))) {
-          return `order skal gi alle ${list.length} tingene, hver én gang, men gav ${got.length} ting.`
+          return `order skal gi alle ${list.length} monstrene, hver én gang, men gav ${got.length} monstre.`
         }
         const place = new Map(got.map((node, i) => [node, i]))
         for (const node of list) {
@@ -906,10 +906,10 @@ console.log(order(nodes)?.map((node) => node.value))
       const ordered: [any[], string][] = [
         [make(4, [[0, 1], [0, 2], [1, 3], [2, 3]]).reverse(), 'en diamant'],
         [make(5, [[4, 3], [3, 2], [2, 1], [1, 0]]), 'en kjede som går baklengs'],
-        [make(3, []), 'tre ting uten piler'],
+        [make(3, []), 'tre monstre uten piler'],
         [make(6, [[0, 3], [3, 5], [1, 4], [4, 2]]), 'to adskilte kjeder'],
-        [[], 'ingen ting'],
-        [t.nodes, 'tingene på scenen'],
+        [[], 'ingen monstre'],
+        [t.nodes, 'monstrene på scenen'],
       ]
       for (const [list, what] of ordered) {
         const got = order(list)
@@ -919,7 +919,7 @@ console.log(order(nodes)?.map((node) => node.value))
       }
       const rings: [any[], string][] = [
         [make(3, [[0, 1], [1, 2], [2, 0]]), 'en ring på tre'],
-        [make(5, [[3, 0], [0, 1], [1, 2], [2, 0], [0, 4]]), 'en ring med en ting foran og en bak'],
+        [make(5, [[3, 0], [0, 1], [1, 2], [2, 0], [0, 4]]), 'en ring med et monster foran og ett bak'],
         [make(6, [[0, 1], [2, 3], [3, 4], [4, 2]]), 'en kjede og en ring ved siden av'],
       ]
       for (const [list, what] of rings) {
@@ -935,23 +935,23 @@ console.log(order(nodes)?.map((node) => node.value))
     title: 'Billigste vei',
     level: 'vanskelig',
     topic: 'grafer',
-    text: `Å gå fra en ting til en av vennene koster forskjellen på verdiene deres, alltid et positivt tall: fra 12 til 30 koster 18, og tilbake igjen også 18. En vei koster summen av stegene.
+    text: `Å gå fra et monster til en av vennene koster forskjellen på verdiene deres, alltid et positivt tall: fra 12 til 30 koster 18, og tilbake igjen også 18. En vei koster summen av stegene.
 
-Skriv \`function cheapest(a, b)\` som gir tilbake hva den billigste veien fra \`a\` til \`b\` koster. Den har ikke nødvendigvis færrest steg. Fra en ting til seg selv koster det 0, og finnes det ingen vei, gir den \`Infinity\`.
+Skriv \`function cheapest(a, b)\` som gir tilbake hva den billigste veien fra \`a\` til \`b\` koster. Den har ikke nødvendigvis færrest steg. Fra et monster til seg selv koster det 0, og finnes det ingen vei, gir den \`Infinity\`.
 
-Bruk Dijkstras metode: ta alltid ut den uferdige tingen som er billigst å nå. En vanlig array holder som kø.`,
+Bruk Dijkstras metode: ta alltid ut det uferdige monsteret som er billigst å nå. En vanlig array holder som kø.`,
     hints: [
-      'Hold en `Map` `best` med billigste kjente pris til hver ting, først bare `a` med 0, og en array `todo` med tingene som skal besøkes.',
-      'Ta ut tingen i `todo` med lavest pris i `best`. For hver venn: prisen er `best.get(node) + Math.abs(node.value - friend.value)`. Er det billigere enn det du har fra før, lagrer du den og legger vennen i `todo`.',
-      'Er tingen du tar ut `b`, er prisen endelig. Blir `todo` tom uten at du kom til `b`, gir du `Infinity`.',
+      'Hold en `Map` `best` med billigste kjente pris til hvert monster, først bare `a` med 0, og en array `todo` med monstrene som skal besøkes.',
+      'Ta ut monsteret i `todo` med lavest pris i `best`. For hver venn: prisen er `best.get(node) + Math.abs(node.value - friend.value)`. Er det billigere enn det du har fra før, lagrer du den og legger vennen i `todo`.',
+      'Er monsteret du tar ut `b`, er prisen endelig. Blir `todo` tom uten at du kom til `b`, gir du `Infinity`.',
     ],
     world: (r) => graphWorld(r, things(r, 8), 3),
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `function cheapest(a, b) {
   const best = new Map([[a, 0]])
   const todo = [a]
-  // Ta alltid ut den billigste i todo, og oppdater prisen til vennene
+  // Ta alltid ut det billigste i todo, og oppdater prisen til vennene
   return Infinity
 }
 
@@ -962,7 +962,7 @@ console.log(cheapest(A, H))
   const done = new Set()
   const todo = [a]
   while (todo.length) {
-    // Ta ut den billigste
+    // Ta ut det billigste
     todo.sort((x, y) => best.get(x) - best.get(y))
     const node = todo.shift()
     if (done.has(node)) continue
@@ -986,7 +986,7 @@ console.log(cheapest(A, H))
     check: (t) => {
       const cheapest = t.fn('cheapest')
       const make = (values: number[], edges: number[][]): any[] => {
-        const list: any[] = values.map((value) => t.ting({ value, neighbors: [] }))
+        const list: any[] = values.map((value) => t.monster({ value, neighbors: [] }))
         for (const [a, b] of edges) {
           list[a].neighbors.push(list[b])
           list[b].neighbors.push(list[a])
@@ -1029,7 +1029,7 @@ console.log(cheapest(A, H))
         [random(8, 11), 'et tilfeldig nett'],
         [random(8, 10), 'et annet tilfeldig nett'],
         [random(7, 6), 'et tynt nett'],
-        [t.slots as any[], 'tingene på scenen'],
+        [t.slots as any[], 'monstrene på scenen'],
       ]
       for (const [list, what] of cases) {
         for (const a of list) {
@@ -1037,7 +1037,7 @@ console.log(cheapest(A, H))
           for (const b of list) {
             const got = cheapest(a, b)
             if (got !== cost.get(b)) {
-              const show = (n: any) => (t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+              const show = (n: any) => (t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
               return `For ${what}: cheapest(${show(a)}, ${show(b)}) gav ${t.show(got)}, men den billigste veien koster ${t.show(cost.get(b))}.`
             }
           }
@@ -1052,22 +1052,22 @@ console.log(cheapest(A, H))
     title: 'Venter i ring?',
     level: 'vanskelig',
     topic: 'grafer',
-    text: `Tingene venter på hverandre. En pil fra A til B betyr at A venter på B, og \`A.neighbors\` er dem A venter på. Kommer pilene rundt i ring, for eksempel A venter på B som venter på C som venter på A, står alle fast for alltid.
+    text: `Monstrene venter på hverandre. En pil fra A til B betyr at A venter på B, og \`A.neighbors\` er dem A venter på. Kommer pilene rundt i ring, for eksempel A venter på B som venter på C som venter på A, står alle fast for alltid.
 
-Skriv \`function hasCycle(nodes)\` som gir \`true\` hvis noen til slutt venter på seg selv, og ellers \`false\`. Pass på at to veier som møtes igjen (en diamant) ikke er en ring, mens en ting som venter på seg selv er det. En tom \`nodes\` gir \`false\`.
+Skriv \`function hasCycle(nodes)\` som gir \`true\` hvis noen til slutt venter på seg selv, og ellers \`false\`. Pass på at to veier som møtes igjen (en diamant) ikke er en ring, mens et monster som venter på seg selv er det. En tom \`nodes\` gir \`false\`.
 
-Merk hver ting hvit (ikke besøkt), grå (du er på vei ned gjennom den) eller svart (ferdig undersøkt). Møter du en grå ting, har du gått i ring.`,
+Merk hvert monster hvitt (ikke besøkt), grått (du er på vei ned gjennom det) eller svart (ferdig undersøkt). Møter du et grått monster, har du gått i ring.`,
     hints: [
-      'Gå dypt fra hver ting som ikke er besøkt. Hold orden på tilstanden til hver ting i et `Map`: ikke i kartet er hvit, `\'grå\'` er under besøk, `\'svart\'` er ferdig.',
-      'Når du går inn i en ting, merk den grå. Når alle den venter på er undersøkt, merk den svart.',
-      'Møter du en grå ting, er det en ring: `true`. En svart ting er ferdig undersøkt og kan hoppes over. Derfor er en diamant ikke en ring.',
+      'Gå dypt fra hvert monster som ikke er besøkt. Hold orden på tilstanden til hvert monster i et `Map`: ikke i kartet er hvit, `\'grå\'` er under besøk, `\'svart\'` er ferdig.',
+      'Når du går inn i et monster, merk det grått. Når alle det venter på er undersøkt, merk det svart.',
+      'Møter du et grått monster, er det en ring: `true`. Et svart monster er ferdig undersøkt og kan hoppes over. Derfor er en diamant ikke en ring.',
     ],
     world: (r) => arrowsOf(r, things(r, 8), 3, r() < 0.5),
-    ting: GRAPH_TING,
+    monster: GRAPH_MONSTER,
     views: { nodes: 'graph' },
     scaffold: `function hasCycle(nodes) {
   const state = new Map() // ikke i kartet = hvit, 'grå' = under besøk, 'svart' = ferdig
-  // Gå dypt fra hver hvit ting. Møter du en grå, er det en ring.
+  // Gå dypt fra hvert hvitt monster. Møter du et grått, er det en ring.
   return false
 }
 
@@ -1099,7 +1099,7 @@ console.log(hasCycle(nodes))
     check: (t) => {
       const hasCycle = t.fn('hasCycle')
       const make = (n: number, arrows: number[][]): any[] => {
-        const list: any[] = Array.from({ length: n }, (_, i) => t.ting({ value: i, neighbors: [] }))
+        const list: any[] = Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
         for (const [a, b] of arrows) list[a].neighbors.push(list[b])
         return list
       }
@@ -1126,12 +1126,12 @@ console.log(hasCycle(nodes))
         [make(6, [[0, 1], [0, 2], [0, 3], [1, 4], [2, 4], [3, 4], [4, 5], [1, 5]]), 'mange veier som møtes'],
         [make(3, [[0, 1], [1, 2], [2, 0]]), 'en ring på tre'],
         [make(2, [[0, 1], [1, 0]]), 'to som venter på hverandre'],
-        [make(2, [[0, 0]]), 'en som venter på seg selv'],
+        [make(2, [[0, 0]]), 'ett som venter på seg selv'],
         [make(5, [[0, 1], [1, 2], [2, 3], [3, 1], [3, 4]]), 'en kjede som ender i en ring'],
         [make(6, [[0, 1], [3, 4], [4, 5], [5, 3]]), 'en kjede og en ring ved siden av'],
-        [make(1, []), 'én ting'],
-        [[], 'ingen ting'],
-        [t.nodes, 'tingene på scenen'],
+        [make(1, []), 'ett monster'],
+        [[], 'ingen monstre'],
+        [t.nodes, 'monstrene på scenen'],
       ]
       for (const [list, what] of cases) {
         for (const nodes of [list, [...list].reverse()]) {

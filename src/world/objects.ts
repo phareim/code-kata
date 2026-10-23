@@ -1,7 +1,7 @@
 /*
  * The objects pane: the roots, then the items in memory order (A, B, C …), written the way the code sees them.
  *   head = D
- *   A = Ting { value: 7, color: 'pink', next: C }
+ *   A = Monster { value: 7, color: 'pink', next: C }
  * A pointer reads as the item's letter; an item no root reaches gets `// løs`.
  */
 import { itemColor, label, reachable, type Prop, type World } from './world'
@@ -74,7 +74,7 @@ export function renderObjects(pane: HTMLElement, world: World): void {
   if (world.truncated) {
     const note = document.createElement('div')
     note.className = 'o-line'
-    note.append(span('o-comment', '// flere ting enn dette vises ikke'))
+    note.append(span('o-comment', '// flere monstre enn dette vises ikke'))
     lines.push(note)
   }
   pane.replaceChildren(...lines)

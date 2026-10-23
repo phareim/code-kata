@@ -1,5 +1,5 @@
 import { arrayWorld, int, pick, PALETTE, shuffled, things, type Random, type Spec } from './build'
-import { PLAIN_TING } from './classes'
+import { PLAIN_MONSTER } from './classes'
 import type { Task } from './types'
 
 const val = (s: Spec) => s.value as number
@@ -59,19 +59,19 @@ export const tasks: Task[] = [
     title: 'Bytt de ytterste',
     level: 'lett',
     topic: 'sortering',
-    text: `Tingene står i arrayen \`items\`, med plassnummeret under hver. Den første og den siste vil bytte plass.
+    text: `Monstrene står i arrayen \`items\`, med plassnummeret under hver. Det første og det siste vil bytte plass.
 
-Bytt \`items[0]\` og den siste, og la de andre stå der de står.`,
+Bytt \`items[0]\` og det siste, og la de andre stå der de står.`,
     hints: [
-      'Den siste står på plass `items.length - 1`.',
-      'Ta vare på den ene i en variabel før du skriver over plassen: `const first = items[0]`.',
+      'Det siste står på plass `items.length - 1`.',
+      'Ta vare på det ene i en variabel før du skriver over plassen: `const first = items[0]`.',
       'Eller bytt begge på én gang: `[items[0], items[last]] = [items[last], items[0]]`.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `const last = items.length - 1
 const first = items[0]
-// Flytt den siste fram, og den første bakerst
+// Flytt det siste fram, og det første bakerst
 `,
     solution: `const last = items.length - 1
 const first = items[0]
@@ -82,7 +82,7 @@ items[last] = first
       const before = t.before('items')
       const want = [before.at(-1), ...before.slice(1, -1), before[0]]
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
-      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} ting, men skal ha ${want.length}.`
+      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.items[i] !== want[i]) return `Plass ${i} skal ha ${t.show(want[i])}, men har ${t.show(t.items[i])}.`
       }
@@ -94,7 +94,7 @@ items[last] = first
     title: 'Boblesortering',
     level: 'middels',
     topic: 'sortering',
-    text: `Sorter tingene i \`items\` etter \`value\`, minst først, med boblesortering: gå gjennom arrayen fra start til slutt, og bytt to naboer som står feil vei. Gjør det igjen og igjen, til en hel runde går uten ett eneste bytte.
+    text: `Sorter monstrene i \`items\` etter \`value\`, minst først, med boblesortering: gå gjennom arrayen fra start til slutt, og bytt to naboer som står feil vei. Gjør det igjen og igjen, til en hel runde går uten ett eneste bytte.
 
 Kall \`vis(items[i], items[i + 1])\` etter hvert bytte, så ser du de store boble seg bakover.`,
     hints: [
@@ -103,7 +103,7 @@ Kall \`vis(items[i], items[i + 1])\` etter hvert bytte, så ser du de store bobl
       'Den ytre løkka går så lenge noe ble byttet i forrige runde.',
     ],
     world: (r) => arrayWorld(things(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `let swapped = true
 while (swapped) {
   swapped = false
@@ -127,7 +127,7 @@ while (swapped) {
     check: (t) => {
       const want = t.before('items').sort((a, b) => a.value - b.value)
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
-      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} ting, men skal ha ${want.length}.`
+      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.items[i] !== want[i]) {
           return `Plass ${i} skal ha ${t.show(want[i])} (${want[i].value}), men har ${t.show(t.items[i])} (${t.items[i]?.value}).`
@@ -142,18 +142,18 @@ while (swapped) {
     title: 'Fra minst til størst',
     level: 'lett',
     topic: 'sortering',
-    text: `Tingene i \`items\` står i tilfeldig rekkefølge, men de vil stå fra minst til størst, etter \`value\`.
+    text: `Monstrene i \`items\` står i tilfeldig rekkefølge, men de vil stå fra minst til størst, etter \`value\`.
 
-Sorter \`items\` så den minste står først og den største sist. Du velger metoden selv: \`sort\` er helt greit, og en løkke også. Til slutt skal det være de samme tingene i raden, bare i ny rekkefølge.`,
+Sorter \`items\` så det minste står først og det største sist. Du velger metoden selv: \`sort\` er helt greit, og en løkke også. Til slutt skal det være de samme monstrene i raden, bare i ny rekkefølge.`,
     hints: [
-      '`sort` tar en funksjon som får to ting, `a` og `b`. Den skal gi et negativt tall hvis `a` skal stå foran `b`.',
-      'Du sammenligner verdiene, ikke tingene: `(a, b) => a.value - b.value`.',
+      '`sort` tar en funksjon som får to monstre, `a` og `b`. Den skal gi et negativt tall hvis `a` skal stå foran `b`.',
+      'Du sammenligner verdiene, ikke monstrene: `(a, b) => a.value - b.value`.',
       'Hele løsningen er `items.sort((a, b) => a.value - b.value)`. Vil du heller sortere selv, kan du bruke boblesortering.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `// Sorter items etter value, minst først.
-// items.sort(…) tar en funksjon som sammenligner to ting: (a, b) => …
+// items.sort(…) tar en funksjon som sammenligner to monstre: (a, b) => …
 console.log(items.map((thing) => thing.value))
 `,
     solution: `items.sort((a, b) => a.value - b.value)
@@ -162,7 +162,7 @@ vis('sortert')
     check: (t) => {
       const want = t.before('items').sort((a, b) => a.value - b.value)
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
-      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} ting, men skal ha ${want.length}.`
+      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.items[i] !== want[i]) {
           return `Plass ${i} skal ha ${t.show(want[i])} (${want[i].value}), men har ${t.show(t.items[i])} (${t.items[i]?.value}).`
@@ -176,16 +176,16 @@ vis('sortert')
     title: 'Størst først',
     level: 'lett',
     topic: 'sortering',
-    text: `Nå vil tingene stå motsatt vei: den med størst \`value\` først og den minste sist.
+    text: `Nå vil monstrene stå motsatt vei: det med størst \`value\` først og det minste sist.
 
-Sorter \`items\` fra størst til minst. Det skal være de samme tingene i raden, bare i ny rekkefølge.`,
+Sorter \`items\` fra størst til minst. Det skal være de samme monstrene i raden, bare i ny rekkefølge.`,
     hints: [
       'Samme grep som når du sorterer minst først, men sammenligningen går motsatt vei.',
-      'Funksjonen du gir til `sort` skal gi et negativt tall når `a` skal stå foran `b`. Skal den største stå først, er det `b.value - a.value`.',
+      'Funksjonen du gir til `sort` skal gi et negativt tall når `a` skal stå foran `b`. Skal det største stå først, er det `b.value - a.value`.',
       'Hele løsningen er `items.sort((a, b) => b.value - a.value)`.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), descending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `// Sorter items etter value, størst først.
 console.log(items.map((thing) => thing.value))
 `,
@@ -195,7 +195,7 @@ vis('størst først')
     check: (t) => {
       const want = t.before('items').sort((a, b) => b.value - a.value)
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
-      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} ting, men skal ha ${want.length}.`
+      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.items[i] !== want[i]) {
           return `Plass ${i} skal ha ${t.show(want[i])} (${want[i].value}), men har ${t.show(t.items[i])} (${t.items[i]?.value}).`
@@ -209,9 +209,9 @@ vis('størst først')
     title: 'Er raden sortert?',
     level: 'lett',
     topic: 'sortering',
-    text: `Før tingene tar seg bryet med å sortere, vil de vite om raden allerede er i orden. Skriv \`function isSorted(items)\` som tar en array av ting og gir tilbake \`true\` hvis \`value\` aldri blir mindre fra en ting til den neste, ellers \`false\`.
+    text: `Før monstrene tar seg bryet med å sortere, vil de vite om raden allerede er i orden. Skriv \`function isSorted(items)\` som tar en array av monstre og gir tilbake \`true\` hvis \`value\` aldri blir mindre fra et monster til det neste, ellers \`false\`.
 
-To like verdier ved siden av hverandre er greit. En tom rad og en rad med én ting er sortert. Funksjonen skal bare se på raden, ikke endre den. Koden nederst prøver den på \`items\`.`,
+To like verdier ved siden av hverandre er greit. En tom rad og en rad med ett monster er sortert. Funksjonen skal bare se på raden, ikke endre den. Koden nederst prøver den på \`items\`.`,
     hints: [
       'Du trenger bare se på ett par naboer om gangen: `items[i]` og `items[i + 1]`.',
       'Finner du et par der `items[i].value > items[i + 1].value`, kan du svare `false` med én gang.',
@@ -225,7 +225,7 @@ To like verdier ved siden av hverandre er greit. En tom rad og en rad med én ti
       row[k + 1] = tmp
       return arrayWorld(row)
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function isSorted(items) {
   // Se på parene av naboer. Står noen feil vei?
   return true
@@ -260,7 +260,7 @@ console.log(isSorted(items))
         [[10, 9], false],
       ]
       for (const [values, want] of cases) {
-        const row = values.map((value) => t.ting({ value }))
+        const row = values.map((value) => t.monster({ value }))
         const got = isSorted(row)
         if (got !== want) return `isSorted gav ${t.show(got)} for raden [${values.join(', ')}], men svaret skal være ${want}.`
         if (row.length !== values.length || row.some((x, i) => x.value !== values[i])) return 'isSorted skal ikke endre raden.'
@@ -273,16 +273,16 @@ console.log(isSorted(items))
     title: 'Én runde med bobler',
     level: 'lett',
     topic: 'sortering',
-    text: `Boblesortering gjør runde etter runde. Her vil tingene bare ha den første runden.
+    text: `Boblesortering gjør runde etter runde. Her vil monstrene bare ha den første runden.
 
-Gå gjennom \`items\` fra venstre mot høyre, én eneste gang. For hvert par naboer, \`items[i]\` og \`items[i + 1]\`, skal de bytte plass hvis den venstre har størst \`value\`. Ikke gjenta runden. Etter én runde har den største havnet helt til høyre, men resten er ikke nødvendigvis i orden.`,
+Gå gjennom \`items\` fra venstre mot høyre, én eneste gang. For hvert par naboer, \`items[i]\` og \`items[i + 1]\`, skal de bytte plass hvis det venstre har størst \`value\`. Ikke gjenta runden. Etter én runde har det største havnet helt til høyre, men resten er ikke nødvendigvis i orden.`,
     hints: [
       'Løkka går fra `i = 0` så lenge det finnes en nabo: `i + 1 < items.length`.',
       'Et par står feil vei når `items[i].value > items[i + 1].value`. Bytt dem med `[items[i], items[i + 1]] = [items[i + 1], items[i]]`.',
-      'Én `for`-løkke er nok, uten noe `while` rundt. Sammenlign alltid raden slik den ser ut nå: tingen du nettopp flyttet til høyre, møter neste nabo.',
+      'Én `for`-løkke er nok, uten noe `while` rundt. Sammenlign alltid raden slik den ser ut nå: monsteret du nettopp flyttet til høyre, møter neste nabo.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), (row) => ascending(row) || ascending(onePass(row)))),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `for (let i = 0; i + 1 < items.length; i++) {
   // Står items[i] og items[i + 1] feil vei? Bytt dem.
 }
@@ -304,7 +304,7 @@ Gå gjennom \`items\` fra venstre mot høyre, én eneste gang. For hvert par nab
           want[i + 1] = tmp
         }
       }
-      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} ting, men skal ha ${want.length}.`
+      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         if (t.items[i] !== want[i]) {
           const sorted = [...want].sort((a, b) => a.value - b.value)
@@ -321,21 +321,21 @@ Gå gjennom \`items\` fra venstre mot høyre, én eneste gang. For hvert par nab
     title: 'Utvalgssortering',
     level: 'lett',
     topic: 'sortering',
-    text: `Utvalgssortering finner den minste tingen og setter den først, finner den nest minste og setter den på plass to, og så videre.
+    text: `Utvalgssortering finner det minste monsteret og setter det først, finner det nest minste og setter det på plass to, og så videre.
 
-Skriv \`function selectionSort(items, swap)\`. Du får ikke flytte på tingene selv: den eneste måten er å kalle \`swap(i, j)\`, som bytter plassene \`i\` og \`j\` i \`items\`. For hver plass \`i\` fra venstre: finn plassen til den minste av de som er igjen (fra \`i\` og utover), og bytt den dit.
+Skriv \`function selectionSort(items, swap)\`. Du får ikke flytte på monstrene selv: den eneste måten er å kalle \`swap(i, j)\`, som bytter plassene \`i\` og \`j\` i \`items\`. For hver plass \`i\` fra venstre: finn plassen til det minste av de som er igjen (fra \`i\` og utover), og bytt det dit.
 
-Raden skal ende sortert etter \`value\`, minst først, med høyst \`n - 1\` bytter for \`n\` ting. Koden nederst kjører funksjonen på \`items\`.`,
+Raden skal ende sortert etter \`value\`, minst først, med høyst \`n - 1\` bytter for \`n\` monstre. Koden nederst kjører funksjonen på \`items\`.`,
     hints: [
-      'Den ytre løkka går over plassene `i`. Inni den leter en indre løkke fra `i + 1` og utover etter plassen til den minste, `min`.',
-      'Husk plassen, ikke tingen: `if (items[j].value < items[min].value) min = j`.',
-      'Etter den indre løkka bytter du den minste til plass `i` med `swap(i, min)`. Den ytre løkka trenger bare gå til nest siste plass.',
+      'Den ytre løkka går over plassene `i`. Inni den leter en indre løkke fra `i + 1` og utover etter plassen til det minste, `min`.',
+      'Husk plassen, ikke monsteret: `if (items[j].value < items[min].value) min = j`.',
+      'Etter den indre løkka bytter du det minste til plass `i` med `swap(i, min)`. Den ytre løkka trenger bare gå til nest siste plass.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function selectionSort(items, swap) {
   for (let i = 0; i < items.length - 1; i++) {
-    // Finn plassen til den minste fra i og utover, og bytt den til plass i med swap(i, min)
+    // Finn plassen til det minste fra i og utover, og bytt det til plass i med swap(i, min)
   }
 }
 
@@ -364,7 +364,7 @@ selectionSort(items, (i, j) => {
       const selectionSort = t.fn('selectionSort')
       const cases: number[][] = [[], [4], [2, 1], [1, 2, 3, 4], [5, 4, 3, 2, 1], [3, 1, 2], [4, 1, 3, 1, 2], [8, 3, 9, 1, 7, 2, 6, 4, 5, 10]]
       for (const values of cases) {
-        const arr = values.map((value) => t.ting({ value }))
+        const arr = values.map((value) => t.monster({ value }))
         const shadow = [...arr]
         const n = arr.length
         let calls = 0
@@ -372,7 +372,7 @@ selectionSort(items, (i, j) => {
         let bad = ''
         const swap = (i: number, j: number) => {
           if (!bad && !(Number.isInteger(i) && Number.isInteger(j) && i >= 0 && j >= 0 && i < n && j < n)) {
-            bad = `swap(${t.show(i)}, ${t.show(j)}) peker utenfor raden, som har ${n} ting.`
+            bad = `swap(${t.show(i)}, ${t.show(j)}) peker utenfor raden, som har ${n} monstre.`
           }
           if (!bad && ++calls > n * n + 10) bad = 'swap ble kalt altfor mange ganger. Går en løkke i ring?'
           if (bad) throw new Error('stopp')
@@ -397,7 +397,7 @@ selectionSort(items, (i, j) => {
         for (let i = 1; i < n; i++) {
           if (arr[i - 1].value > arr[i].value) return `selectionSort(${shown}) endte med [${arr.map((x) => x.value).join(', ')}], som ikke er sortert.`
         }
-        if (swaps > Math.max(0, n - 1)) return `selectionSort(${shown}) brukte ${swaps} bytter på ${n} ting, men det går på ${n - 1}.`
+        if (swaps > Math.max(0, n - 1)) return `selectionSort(${shown}) brukte ${swaps} bytter på ${n} monstre, men det går på ${n - 1}.`
       }
       return true
     },
@@ -408,9 +408,9 @@ selectionSort(items, (i, j) => {
     title: 'Innstikksortering',
     level: 'lett',
     topic: 'sortering',
-    text: `Innstikksortering tar tingene i tur og orden og stikker hver av dem inn på riktig plass blant de som står til venstre. Alt til venstre for den du jobber med, er allerede sortert.
+    text: `Innstikksortering tar monstrene i tur og orden og stikker hvert av dem inn på riktig plass blant de som står til venstre. Alt til venstre for det du jobber med, er allerede sortert.
 
-Skriv \`function insertionSort(items, swap)\`. Du får bare bytte to naboer, med \`swap(j - 1, j)\`. Ta én ting om gangen fra plass 1 og utover, og la den bytte seg bakover (mot venstre) så lenge tingen foran har større \`value\`.
+Skriv \`function insertionSort(items, swap)\`. Du får bare bytte to naboer, med \`swap(j - 1, j)\`. Ta ett monster om gangen fra plass 1 og utover, og la det bytte seg bakover (mot venstre) så lenge monsteret foran har større \`value\`.
 
 Sjekken teller byttene: det skal være like mange som det er par som står feil vei, ikke ett mer. Står to like ved siden av hverandre, skal de ikke bytte.`,
     hints: [
@@ -419,10 +419,10 @@ Sjekken teller byttene: det skal være like mange som det er par som står feil 
       'Bruk `>`, ikke `>=`: like verdier skal bli stående. Hvert bytte retter opp nøyaktig ett par som stod feil vei.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function insertionSort(items, swap) {
   for (let i = 1; i < items.length; i++) {
-    // La items[i] bytte seg bakover med swap(j - 1, j) så lenge tingen foran er større
+    // La items[i] bytte seg bakover med swap(j - 1, j) så lenge monsteret foran er større
   }
 }
 
@@ -451,7 +451,7 @@ insertionSort(items, (i, j) => {
       const insertionSort = t.fn('insertionSort')
       const cases: number[][] = [[], [3], [1, 2, 3], [3, 2, 1], [2, 3, 1, 5, 4], [3, 1, 3, 1], [5, 5, 5], [4, 1, 3, 1, 2], [9, 4, 7, 1, 8, 2, 6, 3, 10, 5, 12, 11]]
       for (const values of cases) {
-        const arr = values.map((value) => t.ting({ value }))
+        const arr = values.map((value) => t.monster({ value }))
         const shadow = [...arr]
         const n = arr.length
         let inversions = 0
@@ -460,9 +460,9 @@ insertionSort(items, (i, j) => {
         let bad = ''
         const swap = (i: number, j: number) => {
           if (!bad && !(Number.isInteger(i) && Number.isInteger(j) && i >= 0 && j >= 0 && i < n && j < n)) {
-            bad = `swap(${t.show(i)}, ${t.show(j)}) peker utenfor raden, som har ${n} ting.`
+            bad = `swap(${t.show(i)}, ${t.show(j)}) peker utenfor raden, som har ${n} monstre.`
           }
-          if (!bad && Math.abs(i - j) !== 1) bad = `swap(${i}, ${j}) er ikke to naboer. Her kan du bare bytte ting som står ved siden av hverandre.`
+          if (!bad && Math.abs(i - j) !== 1) bad = `swap(${i}, ${j}) er ikke to naboer. Her kan du bare bytte monstre som står ved siden av hverandre.`
           if (!bad && ++swaps > n * n + 10) bad = 'swap ble kalt altfor mange ganger. Går en løkke i ring?'
           if (bad) throw new Error('stopp')
           const a = arr[i]
@@ -485,7 +485,7 @@ insertionSort(items, (i, j) => {
         for (let i = 1; i < n; i++) {
           if (arr[i - 1].value > arr[i].value) return `insertionSort(${shown}) endte med [${arr.map((x) => x.value).join(', ')}], som ikke er sortert.`
         }
-        if (swaps !== inversions) return `insertionSort(${shown}) brukte ${swaps} bytter, men ${inversions} par stod feil vei. Hvert bytte skal rette opp ett par, og like ting skal ikke bytte.`
+        if (swaps !== inversions) return `insertionSort(${shown}) brukte ${swaps} bytter, men ${inversions} par stod feil vei. Hvert bytte skal rette opp ett par, og like monstre skal ikke bytte.`
       }
       return true
     },
@@ -496,7 +496,7 @@ insertionSort(items, (i, j) => {
     title: 'Nissen som sorterer',
     level: 'lett',
     topic: 'sortering',
-    text: `En nisse sorterer tingene på sin egen måte. Han står ved en plass, \`pos\`, og ser på tingen der og tingen foran. Står de i riktig rekkefølge, går han ett skritt fram. Gjør de ikke det, bytter han dem og går ett skritt tilbake. Ved plass 0 er det ingen ting foran, så der går han bare fram. Når han kommer forbi den siste plassen, er alt sortert.
+    text: `En nisse sorterer monstrene på sin egen måte. Han står ved en plass, \`pos\`, og ser på monsteret der og monsteret foran. Står de i riktig rekkefølge, går han ett skritt fram. Gjør de ikke det, bytter han dem og går ett skritt tilbake. Ved plass 0 er det ikke noe monster foran, så der går han bare fram. Når han kommer forbi den siste plassen, er alt sortert.
 
 Skriv \`function gnomeSort(items, swap)\` med nissens regler. \`pos\` starter på 0, og du får bare bytte to naboer, med \`swap(pos - 1, pos)\`. Raden skal ende sortert etter \`value\`, minst først. To like er i riktig rekkefølge.`,
     hints: [
@@ -505,11 +505,11 @@ Skriv \`function gnomeSort(items, swap)\` med nissens regler. \`pos\` starter p�
       'Ellers står de feil vei: `swap(pos - 1, pos)` og så `pos--`. Det er hele algoritmen.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function gnomeSort(items, swap) {
   let pos = 0
   while (pos < items.length) {
-    // Står tingen på pos og den foran i riktig rekkefølge? Gå fram.
+    // Står monsteret på pos og det foran i riktig rekkefølge? Gå fram.
     // Ellers: swap(pos - 1, pos) og gå tilbake.
     pos++
   }
@@ -542,16 +542,16 @@ gnomeSort(items, (i, j) => {
       const gnomeSort = t.fn('gnomeSort')
       const cases: number[][] = [[], [3], [1, 2, 3], [3, 2, 1], [2, 3, 1, 5, 4], [3, 1, 3, 1], [5, 5, 5], [4, 1, 3, 1, 2], [9, 4, 7, 1, 8, 2, 6, 3, 10, 5, 12, 11]]
       for (const values of cases) {
-        const arr = values.map((value) => t.ting({ value }))
+        const arr = values.map((value) => t.monster({ value }))
         const shadow = [...arr]
         const n = arr.length
         let swaps = 0
         let bad = ''
         const swap = (i: number, j: number) => {
           if (!bad && !(Number.isInteger(i) && Number.isInteger(j) && i >= 0 && j >= 0 && i < n && j < n)) {
-            bad = `swap(${t.show(i)}, ${t.show(j)}) peker utenfor raden, som har ${n} ting.`
+            bad = `swap(${t.show(i)}, ${t.show(j)}) peker utenfor raden, som har ${n} monstre.`
           }
-          if (!bad && Math.abs(i - j) !== 1) bad = `swap(${i}, ${j}) er ikke to naboer. Her kan du bare bytte ting som står ved siden av hverandre.`
+          if (!bad && Math.abs(i - j) !== 1) bad = `swap(${i}, ${j}) er ikke to naboer. Her kan du bare bytte monstre som står ved siden av hverandre.`
           if (!bad && ++swaps > n * n + 10) bad = 'swap ble kalt altfor mange ganger. Går nissen i ring?'
           if (bad) throw new Error('stopp')
           const a = arr[i]
@@ -595,7 +595,7 @@ Trikset er å få den største ned først: én vending henter den opp øverst, o
       'Ligger den allerede på plass `size - 1`, gjør du ingenting. Ligger den øverst (`big === 0`), hopper du over den første vendingen. Da holder det med `2n - 3`.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function pancakeSort(items, flip) {
   for (let size = items.length; size > 1; size--) {
     // Finn den største blant de size første, og få den ned på plass size - 1 med flip
@@ -638,7 +638,7 @@ pancakeSort(items, (k) => {
         }
       }
       for (const values of cases) {
-        const arr = values.map((value) => t.ting({ value }))
+        const arr = values.map((value) => t.monster({ value }))
         const shadow = [...arr]
         const n = arr.length
         const limit = Math.max(0, 2 * n - 3)
@@ -676,18 +676,18 @@ pancakeSort(items, (k) => {
     title: 'Flettesortering',
     level: 'middels',
     topic: 'sortering',
-    text: `Flettesortering deler raden i to, sorterer hver halvdel for seg, og fletter dem sammen igjen. Å flette to sorterte rader er lett: se på den første i hver, ta den minste, og gjenta til den ene raden er tom.
+    text: `Flettesortering deler raden i to, sorterer hver halvdel for seg, og fletter dem sammen igjen. Å flette to sorterte rader er lett: se på det første i hver, ta det minste, og gjenta til den ene raden er tom.
 
-Skriv \`function mergeSort(items)\` som gir tilbake en ny array med de samme tingene, sortert etter \`value\`, minst først. Arrayen du får inn, skal stå urørt. \`sort\` er forbudt: sjekken stopper deg hvis du prøver. En rad med null eller én ting er allerede sortert.
+Skriv \`function mergeSort(items)\` som gir tilbake en ny array med de samme monstrene, sortert etter \`value\`, minst først. Arrayen du får inn, skal stå urørt. \`sort\` er forbudt: sjekken stopper deg hvis du prøver. En rad med null eller ett monster er allerede sortert.
 
-Sjekken prøver også en rad med flere tusen ting, så en treg metode klarer seg ikke. Koden nederst setter \`items\` til den sorterte raden.`,
+Sjekken prøver også en rad med flere tusen monstre, så en treg metode klarer seg ikke. Koden nederst setter \`items\` til den sorterte raden.`,
     hints: [
-      'Del raden på midten med `slice`, sorter hver halvdel ved å kalle `mergeSort` på den, og flett resultatene. En rad med færre enn to ting trenger ikke deles.',
-      'Å flette: hold en plass i hver av de to sorterte radene, `a` og `b`. Så lenge begge har noe igjen, legger du den med minst `value` i resultatet og går ett skritt fram i den raden.',
-      'Er den ene raden tom, legger du resten av den andre til sist. Ved like verdier tar du den fra venstre rad, så like ting beholder rekkefølgen.',
+      'Del raden på midten med `slice`, sorter hver halvdel ved å kalle `mergeSort` på den, og flett resultatene. En rad med færre enn to monstre trenger ikke deles.',
+      'Å flette: hold en plass i hver av de to sorterte radene, `a` og `b`. Så lenge begge har noe igjen, legger du det med minst `value` i resultatet og går ett skritt fram i den raden.',
+      'Er den ene raden tom, legger du resten av den andre til sist. Ved like verdier tar du det fra venstre rad, så like monstre beholder rekkefølgen.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function mergeSort(items) {
   if (items.length <= 1) return [...items]
   // Del på midten, sorter hver halvdel med mergeSort, og flett dem
@@ -725,7 +725,7 @@ items = mergeSort(items)
         const n = values.length
         let reads = 0
         const arr = values.map((value) => {
-          const o = t.ting({ value: 0 })
+          const o = t.monster({ value: 0 })
           Object.defineProperty(o, 'value', { get() { reads++; return value } })
           return o
         })
@@ -748,15 +748,15 @@ items = mergeSort(items)
           proto.toSorted = real.toSorted
         }
         if (banned) return 'Du bruker `sort`, men det er forbudt her. Sorter selv, ved å dele og flette.'
-        const shown = n > 12 ? `en rad med ${n} ting` : `[${values.join(', ')}]`
+        const shown = n > 12 ? `en rad med ${n} monstre` : `[${values.join(', ')}]`
         if (!Array.isArray(got)) return `mergeSort(${shown}) gav ${t.show(got)}, men skal gi en array.`
         if (arr.length !== n || arr.some((x, i) => x !== copy[i])) return 'mergeSort skal ikke endre arrayen den får inn.'
         if (n >= 2 && got === arr) return 'mergeSort skal gi tilbake en ny array, ikke den du fikk inn.'
-        if (got.length !== n) return `mergeSort(${shown}) gav en array med ${got.length} ting, men skal gi ${n}.`
+        if (got.length !== n) return `mergeSort(${shown}) gav en array med ${got.length} monstre, men skal gi ${n}.`
         const seen = new Set(got)
-        if (seen.size !== n || copy.some((x) => !seen.has(x))) return `mergeSort(${shown}) skal gi tilbake de samme tingene, hver én gang.`
+        if (seen.size !== n || copy.some((x) => !seen.has(x))) return `mergeSort(${shown}) skal gi tilbake de samme monstrene, hver én gang.`
         if (readLimit && reads > readLimit) {
-          return `mergeSort så på verdiene ${reads} ganger blant ${n} ting. Det er altfor mye: med flettesortering holder det rundt ${Math.round(2 * n * Math.log2(n))}.`
+          return `mergeSort så på verdiene ${reads} ganger blant ${n} monstre. Det er altfor mye: med flettesortering holder det rundt ${Math.round(2 * n * Math.log2(n))}.`
         }
         for (let i = 1; i < n; i++) {
           if (got[i - 1].value > got[i].value) return `mergeSort(${shown}) endte med ${t.show(got.map((x: any) => x.value))}, som ikke er sortert.`
@@ -787,18 +787,18 @@ items = mergeSort(items)
     title: 'Quicksort',
     level: 'middels',
     topic: 'sortering',
-    text: `Quicksort velger en ting som skilletegn, pivoten, og flytter alle mindre ting til venstre for den og alle større til høyre. Da står pivoten på sin endelige plass. Så gjør quicksort det samme med hver side.
+    text: `Quicksort velger et monster som skilletegn, pivoten, og flytter alle mindre monstre til venstre for den og alle større til høyre. Da står pivoten på sin endelige plass. Så gjør quicksort det samme med hver side.
 
-Skriv \`function quickSort(items, swap)\` som sorterer \`items\` på stedet, etter \`value\`, minst først. Du får bare flytte ting med \`swap(i, j)\`, og \`sort\` er forbudt. Det lønner seg med en hjelpefunksjon inni som tar et område, for eksempel \`sortRange(lo, hi)\`.
+Skriv \`function quickSort(items, swap)\` som sorterer \`items\` på stedet, etter \`value\`, minst først. Du får bare flytte monstrene med \`swap(i, j)\`, og \`sort\` er forbudt. Det lønner seg med en hjelpefunksjon inni som tar et område, for eksempel \`sortRange(lo, hi)\`.
 
-Sjekken prøver også en rad med flere tusen ting, så metoden må være rask.`,
+Sjekken prøver også en rad med flere tusen monstre, så metoden må være rask.`,
     hints: [
-      'Et område med færre enn to ting er ferdig. Ellers velger du en pivot, for eksempel den siste tingen i området, og husker verdien.',
-      'Gå gjennom området og hold en plass `store` der neste ting som er mindre enn pivoten skal stå. Finner du en mindre på `j`, bytter du `swap(store, j)` og øker `store`. Til slutt `swap(store, hi)` så pivoten havner på plass.',
+      'Et område med færre enn to monstre er ferdig. Ellers velger du en pivot, for eksempel det siste monsteret i området, og husker verdien.',
+      'Gå gjennom området og hold en plass `store` der neste monster som er mindre enn pivoten skal stå. Finner du et mindre på `j`, bytter du `swap(store, j)` og øker `store`. Til slutt `swap(store, hi)` så pivoten havner på plass.',
       'Pivoten står nå riktig på `store`. Sorter området fra `lo` til `store - 1` og området fra `store + 1` til `hi` på samme måte.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function quickSort(items, swap) {
   function sortRange(lo, hi) {
     if (lo >= hi) return
@@ -845,7 +845,7 @@ quickSort(items, (i, j) => {
         const n = values.length
         let reads = 0
         const arr = values.map((value) => {
-          const o = t.ting({ value: 0 })
+          const o = t.monster({ value: 0 })
           Object.defineProperty(o, 'value', { get() { reads++; return value } })
           return o
         })
@@ -856,7 +856,7 @@ quickSort(items, (i, j) => {
         let banned = false
         const swap = (i: number, j: number) => {
           if (!bad && !(Number.isInteger(i) && Number.isInteger(j) && i >= 0 && j >= 0 && i < n && j < n)) {
-            bad = `swap(${String(i)}, ${String(j)}) peker utenfor raden, som har ${n} ting.`
+            bad = `swap(${String(i)}, ${String(j)}) peker utenfor raden, som har ${n} monstre.`
           }
           if (!bad && ++calls > cap) bad = 'swap ble kalt altfor mange ganger. Går en løkke i ring?'
           if (bad) throw new Error('stopp')
@@ -884,12 +884,12 @@ quickSort(items, (i, j) => {
         }
         if (banned) return 'Du bruker `sort`, men det er forbudt her. Sorter selv, med pivot og swap.'
         if (bad) return bad
-        const shown = n > 12 ? `en rad med ${n} ting` : `[${values.join(', ')}]`
+        const shown = n > 12 ? `en rad med ${n} monstre` : `[${values.join(', ')}]`
         if (arr.length !== n || arr.some((x, i) => x !== shadow[i])) {
           return `Etter quickSort(${shown}) er raden endret på annen måte enn med swap. Flytt bare med swap(i, j).`
         }
         if (readLimit && reads > readLimit) {
-          return `quickSort så på verdiene ${reads} ganger blant ${n} ting. Det er altfor mye: med quicksort holder det rundt ${Math.round(3 * n * Math.log2(n))}.`
+          return `quickSort så på verdiene ${reads} ganger blant ${n} monstre. Det er altfor mye: med quicksort holder det rundt ${Math.round(3 * n * Math.log2(n))}.`
         }
         for (let i = 1; i < n; i++) {
           if (arr[i - 1].value > arr[i].value) return `quickSort(${shown}) endte med ${t.show(arr.map((x) => x.value))}, som ikke er sortert.`
@@ -921,19 +921,19 @@ quickSort(items, (i, j) => {
     title: 'Tellesortering',
     level: 'middels',
     topic: 'sortering',
-    text: `Alle tingene har en \`value\` fra 1 til 9, og flere kan ha samme verdi. Da trenger ikke tingene sammenligne seg med hverandre: du kan telle hvor mange det er av hver verdi, og regne ut hvor hver av dem skal stå.
+    text: `Alle monstrene har en \`value\` fra 1 til 9, og flere kan ha samme verdi. Da trenger ikke monstrene sammenligne seg med hverandre: du kan telle hvor mange det er av hver verdi, og regne ut hvor hvert av dem skal stå.
 
-Skriv \`function countingSort(items)\` som gir tilbake en ny array med de samme tingene, sortert etter \`value\`, minst først. Arrayen du får inn, skal stå urørt, og \`sort\` er forbudt. Koden nederst setter \`items\` til den sorterte raden.`,
+Skriv \`function countingSort(items)\` som gir tilbake en ny array med de samme monstrene, sortert etter \`value\`, minst først. Arrayen du får inn, skal stå urørt, og \`sort\` er forbudt. Koden nederst setter \`items\` til den sorterte raden.`,
     hints: [
-      'Lag en array `counts` med ti plasser, alle 0, og tell: for hver ting øker du `counts[thing.value]`.',
-      'Regn ut hvor den første tingen med hver verdi skal stå: `start[v]` er summen av `counts` for alle mindre verdier.',
-      'Gå gjennom `items` og legg hver ting på plassen `start[thing.value]` i resultatet, og øk den plassen med én. Slik beholder like ting rekkefølgen.',
+      'Lag en array `counts` med ti plasser, alle 0, og tell: for hvert monster øker du `counts[thing.value]`.',
+      'Regn ut hvor det første monsteret med hver verdi skal stå: `start[v]` er summen av `counts` for alle mindre verdier.',
+      'Gå gjennom `items` og legg hvert monster på plassen `start[thing.value]` i resultatet, og øk den plassen med én. Slik beholder like monstre rekkefølgen.',
     ],
     world: (r) => arrayWorld(smallValues(r)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function countingSort(items) {
   const counts = new Array(10).fill(0)
-  // Tell hvor mange det er av hver verdi, og legg tingene på riktig plass i result
+  // Tell hvor mange det er av hver verdi, og legg monstrene på riktig plass i result
   const result = [...items]
   return result
 }
@@ -943,7 +943,7 @@ items = countingSort(items)
     solution: `function countingSort(items) {
   const counts = new Array(10).fill(0)
   for (const thing of items) counts[thing.value]++
-  // start[v] er plassen til den første tingen med verdi v
+  // start[v] er plassen til det første monsteret med verdi v
   const start = new Array(10).fill(0)
   for (let v = 1; v < 10; v++) start[v] = start[v - 1] + counts[v - 1]
   const result = new Array(items.length)
@@ -973,7 +973,7 @@ items = countingSort(items)
       ]
       for (const values of cases) {
         const n = values.length
-        const arr = values.map((value) => t.ting({ value }))
+        const arr = values.map((value) => t.monster({ value }))
         const copy = [...arr]
         let banned = false
         const ban = () => {
@@ -993,13 +993,13 @@ items = countingSort(items)
           proto.toSorted = real.toSorted
         }
         if (banned) return 'Du bruker `sort`, men det er forbudt her. Sorter ved å telle.'
-        const shown = n > 12 ? `en rad med ${n} ting` : `[${values.join(', ')}]`
+        const shown = n > 12 ? `en rad med ${n} monstre` : `[${values.join(', ')}]`
         if (!Array.isArray(got)) return `countingSort(${shown}) gav ${t.show(got)}, men skal gi en array.`
         if (arr.length !== n || arr.some((x, i) => x !== copy[i])) return 'countingSort skal ikke endre arrayen den får inn.'
         if (n >= 2 && got === arr) return 'countingSort skal gi tilbake en ny array, ikke den du fikk inn.'
-        if (got.length !== n) return `countingSort(${shown}) gav en array med ${got.length} ting, men skal gi ${n}.`
+        if (got.length !== n) return `countingSort(${shown}) gav en array med ${got.length} monstre, men skal gi ${n}.`
         const seen = new Set(got)
-        if (seen.size !== n || copy.some((x) => !seen.has(x))) return `countingSort(${shown}) skal gi tilbake de samme tingene, hver én gang.`
+        if (seen.size !== n || copy.some((x) => !seen.has(x))) return `countingSort(${shown}) skal gi tilbake de samme monstrene, hver én gang.`
         for (let i = 1; i < n; i++) {
           if (got[i - 1].value > got[i].value) return `countingSort(${shown}) endte med ${t.show(got.map((x: any) => x.value))}, som ikke er sortert.`
         }
@@ -1013,22 +1013,22 @@ items = countingSort(items)
     title: 'Haugsortering',
     level: 'vanskelig',
     topic: 'sortering',
-    text: `En haug er en rad som du ser på som et tre: tingen på plass \`i\` har barna sine på plass \`2 * i + 1\` og \`2 * i + 2\`. I en maks-haug er hver ting minst like stor (\`value\`) som barna sine, så den største alltid ligger på plass 0.
+    text: `En haug er en rad som du ser på som et tre: monsteret på plass \`i\` har barna sine på plass \`2 * i + 1\` og \`2 * i + 2\`. I en maks-haug er hvert monster minst like stort (\`value\`) som barna sine, så det største alltid ligger på plass 0.
 
-Skriv \`function heapSort(items, swap)\` som sorterer \`items\` på stedet, minst først, og bare flytter ting med \`swap(i, j)\`. Først bygger du en maks-haug av hele raden. Så bytter du den største (plass 0) bakerst, lar haugen bli én ting kortere, og lar den nye toppen synke ned til den står riktig. Gjenta til haugen er tom.
+Skriv \`function heapSort(items, swap)\` som sorterer \`items\` på stedet, minst først, og bare flytter monstrene med \`swap(i, j)\`. Først bygger du en maks-haug av hele raden. Så bytter du det største (plass 0) bakerst, lar haugen bli ett monster kortere, og lar den nye toppen synke ned til den står riktig. Gjenta til haugen er tom.
 
-\`sort\` er forbudt, og sjekken prøver en rad med flere tusen ting, så en tregere metode klarer seg ikke.`,
+\`sort\` er forbudt, og sjekken prøver en rad med flere tusen monstre, så en tregere metode klarer seg ikke.`,
     hints: [
-      'Skriv en hjelper `siftDown(i, size)` som lar tingen på plass `i` synke: finn den største av den selv og barna på `2 * i + 1` og `2 * i + 2` (bare plasser under `size`). Er det et barn, bytter du med det og fortsetter derfra.',
+      'Skriv en hjelper `siftDown(i, size)` som lar monsteret på plass `i` synke: finn det største av monsteret selv og barna på `2 * i + 1` og `2 * i + 2` (bare plasser under `size`). Er det et barn, bytter du med det og fortsetter derfra.',
       'Bygg haugen ved å kalle `siftDown(i, n)` for `i` fra `Math.floor(n / 2) - 1` ned til 0.',
-      'Så for `end` fra `n - 1` ned til 1: `swap(0, end)` flytter den største bakerst, og `siftDown(0, end)` får den nye toppen på plass i den korte haugen.',
+      'Så for `end` fra `n - 1` ned til 1: `swap(0, end)` flytter det største bakerst, og `siftDown(0, end)` får den nye toppen på plass i den korte haugen.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function heapSort(items, swap) {
   const n = items.length
   function siftDown(i, size) {
-    // La tingen på plass i synke ned til den er minst like stor som barna
+    // La monsteret på plass i synke ned til det er minst like stort som barna
   }
   // 1. Bygg en maks-haug
   // 2. Flytt toppen bakerst, og la den nye toppen synke
@@ -1075,7 +1075,7 @@ heapSort(items, (i, j) => {
         const n = values.length
         let reads = 0
         const arr = values.map((value) => {
-          const o = t.ting({ value: 0 })
+          const o = t.monster({ value: 0 })
           Object.defineProperty(o, 'value', { get() { reads++; return value } })
           return o
         })
@@ -1086,7 +1086,7 @@ heapSort(items, (i, j) => {
         let banned = false
         const swap = (i: number, j: number) => {
           if (!bad && !(Number.isInteger(i) && Number.isInteger(j) && i >= 0 && j >= 0 && i < n && j < n)) {
-            bad = `swap(${String(i)}, ${String(j)}) peker utenfor raden, som har ${n} ting.`
+            bad = `swap(${String(i)}, ${String(j)}) peker utenfor raden, som har ${n} monstre.`
           }
           if (!bad && ++calls > cap) bad = 'swap ble kalt altfor mange ganger. Går en løkke i ring?'
           if (bad) throw new Error('stopp')
@@ -1114,12 +1114,12 @@ heapSort(items, (i, j) => {
         }
         if (banned) return 'Du bruker `sort`, men det er forbudt her. Sorter selv, med en haug og swap.'
         if (bad) return bad
-        const shown = n > 12 ? `en rad med ${n} ting` : `[${values.join(', ')}]`
+        const shown = n > 12 ? `en rad med ${n} monstre` : `[${values.join(', ')}]`
         if (arr.length !== n || arr.some((x, i) => x !== shadow[i])) {
           return `Etter heapSort(${shown}) er raden endret på annen måte enn med swap. Flytt bare med swap(i, j).`
         }
         if (readLimit && reads > readLimit) {
-          return `heapSort så på verdiene ${reads} ganger blant ${n} ting. Det er altfor mye: med en haug holder det rundt ${Math.round(4 * n * Math.log2(n))}.`
+          return `heapSort så på verdiene ${reads} ganger blant ${n} monstre. Det er altfor mye: med en haug holder det rundt ${Math.round(4 * n * Math.log2(n))}.`
         }
         for (let i = 1; i < n; i++) {
           if (arr[i - 1].value > arr[i].value) return `heapSort(${shown}) endte med ${t.show(arr.map((x) => x.value))}, som ikke er sortert.`
@@ -1151,18 +1151,18 @@ heapSort(items, (i, j) => {
     title: 'Sorteringsnettverket',
     level: 'middels',
     topic: 'sortering',
-    text: `Et sorteringsnettverk sorterer uten å se på verdiene. Det er en fast liste over par av plasser, og for hvert par bytter vi bare hvis de står feil vei. Er listen smart nok, ender alt i orden, uansett hvordan tingene sto.
+    text: `Et sorteringsnettverk sorterer uten å se på verdiene. Det er en fast liste over par av plasser, og for hvert par bytter vi bare hvis de står feil vei. Er listen smart nok, ender alt i orden, uansett hvordan monstrene sto.
 
-Skriv \`function network(cmpSwap)\` som sorterer fire ting, på plassene 0, 1, 2 og 3, bare ved å kalle \`cmpSwap(i, j)\`. Den bytter plass \`i\` og \`j\` hvis tingen på \`i\` er større enn den på \`j\`, ellers skjer ingenting. Du får ikke se verdiene, så listen over kall blir den samme hver gang.
+Skriv \`function network(cmpSwap)\` som sorterer fire monstre, på plassene 0, 1, 2 og 3, bare ved å kalle \`cmpSwap(i, j)\`. Den bytter plass \`i\` og \`j\` hvis monsteret på \`i\` er større enn det på \`j\`, ellers skjer ingenting. Du får ikke se verdiene, så listen over kall blir den samme hver gang.
 
-Sjekken prøver alle 24 rekkefølgene av fire ting, og du får kalle \`cmpSwap\` høyst 5 ganger.`,
+Sjekken prøver alle 24 rekkefølgene av fire monstre, og du får kalle \`cmpSwap\` høyst 5 ganger.`,
     hints: [
       'Start med to par som hver for seg kommer i orden: `cmpSwap(0, 1)` og `cmpSwap(2, 3)`.',
-      'Nå ligger den minste av alle fire på plass 0 eller 2, og den største på 1 eller 3. `cmpSwap(0, 2)` og `cmpSwap(1, 3)` setter den minste på plass 0 og den største på plass 3.',
+      'Nå ligger det minste av alle fire på plass 0 eller 2, og det største på 1 eller 3. `cmpSwap(0, 2)` og `cmpSwap(1, 3)` setter det minste på plass 0 og det største på plass 3.',
       'Bare de to i midten kan fortsatt stå feil vei: `cmpSwap(1, 2)` er det femte og siste kallet.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r, 4), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function network(cmpSwap) {
   // Hvilke par vil du sammenligne? cmpSwap(0, 1) bytter plass 0 og 1 hvis de står feil vei.
 }
@@ -1235,13 +1235,13 @@ network((i, j) => {
     title: 'Farge for farge',
     level: 'middels',
     topic: 'sortering',
-    text: `Tingene vil stå sammen med dem som har samme farge, og fargene vil stå i alfabetisk rekkefølge: \`'cyan'\` før \`'gold'\`, \`'gold'\` før \`'lime'\`, og så videre. \`color\` er en tekst, og tekster kan du sammenligne med \`<\` og \`>\` eller med \`localeCompare\`.
+    text: `Monstrene vil stå sammen med dem som har samme farge, og fargene vil stå i alfabetisk rekkefølge: \`'cyan'\` før \`'gold'\`, \`'gold'\` før \`'lime'\`, og så videre. \`color\` er en tekst, og tekster kan du sammenligne med \`<\` og \`>\` eller med \`localeCompare\`.
 
-Sorter \`items\` etter \`color\`. De som har samme farge, skal beholde rekkefølgen de hadde før: sorteringen skal være stabil. Raden har flere ting i hver farge, så du ser tydelig om de holder rekkefølgen.`,
+Sorter \`items\` etter \`color\`. De som har samme farge, skal beholde rekkefølgen de hadde før: sorteringen skal være stabil. Raden har flere monstre i hver farge, så du ser tydelig om de holder rekkefølgen.`,
     hints: [
       '`a.color.localeCompare(b.color)` gir et negativt tall, null eller et positivt tall, akkurat slik `sort` vil ha det.',
       'Sammenligner du selv med `<` og `>`, må funksjonen gi 0 når fargene er like. Da vet `sort` at de skal beholde rekkefølgen.',
-      '`sort` er stabil i JavaScript: like ting holder rekkefølgen. Sorterer du selv, bytter du to naboer bare når den venstre er strengt større.',
+      '`sort` er stabil i JavaScript: like monstre holder rekkefølgen. Sorterer du selv, bytter du to naboer bare når det venstre er strengt større.',
     ],
     world: (r) => {
       const names = shuffled(r, PALETTE).slice(0, 3)
@@ -1249,7 +1249,7 @@ Sorter \`items\` etter \`color\`. De som har samme farge, skal beholde rekkeføl
       const specs = things(r).map((spec, i) => ({ ...spec, color: colors[i] }))
       return arrayWorld(scrambled(r, specs, (row) => byColor(row) || keepsOrder(row)))
     },
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `// Sorter items etter color, a til å. Like farger beholder rekkefølgen.
 console.log(items.map((thing) => thing.color))
 `,
@@ -1263,7 +1263,7 @@ vis('sortert etter farge')
         .map((x, i) => ({ x, i }))
         .sort((a, b) => (a.x.color < b.x.color ? -1 : a.x.color > b.x.color ? 1 : a.i - b.i))
         .map((e) => e.x)
-      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} ting, men skal ha ${want.length}.`
+      if (t.items.length !== want.length) return `\`items\` har ${t.items.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
         const got = t.items[i]
         if (got === want[i]) continue
@@ -1281,16 +1281,16 @@ vis('sortert etter farge')
     title: 'Hvor mange må flytte?',
     level: 'vanskelig',
     topic: 'sortering',
-    text: `Tingene i \`items\` vil stå sortert etter \`value\`, men så få som mulig vil reise seg. En ting som flytter seg, kan settes ned hvor som helst. De som blir sittende, må allerede stå i riktig rekkefølge seg imellom.
+    text: `Monstrene i \`items\` vil stå sortert etter \`value\`, men så få som mulig vil reise seg. Et monster som flytter seg, kan settes ned hvor som helst. De som blir sittende, må allerede stå i riktig rekkefølge seg imellom.
 
-Skriv \`function fewestMoves(items)\` som gir tilbake det minste antallet ting som må flytte seg. Funksjonen skal bare regne, ikke flytte noe. Sjekken prøver også en rad med flere tusen ting.`,
+Skriv \`function fewestMoves(items)\` som gir tilbake det minste antallet monstre som må flytte seg. Funksjonen skal bare regne, ikke flytte noe. Sjekken prøver også en rad med flere tusen monstre.`,
     hints: [
       'De som blir sittende, er en stigende rekke med hull i: verdiene øker fra venstre mot høyre, men står ikke nødvendigvis ved siden av hverandre. Jo lengre en slik rekke, jo færre må flytte.',
-      'Svaret er antall ting minus lengden av den lengste stigende rekka. For hver plass kan du regne ut den lengste stigende rekka som slutter der, ved å se på alle plassene til venstre. Det er raskt nok for 8, men ikke for flere tusen.',
+      'Svaret er antall monstre minus lengden av den lengste stigende rekka. For hver plass kan du regne ut den lengste stigende rekka som slutter der, ved å se på alle plassene til venstre. Det er raskt nok for 8, men ikke for flere tusen.',
       'Raskere: hold en array `tails`, der `tails[k]` er den minste sluttverdien en stigende rekke med lengde `k + 1` kan ha. For hver verdi finner du med binærsøk den første i `tails` som er minst like stor, og bytter den ut, eller legger verdien til bakerst.',
     ],
     world: (r) => arrayWorld(scrambled(r, things(r), ascending)),
-    ting: PLAIN_TING,
+    monster: PLAIN_MONSTER,
     scaffold: `function fewestMoves(items) {
   // Hvor lang er den lengste stigende rekka?
   return items.length
@@ -1334,13 +1334,13 @@ console.log(fewestMoves(items))
       }
       const rows = [[3, 1, 2], [1, 2, 3, 4], [4, 3, 2, 1], [], [7], [10, 9, 2, 5, 3, 7, 101, 18], [5, 1, 6, 2, 7, 3]]
       for (const values of rows) {
-        const got = fewestMoves(values.map((value) => t.ting({ value })))
+        const got = fewestMoves(values.map((value) => t.monster({ value })))
         const want = values.length - lis(values)
         if (got !== want) return `For ${t.show(values)} gav fewestMoves ${t.show(got)}, men det holder at ${want} flytter seg.`
       }
       const long = Array.from({ length: 4000 }, (_, i) => (i * 7919) % 4001)
-      const got = fewestMoves(long.map((value) => t.ting({ value })))
-      if (got !== long.length - lis(long)) return `For en lang rad på 4000 ting gav fewestMoves ${t.show(got)}, men svaret er ${long.length - lis(long)}.`
+      const got = fewestMoves(long.map((value) => t.monster({ value })))
+      if (got !== long.length - lis(long)) return `For en lang rad på 4000 monstre gav fewestMoves ${t.show(got)}, men svaret er ${long.length - lis(long)}.`
       return true
     },
     source: 'https://en.wikipedia.org/wiki/Longest_increasing_subsequence',

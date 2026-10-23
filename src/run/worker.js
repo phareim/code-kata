@@ -18,7 +18,7 @@
  *                  { type: 'done', ms }                         the code returned and no timer is left
  *                  { type: 'error', name, message, line, where, compile, ms }
  *                                                an uncaught error; line is 1-based in the editor `where` names
- *                                                ('kode' or 'ting'), both null when the engine doesn't say;
+ *                                                ('kode' or 'klasse'), both null when the engine doesn't say;
  *                                                compile is true when the code didn't parse
  *
  * `done` and `error` end the run; the page then terminates the worker.
@@ -167,9 +167,9 @@ function errorText(e) {
  *   { key, text, lossy: true }   a value that doesn't (a function, a symbol); the next run gets the text
  * A root is a prop keyed by its global's name.
  * Slots are memory: the items the page sent keep their slot, items the code made are appended in the order they are
- * found: from the roots, then along pointers (next, prev, left, right, parent) and through arrays of Ting. Slot i is
+ * found: from the roots, then along pointers (next, prev, left, right, parent) and through arrays of Monster. Slot i is
  * named label(i) (A, B, … Z, A1 …) as a fixed global.
- * Each item also carries `cls`, its constructor's name, and the world carries `fields`: the own properties a new Ting
+ * Each item also carries `cls`, its constructor's name, and the world carries `fields`: the own properties a new Monster
  * had when the items were last built, so the next build knows which fields the class has dropped since.
  */
 const WORLD_LIMIT = 64
@@ -189,13 +189,13 @@ function decoder(objs) {
 
 /**
  * The objects the page's world describes, linked to each other, and the roots as [name, value] pairs. With a class,
- * every item is a new Ting: it starts with the class's fields and defaults, then gets its stored props back, except
+ * every item is a new Monster: it starts with the class's fields and defaults, then gets its stored props back, except
  * fields the class no longer has.
  */
-function buildWorld(world, Ting) {
-  const objs = world.items.map(() => (Ting ? new Ting() : {}))
-  const fields = Ting ? Object.keys(objs[0] ?? new Ting()) : world.fields ?? []
-  const dropped = new Set(Ting ? (world.fields ?? []).filter((f) => !fields.includes(f)) : [])
+function buildWorld(world, Monster) {
+  const objs = world.items.map(() => (Monster ? new Monster() : {}))
+  const fields = Monster ? Object.keys(objs[0] ?? new Monster()) : world.fields ?? []
+  const dropped = new Set(Monster ? (world.fields ?? []).filter((f) => !fields.includes(f)) : [])
   const decode = decoder(objs)
   world.items.forEach((item, i) => {
     for (const p of item.props) if (!dropped.has(p.key)) objs[i][p.key] = decode(p)
@@ -238,7 +238,7 @@ function itemKeys(o) {
  * so an item keeps its slot from one vis() frame to the next and to the end. `roots` is [name, value] pairs;
  * `marked` are objects to light up, given as `marks` (slots).
  */
-function snapshotWorld(known, roots, fields = [], Ting = undefined, marked = []) {
+function snapshotWorld(known, roots, fields = [], Monster = undefined, marked = []) {
   const slot = new Map(known.map((o, i) => [o, i]))
   let truncated = false
   const add = (o) => {
@@ -247,9 +247,9 @@ function snapshotWorld(known, roots, fields = [], Ting = undefined, marked = [])
     slot.set(o, known.length)
     known.push(o)
   }
-  const isTing = (v) => {
+  const isMonster = (v) => {
     try {
-      return typeof Ting === 'function' && v instanceof Ting
+      return typeof Monster === 'function' && v instanceof Monster
     } catch {
       return false
     }
@@ -259,8 +259,8 @@ function snapshotWorld(known, roots, fields = [], Ting = undefined, marked = [])
     const proto = Object.getPrototypeOf(v)
     return proto === Object.prototype || proto === null
   }
-  // An item: one we know, a Ting, or a plain object reached from a root or through a pointer.
-  const isNode = (v) => isObject(v) && (slot.has(v) || isTing(v) || isPlain(v))
+  // An item: one we know, a Monster, or a plain object reached from a root or through a pointer.
+  const isNode = (v) => isObject(v) && (slot.has(v) || isMonster(v) || isPlain(v))
   const fromRoot = (v, depth) => {
     if (Array.isArray(v)) {
       if (depth < 3) for (const x of v.slice(0, ARRAY_LIMIT)) fromRoot(x, depth + 1)
@@ -275,7 +275,7 @@ function snapshotWorld(known, roots, fields = [], Ting = undefined, marked = [])
     }
     for (const key of keysOf(o)) {
       const v = read(o, key)
-      if (Array.isArray(v)) for (const x of v.slice(0, ARRAY_LIMIT)) if (isObject(x) && isTing(x)) add(x)
+      if (Array.isArray(v)) for (const x of v.slice(0, ARRAY_LIMIT)) if (isObject(x) && isMonster(x)) add(x)
     }
   }
 
@@ -312,9 +312,9 @@ function snapshotWorld(known, roots, fields = [], Ting = undefined, marked = [])
 }
 
 /*
- * The class and the code run as one source, so that `Ting` in the code is the class the items are made of:
+ * The class and the code run as one source, so that `Monster` in the code is the class the items are made of:
  *   <class source>
- *   ;__kata_build__(Ting)      builds the items as Ting, then
+ *   ;__kata_build__(Monster)   builds the items as Monster, then
  *   <code>
  *   ;return { name: … }        for a task with exports: the functions the code declared
  * place() turns a line in that source into a line in the editor it came from.
@@ -322,9 +322,20 @@ function snapshotWorld(known, roots, fields = [], Ting = undefined, marked = [])
 function place(line, classLines) {
   if (line === null) return { line: null, where: null }
   if (!classLines) return { line, where: 'kode' }
-  if (line <= classLines) return { line, where: 'ting' }
-  if (line === classLines + 1) return { line: null, where: 'ting' }
+  if (line <= classLines) return { line, where: 'klasse' }
+  if (line === classLines + 1) return { line: null, where: 'klasse' }
   return { line: line - classLines - 1, where: 'kode' }
+}
+
+/*
+ * The class was called Ting until 2026-10-23, and visitors have code and classes saved from then (`class Ting`,
+ * `new Ting(…)`). The items are made of the class the class editor declares, Monster or else Ting, and the other
+ * name is the same class.
+ */
+function classNames(classSource) {
+  return !/\bclass\s+Monster\b/.test(classSource) && /\bclass\s+Ting\b/.test(classSource)
+    ? ['Ting', 'Monster']
+    : ['Monster', 'Ting']
 }
 
 function exportsTrailer(names) {
@@ -378,12 +389,12 @@ function errorLine(err, cal, compiling, lineCount) {
  *                               list along key ('next')
  *   t.out                       the lines the code printed
  *   t.fn(name)                  a function (or class, for `new`) the code declared, one of the task's exports
- *   t.Ting                      the class
+ *   t.Monster                   the class
  *   t.chain(node, key)          the nodes from node along key ('next'), or null when it loops or hits a non-object
  *   t.values(node, key)         their values
- *   t.list(values, colors)      a new list of Ting; returns its head (null for none)
- *   t.ting(props)               a new Ting
- *   t.tree(spec)                a new tree of Ting from [value, left, right] (a bare value is a leaf)
+ *   t.list(values, colors)      a new list of Monster; returns its head (null for none)
+ *   t.monster(props)            a new Monster
+ *   t.tree(spec)                a new tree of Monster from [value, left, right] (a bare value is a leaf)
  *   t.same(a, b)                deep equality for plain data, arrays, Maps and Sets
  *   t.show(v)                   text for a message: an item by its letter, strings quoted
  *   t.shuffle(array)            a shuffled copy
@@ -391,7 +402,7 @@ function errorLine(err, cal, compiling, lineCount) {
  */
 const USER_ERROR = Symbol('kata user error')
 
-function checkContext({ Ting, slots, start, roots, out, exported, slotOf }) {
+function checkContext({ Monster, slots, start, roots, out, exported, slotOf }) {
   const userCall = (name, fn) => {
     const call = function (...args) {
       let r
@@ -409,8 +420,8 @@ function checkContext({ Ting, slots, start, roots, out, exported, slotOf }) {
     if (fn.prototype) call.prototype = fn.prototype
     return call
   }
-  const make = userCall('Ting', (props) => {
-    const o = typeof Ting === 'function' ? new Ting(props) : {}
+  const make = userCall('Monster', (props) => {
+    const o = typeof Monster === 'function' ? new Monster(props) : {}
     return Object.assign(o, props)
   })
   const chain = (node, key = 'next', max = 1000) => {
@@ -454,7 +465,7 @@ function checkContext({ Ting, slots, start, roots, out, exported, slotOf }) {
     return i >= 0 ? slots[i] : undefined
   }
   const t = {
-    Ting,
+    Monster,
     slots,
     start,
     out,
@@ -473,7 +484,7 @@ function checkContext({ Ting, slots, start, roots, out, exported, slotOf }) {
       }
       return head
     },
-    ting: (props) => make(props),
+    monster: (props) => make(props),
     tree: function tree(spec, i = 0) {
       if (spec === null || spec === undefined) return null
       const [value, left, right] = Array.isArray(spec) ? spec : [spec]
@@ -603,10 +614,10 @@ function start() {
   }
 
   // The items, sent back as the code left them; not after a compile error, when no code ran.
-  // `world` is { objs, roots (names), fields, Ting, start }; objs grows as the code makes new items.
+  // `world` is { objs, roots (names), fields, Monster, start }; objs grows as the code makes new items.
   let world = null
   const readRoots = () => world.roots.map((name) => [name, self[name]])
-  const snap = (marked) => snapshotWorld(world.objs, readRoots(), world.fields, world.Ting, marked)
+  const snap = (marked) => snapshotWorld(world.objs, readRoots(), world.fields, world.Monster, marked)
 
   // vis(): a frame of the items as they are now, played back on the page after the run. Strings and numbers make
   // the frame's caption; items (or arrays of them) light up.
@@ -686,7 +697,7 @@ function start() {
       finished = true
       if (task && world) {
         const t = checkContext({
-          Ting: world.Ting,
+          Monster: world.Monster,
           slots: world.objs.slice(0, world.start.objs.length),
           start: Object.assign({ slots: world.start.objs }, Object.fromEntries(world.start.roots)),
           roots: world.roots,
@@ -736,14 +747,14 @@ function start() {
     startedAt = performance.now()
     task = msg.task && typeof msg.task.check === 'string' ? msg.task : null
     const code = String(msg.code) + (task ? exportsTrailer(task.exports) : '')
-    const install = (Ting) => {
+    const install = (Monster) => {
       if (!msg.world) return
-      const built = buildWorld(msg.world, Ting)
+      const built = buildWorld(msg.world, Monster)
       world = {
         objs: built.objs,
         roots: built.roots.map(([name]) => name),
         fields: built.fields,
-        Ting,
+        Monster,
         // A copy of its own: raw values (a grid, a tag list) would otherwise be the code's to change.
         start: buildWorld(structuredClone(msg.world), undefined),
       }
@@ -754,19 +765,22 @@ function start() {
       for (const [name, value] of built.roots) self[name] = value
     }
     if (typeof msg.classSource === 'string') {
+      const [name, alias] = classNames(msg.classSource)
       Object.defineProperty(self, '__kata_build__', {
         configurable: true,
-        value: (Ting) => {
-          if (typeof Ting !== 'function') {
-            const err = new ReferenceError('Fant ingen class Ting over tingene.')
-            err.kataWhere = 'ting'
+        value: (Monster) => {
+          if (typeof Monster !== 'function') {
+            const err = new ReferenceError('Fant ingen class Monster over monstrene.')
+            err.kataWhere = 'klasse'
             throw err
           }
-          install(Ting)
+          // The other name is a global, so code that declares its own Ting (or Monster) keeps it.
+          Object.defineProperty(self, alias, { value: Monster, writable: true, configurable: true })
+          install(Monster)
         },
       })
       classLines = msg.classSource.split('\n').length
-      source = `${msg.classSource}\n;__kata_build__(typeof Ting === 'function' ? Ting : undefined)\n${code}`
+      source = `${msg.classSource}\n;__kata_build__(typeof ${name} === 'function' ? ${name} : undefined)\n${code}`
     } else {
       install(undefined)
       source = code

@@ -90,15 +90,15 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
-| 1 | `tell-tingene` | Tell tingene | lett |  |
+| 1 | `tell-tingene` | Tell monstrene | lett |  |
 | 2 | `snu-lista` | Snu lista | middels | [link](https://leetcode.com/problems/reverse-linked-list/) |
-| 3 | `storst-forst` | Den største først | lett |  |
+| 3 | `storst-forst` | Det største først | lett |  |
 | 4 | `ut-med-de-rosa` | Ut med de rosa | middels | [link](https://leetcode.com/problems/remove-linked-list-elements/) |
 | 5 | `legg-sammen` | Legg sammen | lett |  |
 | 6 | `fra-liste-til-array` | Fra liste til array | lett |  |
-| 7 | `ting-nummer-n` | Ting nummer n | lett |  |
+| 7 | `ting-nummer-n` | Monster nummer n | lett |  |
 | 8 | `g-vil-sta-forst` | G vil stå først | lett |  |
-| 9 | `forst-blir-sist` | Den første blir sist | lett |  |
+| 9 | `forst-blir-sist` | Det første blir sist | lett |  |
 | 10 | `skilpadda-og-haren` | Skilpadda og haren | middels | [link](https://en.wikipedia.org/wiki/Cycle_detection#Floyd's_tortoise_and_hare) |
 | 11 | `k-fra-slutten` | K fra slutten | middels |  |
 | 12 | `naboer-bytter-plass` | Naboer bytter plass | middels | [link](https://leetcode.com/problems/swap-nodes-in-pairs/) |
@@ -142,7 +142,7 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 | 40 | `spokelsene-bakerst` | Spøkelsene bakerst | lett |  |
 | 41 | `tett-hullene` | Tett hullene | lett |  |
 | 42 | `snu-raden` | Snu raden på stedet | lett |  |
-| 43 | `en-av-hver-farge` | Én av hver farge | lett |  |
+| 43 | `en-av-hver-farge` | Ett av hver farge | lett |  |
 | 44 | `roter-raden` | Roter raden | middels |  |
 | 45 | `tre-farger` | Tre farger på rad | middels | [link](https://en.wikipedia.org/wiki/Dutch_national_flag_problem) |
 | 46 | `bolgen` | Bølgen | middels |  |
@@ -156,7 +156,7 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 |---|---|---|---|---|
 | 50 | `snu-koen` | Snu køen med en stabel | lett |  |
 | 51 | `hanois-tarn` | Hanois tårn | vanskelig | [link](https://en.wikipedia.org/wiki/Tower_of_Hanoi) |
-| 52 | `tre-pa-en-av` | Tre på, én av | lett | [link](https://en.wikipedia.org/wiki/Stack_(abstract_data_type)) |
+| 52 | `tre-pa-en-av` | Tre på, ett av | lett | [link](https://en.wikipedia.org/wiki/Stack_(abstract_data_type)) |
 | 53 | `titt-pa-toppen` | Titt på toppen | lett |  |
 | 54 | `spokelset-bakerst` | Spøkelset vil bakerst | lett |  |
 | 55 | `runde-for-runde` | Runde for runde | middels | [link](https://en.wikipedia.org/wiki/Round-robin_scheduling) |
@@ -196,7 +196,7 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
 | 81 | `steg-fra-a` | Hvor mange steg unna? | middels | [link](https://en.wikipedia.org/wiki/Breadth-first_search) |
-| 82 | `den-mest-populaere` | Den mest populære | lett |  |
+| 82 | `den-mest-populaere` | Det mest populære | lett |  |
 | 83 | `er-vi-venner` | Er vi venner? | lett |  |
 | 84 | `bli-kjent` | Bli kjent | lett |  |
 | 85 | `forlat-gjengen` | Forlat gjengen | lett |  |
@@ -231,9 +231,9 @@ pages); LeetCode links in `source` fields point at the problem a task resembles.
 | # | Id | Title | Level | Source |
 |---|---|---|---|---|
 | 106 | `si-hvem-du-er` | Si hvem du er | lett |  |
-| 107 | `er-den-stor` | Er den stor? | lett |  |
+| 107 | `er-den-stor` | Er det stort? | lett |  |
 | 108 | `mellom-1-og-99` | Mellom 1 og 99 | middels |  |
-| 109 | `ting-compare` | Ting.compare | lett |  |
+| 109 | `ting-compare` | Monster.compare | lett |  |
 | 110 | `katter-og-spokelser` | Katter og spøkelser | middels |  |
 | 111 | `roboten-teller` | Roboten teller i det skjulte | middels |  |
 | 112 | `tekst-og-tall` | Tekst og tall | middels |  |

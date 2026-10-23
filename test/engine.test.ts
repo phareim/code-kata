@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { label, prop, randomWorld, reachable, root, walk, type Prop, type World } from '../src/world/world'
 import { runWorker } from './harness'
 
-const TING = `class Ting {
+const MONSTER = `class Monster {
   value = 0
   color = 'pink'
   next = null
@@ -15,7 +15,7 @@ const raw = (key: string, value: unknown): Prop => ({ key, raw: value, text: JSO
 /** Items with the given values, held by an `items` array in slot order; no list. */
 function arrayWorld(values: number[]): World {
   return {
-    items: values.map((v) => ({ cls: 'Ting', props: [raw('value', v), raw('color', 'pink')] })),
+    items: values.map((v) => ({ cls: 'Monster', props: [raw('value', v), raw('color', 'pink')] })),
     roots: [{ key: 'items', list: values.map((_, i) => ref(String(i), i)), text: '' }],
   }
 }
@@ -24,7 +24,7 @@ describe('roots and arrays', () => {
   it('brings an array of items back as a list of refs, in its new order', async () => {
     const run = await runWorker({
       code: 'items.sort((a, b) => a.value - b.value)',
-      classSource: TING,
+      classSource: MONSTER,
       world: arrayWorld([30, 10, 20]),
     })
     expect(run.end.type).toBe('done')
@@ -32,13 +32,13 @@ describe('roots and arrays', () => {
     expect(root(run.world!, 'items')!.text).toBe('[B, C, A]')
   })
 
-  it('finds new items in a root array, through left/right and in arrays of Ting', async () => {
+  it('finds new items in a root array, through left/right and in arrays of Monster', async () => {
     const run = await runWorker({
       code: `
-        const top = new Ting({ value: 1, left: A, right: new Ting({ value: 2 }) })
-        A.neighbors = [B, new Ting({ value: 3 })]
+        const top = new Monster({ value: 1, left: A, right: new Monster({ value: 2 }) })
+        A.neighbors = [B, new Monster({ value: 3 })]
         items.push(top)`,
-      classSource: TING,
+      classSource: MONSTER,
       world: arrayWorld([5, 6]),
     })
     expect(run.end.type).toBe('done')
@@ -54,7 +54,7 @@ describe('roots and arrays', () => {
   it('keeps plain arrays of values raw, and arrays of arrays of items as nested lists', async () => {
     const run = await runWorker({
       code: `grid = [['pink', 'cyan'], ['gold', 'lime']]; pegs = [[B, A], [], []]`,
-      classSource: TING,
+      classSource: MONSTER,
       world: { ...arrayWorld([2, 1]), roots: [raw('grid', null), raw('pegs', null)] },
     })
     expect(root(run.world!, 'grid')).toMatchObject({ raw: [['pink', 'cyan'], ['gold', 'lime']] })
@@ -68,11 +68,11 @@ describe('vis()', () => {
     const run = await runWorker({
       code: `
         vis('start')
-        const extra = new Ting({ value: 100, next: head })
+        const extra = new Monster({ value: 100, next: head })
         head = extra
         vis('ny først', extra, [A, B])
         head = head.next`,
-      classSource: TING,
+      classSource: MONSTER,
       world: start,
     })
     expect(run.end.type).toBe('done')
@@ -91,7 +91,7 @@ describe('task checks', () => {
   const sortedCheck = String((t: any) => {
     const values = t.values(t.head)
     if (!values) return 'Lista går i ring.'
-    if (values.length !== t.slots.length) return `Lista har ${values.length} ting, ventet ${t.slots.length}.`
+    if (values.length !== t.slots.length) return `Lista har ${values.length} monstre, ventet ${t.slots.length}.`
     for (let i = 1; i < values.length; i++) if (values[i - 1] > values[i]) return `${values[i - 1]} står før ${values[i]}.`
     return true
   })
@@ -104,7 +104,7 @@ describe('task checks', () => {
         nodes.sort((a, b) => a.value - b.value)
         nodes.forEach((n, i) => { n.next = nodes[i + 1] ?? null })
         head = nodes[0]`,
-      classSource: TING,
+      classSource: MONSTER,
       world: randomWorld(),
       task: { check: sortedCheck },
     })
@@ -113,16 +113,16 @@ describe('task checks', () => {
   })
 
   it('passes on what is still wrong', async () => {
-    const run = await runWorker({ code: 'head = head.next', classSource: TING, world: randomWorld(), task: { check: sortedCheck } })
+    const run = await runWorker({ code: 'head = head.next', classSource: MONSTER, world: randomWorld(), task: { check: sortedCheck } })
     expect(run.verdict!.ok).toBe(false)
     expect(run.verdict!.broken).toBe(false)
-    expect(run.verdict!.message).toMatch(/Lista har 7 ting|står før/)
+    expect(run.verdict!.message).toMatch(/Lista har 7 monstre|står før/)
   })
 
   it('names a function the code did not declare', async () => {
     const run = await runWorker({
       code: 'const x = 1',
-      classSource: TING,
+      classSource: MONSTER,
       world: randomWorld(),
       task: { check: String(() => true), exports: ['length'] },
     })
@@ -138,7 +138,7 @@ describe('task checks', () => {
       [`throw new ReferenceError("Can't find variable: count")`, ['count'], 'Fant ikke funksjonen count.'],
     ] as const
     for (const [code, exports, message] of cases) {
-      const run = await runWorker({ code, classSource: TING, world: randomWorld(), task: { check: String(() => true), exports: [...exports] } })
+      const run = await runWorker({ code, classSource: MONSTER, world: randomWorld(), task: { check: String(() => true), exports: [...exports] } })
       expect(run.end, code).toMatchObject({ type: 'error', name: 'ReferenceError' })
       expect(run.verdict, code).toMatchObject({ ok: false, broken: false })
       expect(run.verdict!.message, code).toContain(message)
@@ -148,7 +148,7 @@ describe('task checks', () => {
   it('gives no verdict for a missing name that is not an export', async () => {
     const run = await runWorker({
       code: 'console.log(cuont(head))',
-      classSource: TING,
+      classSource: MONSTER,
       world: randomWorld(),
       task: { check: String(() => true), exports: ['count'] },
     })
@@ -161,13 +161,13 @@ describe('task checks', () => {
       const length = t.fn('length')
       for (const values of [[], [4], [1, 2, 3]]) {
         const got = length(t.list(values))
-        if (got !== values.length) return `length gav ${got} for ${values.length} ting.`
+        if (got !== values.length) return `length gav ${got} for ${values.length} monstre.`
       }
       return true
     })
     const good = await runWorker({
       code: 'function length(head) {\n  let n = 0\n  for (let p = head; p; p = p.next) n++\n  return n\n}',
-      classSource: TING,
+      classSource: MONSTER,
       world: randomWorld(),
       task: { check, exports: ['length'] },
     })
@@ -175,7 +175,7 @@ describe('task checks', () => {
 
     const bad = await runWorker({
       code: 'function length(head) {\n  return head.next.value\n}',
-      classSource: TING,
+      classSource: MONSTER,
       world: randomWorld(),
       task: { check, exports: ['length'] },
     })
@@ -186,7 +186,7 @@ describe('task checks', () => {
   it('tells a broken check from a failed task', async () => {
     const run = await runWorker({
       code: '',
-      classSource: TING,
+      classSource: MONSTER,
       world: randomWorld(),
       task: { check: String((t: any) => t.nothing.here) },
     })
@@ -203,7 +203,7 @@ describe('task checks', () => {
     })
     const run = await runWorker({
       code: "console.log('hei')\nconsole.log(1, 2)\nhead = null",
-      classSource: TING,
+      classSource: MONSTER,
       world: randomWorld(),
       task: { check },
     })
@@ -219,7 +219,7 @@ describe('task checks', () => {
     })
     const run = await runWorker({
       code: 'class Counter {\n  constructor(n) { this.n = n }\n  add() { this.n++ }\n}',
-      classSource: TING,
+      classSource: MONSTER,
       world: randomWorld(),
       task: { check, exports: ['Counter'] },
     })
@@ -229,7 +229,7 @@ describe('task checks', () => {
   it('draws a value from a getter in the class', async () => {
     const run = await runWorker({
       code: '',
-      classSource: `class Ting {
+      classSource: `class Monster {
   #v = 0
   color = 'pink'
   next = null
@@ -248,11 +248,68 @@ describe('task checks', () => {
     const check = String((t: any) => (t.fn('shout')() === 1 ? true : 'nei'))
     const run = await runWorker({
       code: "function shout() { console.log('fra sjekken'); return 1 }\nconsole.log('fra koden')",
-      classSource: TING,
+      classSource: MONSTER,
       world: randomWorld(),
       task: { check, exports: ['shout'] },
     })
     expect(run.verdict).toMatchObject({ ok: true })
     expect(run.output.map((e) => e.text)).toEqual(['fra koden'])
+  })
+})
+
+// The class was Ting until 2026-10-23: visitors have saved classes and code from then (localStorage).
+describe('code and classes saved when the class was Ting', () => {
+  const OLD_CLASS = `// Legg til eller ta bort et felt og trykk «Bruk».
+class Ting {
+  value = 0
+  color = 'pink'
+  next = null
+  constructor(props) { Object.assign(this, props) }
+}`
+  const OLD_CODE = `head = new Ting({ value: 5, color: 'gold', next: head })
+console.log(head instanceof Ting, head instanceof Monster, A instanceof Ting)`
+  const check = String((t: any) => (t.head instanceof t.Monster && t.monster({ value: 1 }) instanceof t.Monster ? true : 'nei'))
+
+  it('runs an old class with old code: the items are Ting, and Monster is the same class', async () => {
+    const run = await runWorker({ code: OLD_CODE, classSource: OLD_CLASS, world: randomWorld(), task: { check } })
+    expect(run.end.type).toBe('done')
+    expect(run.output.map((e) => e.text)).toEqual(['true true true'])
+    expect(run.world!.items.every((item) => item.cls === 'Ting')).toBe(true)
+    expect(walk(run.world!).chain[0]).toBe(8)
+    expect(run.verdict).toMatchObject({ ok: true })
+  })
+
+  it('runs old code with the new class: Ting is Monster', async () => {
+    const run = await runWorker({ code: OLD_CODE, classSource: MONSTER, world: randomWorld(), task: { check } })
+    expect(run.end.type).toBe('done')
+    expect(run.output.map((e) => e.text)).toEqual(['true true true'])
+    expect(run.world!.items.every((item) => item.cls === 'Monster')).toBe(true)
+    expect(run.verdict).toMatchObject({ ok: true })
+  })
+
+  it('runs new code with an old class', async () => {
+    const run = await runWorker({ code: "head = new Monster({ value: 5, next: head })", classSource: OLD_CLASS, world: randomWorld() })
+    expect(run.end.type).toBe('done')
+    expect(run.world!.items[8].cls).toBe('Ting')
+  })
+
+  it('lets the code have a Ting of its own beside the Monster class', async () => {
+    const run = await runWorker({
+      code: "class Ting { constructor() { this.mine = true } }\nconsole.log(new Ting().mine, A instanceof Monster)",
+      classSource: MONSTER,
+      world: randomWorld(),
+    })
+    expect(run.end.type).toBe('done')
+    expect(run.output.map((e) => e.text)).toEqual(['true true'])
+  })
+
+  it('places an error in an old class in the class editor', async () => {
+    const run = await runWorker({ code: '', classSource: 'class Ting {\n  value = 0\n  constructor() { null.boom() }\n}', world: randomWorld() })
+    expect(run.end).toMatchObject({ type: 'error', where: 'klasse' })
+  })
+
+  it('says so when the class editor has neither', async () => {
+    const run = await runWorker({ code: '', classSource: 'class Thing {}', world: randomWorld() })
+    expect(run.end).toMatchObject({ type: 'error', message: 'Fant ingen class Monster over monstrene.', where: 'klasse' })
   })
 })

@@ -1,5 +1,5 @@
 import { arrayWorld, at, bstWorld, distinct, int, makeWorld, PALETTE, pick, things, treeWorld, type Random, type Spec } from './build'
-import { TREE_TING } from './classes'
+import { TREE_MONSTER } from './classes'
 import type { Task } from './types'
 import { label, type World } from '../world/world'
 
@@ -46,16 +46,16 @@ export const tasks: Task[] = [
     title: 'Hvor høyt er treet?',
     level: 'middels',
     topic: 'trær',
-    text: `Tingene står i et tre som starter i \`root\`. Hver ting har \`left\` og \`right\`, som peker på en ny ting eller er \`null\`.
+    text: `Monstrene står i et tre som starter i \`root\`. Hvert monster har \`left\` og \`right\`, som peker på et nytt monster eller er \`null\`.
 
-Skriv \`function height(node)\` som gir tilbake hvor mange nivåer treet under \`node\` har. Et tomt tre (\`null\`) har høyde 0, og en ting uten barn har høyde 1.`,
+Skriv \`function height(node)\` som gir tilbake hvor mange nivåer treet under \`node\` har. Et tomt tre (\`null\`) har høyde 0, og et monster uten barn har høyde 1.`,
     hints: [
-      'Et tre er en ting med to mindre trær under seg. Spør dem!',
+      'Et tre er et monster med to mindre trær under seg. Spør dem!',
       'Høyden er 1 pluss den høyeste av `height(node.left)` og `height(node.right)`.',
       'Husk stoppen først: `if (!node) return 0`.',
     ],
     world: (r) => treeWorld(r, things(r, 9)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function height(node) {
   if (!node) return 0
   // Hvor høye er de to trærne under node?
@@ -93,16 +93,16 @@ console.log(height(root))
     title: 'Speil treet',
     level: 'middels',
     topic: 'trær',
-    text: `Treet vil se seg selv i speilet. Bytt \`left\` og \`right\` på hver eneste ting i treet, så det blir speilvendt.
+    text: `Treet vil se seg selv i speilet. Bytt \`left\` og \`right\` på hvert eneste monster i treet, så det blir speilvendt.
 
-\`root\` skal peke på den samme tingen som før.`,
+\`root\` skal peke på det samme monsteret som før.`,
     hints: [
       'Lag en funksjon `mirror(node)` som gjør jobben for ett tre, og kall den på `root`.',
-      'For én ting: bytt `node.left` og `node.right`, og speil så begge barna.',
+      'For ett monster: bytt `node.left` og `node.right`, og speil så begge barna.',
       'Stopp når `node` er `null`.',
     ],
     world: (r) => bstWorld(things(r, 9)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function mirror(node) {
   if (!node) return
   // Bytt left og right, og speil barna
@@ -120,7 +120,7 @@ mirror(root)
 mirror(root)
 `,
     check: (t) => {
-      if (t.root !== t.live(t.start.root)) return '`root` skal fortsatt peke på den samme tingen.'
+      if (t.root !== t.live(t.start.root)) return '`root` skal fortsatt peke på det samme monsteret.'
       const stack = [t.start.root]
       while (stack.length) {
         const copy = stack.pop()
@@ -140,18 +140,18 @@ mirror(root)
     title: 'Tell og legg sammen',
     level: 'lett',
     topic: 'trær',
-    text: `Tingene står i et tre som starter i \`root\`. Hver ting har \`left\` og \`right\`, som peker på en ny ting eller er \`null\`.
+    text: `Monstrene står i et tre som starter i \`root\`. Hvert monster har \`left\` og \`right\`, som peker på et nytt monster eller er \`null\`.
 
-Skriv to funksjoner. \`function size(node)\` gir tilbake hvor mange ting det er i treet under \`node\`, og \`node\` selv teller med. \`function total(node)\` gir summen av alle \`value\` i det samme treet.
+Skriv to funksjoner. \`function size(node)\` gir tilbake hvor mange monstre det er i treet under \`node\`, og \`node\` selv teller med. \`function total(node)\` gir summen av alle \`value\` i det samme treet.
 
 Begge skal klare et tomt tre: \`null\` gir 0.`,
     hints: [
-      'Et tre er én ting og to mindre trær. La funksjonen spørre de to trærne om svaret deres.',
+      'Et tre er ett monster og to mindre trær. La funksjonen spørre de to trærne om svaret deres.',
       'Stopp først: `if (!node) return 0`. Ellers er svaret 1 pluss `size(node.left)` pluss `size(node.right)`.',
       '`total` er bygd likt, men i stedet for 1 legger du til `node.value`.',
     ],
     world: (r) => treeWorld(r, things(r, 9)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function size(node) {
   if (!node) return 0
   // Hvor mange er det i treet til venstre og i treet til høyre?
@@ -194,12 +194,12 @@ console.log(size(root), total(root))
       for (const [spec, wantSize, wantTotal] of cases) {
         const tree = t.tree(spec)
         const gotSize = size(tree)
-        if (gotSize !== wantSize) return `size gav ${t.show(gotSize)} for et tre med ${wantSize} ting.`
+        if (gotSize !== wantSize) return `size gav ${t.show(gotSize)} for et tre med ${wantSize} monstre.`
         const gotTotal = total(tree)
         if (gotTotal !== wantTotal) return `total gav ${t.show(gotTotal)} for et tre med verdiene sum ${wantTotal}.`
       }
       const sum = t.slots.reduce((s: number, node) => s + node.value, 0)
-      if (size(t.root) !== t.slots.length) return `size(root) gav ${t.show(size(t.root))}, men det står ${t.slots.length} ting i treet.`
+      if (size(t.root) !== t.slots.length) return `size(root) gav ${t.show(size(t.root))}, men det står ${t.slots.length} monstre i treet.`
       if (total(t.root) !== sum) return `total(root) gav ${t.show(total(t.root))}, men verdiene i treet summerer til ${sum}.`
       return true
     },
@@ -209,16 +209,16 @@ console.log(size(root), total(root))
     title: 'Gull på bladene',
     level: 'lett',
     topic: 'trær',
-    text: `Det er høst i treet, og bladene vil bli gull. Et blad er en ting uten barn: både \`left\` og \`right\` er \`null\`.
+    text: `Det er høst i treet, og bladene vil bli gull. Et blad er et monster uten barn: både \`left\` og \`right\` er \`null\`.
 
-Gjør hvert blad i treet fra \`root\` gull med \`color = 'gold'\`. Tingene som har barn beholder fargen sin, og treet skal ha samme form som før.`,
+Gjør hvert blad i treet fra \`root\` gull med \`color = 'gold'\`. Monstrene som har barn beholder fargen sin, og treet skal ha samme form som før.`,
     hints: [
       'Lag en funksjon som kaller seg selv på `node.left` og `node.right`, og start den på `root`.',
       'Stopp når `node` er `null`. Ellers: mangler både `node.left` og `node.right`, er `node` et blad.',
       'Mal bladet med `node.color = \'gold\'`, og besøk begge sider etterpå. For et blad er de `null`, så det stopper av seg selv.',
     ],
     world: (r) => treeWorld(r, notGold(r, 9)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function paint(node) {
   if (!node) return
   // Er node et blad? Mal det gull. Besøk så begge sider.
@@ -239,7 +239,7 @@ paint(root)
 paint(root)
 `,
     check: (t) => {
-      if (t.root !== t.live(t.start.root)) return '`root` skal fortsatt peke på den samme tingen.'
+      if (t.root !== t.live(t.start.root)) return '`root` skal fortsatt peke på det samme monsteret.'
       for (let i = 0; i < t.slots.length; i++) {
         const copy = t.start.slots[i]
         const node = t.slots[i]
@@ -258,18 +258,18 @@ paint(root)
     title: 'I orden',
     level: 'lett',
     topic: 'trær',
-    text: `Tingene står i et tre fra \`root\`. Skriv \`function inOrder(node)\` som gir tilbake alle \`value\` i treet under \`node\` som en array, i denne rekkefølgen: først alt i venstre tre, så \`node\` selv, så alt i høyre tre.
+    text: `Monstrene står i et tre fra \`root\`. Skriv \`function inOrder(node)\` som gir tilbake alle \`value\` i treet under \`node\` som en array, i denne rekkefølgen: først alt i venstre tre, så \`node\` selv, så alt i høyre tre.
 
 Et tomt tre (\`null\`) gir en tom array.
 
-Treet på scenen er et søketre: alt til venstre for en ting er mindre enn den, og alt til høyre er større. Se hvilken rekkefølge du får: på et søketre kommer verdiene i stigende rekkefølge!`,
+Treet på scenen er et søketre: alt til venstre for et monster er mindre enn det, og alt til høyre er større. Se hvilken rekkefølge du får: på et søketre kommer verdiene i stigende rekkefølge!`,
     hints: [
-      'Tenk på tre trinn for hver ting: venstre tre, så tingen selv, så høyre tre. Hva gir en tom plass?',
+      'Tenk på tre trinn for hvert monster: venstre tre, så monsteret selv, så høyre tre. Hva gir en tom plass?',
       'Et tomt tre gir `[]`. Ellers kaller du `inOrder(node.left)`, tar med `node.value` og kaller `inOrder(node.right)`.',
       'Sett svarene sammen med spredning: `[...inOrder(node.left), node.value, ...inOrder(node.right)]`.',
     ],
     world: (r) => bstWorld(things(r, 9)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function inOrder(node) {
   if (!node) return []
   // Venstre tre, så node.value, så høyre tre
@@ -322,9 +322,9 @@ console.log(inOrder(root))
     title: 'Før og etter',
     level: 'middels',
     topic: 'trær',
-    text: `Et tre kan gås gjennom på flere måter. Skriv \`function walks(node)\` som gir tilbake et objekt \`{ pre, post }\`. Begge er arrayer med \`value\` fra alle tingene i treet under \`node\`.
+    text: `Et tre kan gås gjennom på flere måter. Skriv \`function walks(node)\` som gir tilbake et objekt \`{ pre, post }\`. Begge er arrayer med \`value\` fra alle monstrene i treet under \`node\`.
 
-I \`pre\` kommer hver ting før barna sine: tingen selv, så venstre tre, så høyre tre. I \`post\` kommer den etter barna: venstre tre, høyre tre, så tingen selv.
+I \`pre\` kommer hvert monster før barna sine: monsteret selv, så venstre tre, så høyre tre. I \`post\` kommer det etter barna: venstre tre, høyre tre, så monsteret selv.
 
 Et tomt tre (\`null\`) gir \`{ pre: [], post: [] }\`.`,
     hints: [
@@ -333,7 +333,7 @@ Et tomt tre (\`null\`) gir \`{ pre: [], post: [] }\`.`,
       'Hjelpefunksjonen stopper på `null`. Til slutt gir `walks` tilbake `{ pre, post }`.',
     ],
     world: (r) => treeWorld(r, things(r, 9)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function walks(node) {
   const pre = []
   const post = []
@@ -399,18 +399,18 @@ console.log(walks(root))
     title: 'Nivå for nivå',
     level: 'middels',
     topic: 'trær',
-    text: `Tingene i treet står på nivåer: \`root\` øverst, barna under den, barnebarna under dem, og så videre. Skriv \`function levels(root)\` som gir tilbake en array med én array per nivå, det øverste først. Hver av dem har \`value\` fra tingene på nivået, fra venstre mot høyre.
+    text: `Monstrene i treet står på nivåer: \`root\` øverst, barna under den, barnebarna under dem, og så videre. Skriv \`function levels(root)\` som gir tilbake en array med én array per nivå, det øverste først. Hver av dem har \`value\` fra monstrene på nivået, fra venstre mot høyre.
 
 Et tomt tre (\`null\`) gir \`[]\`.
 
-Bruk en kø: ta en ting ut foran, og still barna bakerst.`,
+Bruk en kø: ta et monster ut foran, og still barna bakerst.`,
     hints: [
-      'Start med en kø som har `root` i seg (eller er tom). Så lenge køen ikke er tom, tar du ut en ting og stiller barna bakerst.',
-      'For å vite hvor et nivå slutter: før hver runde står bare ting fra ett nivå i køen. Ta ut akkurat `queue.length` ting, og legg verdiene i en egen array.',
-      'Legg den ferdige arrayen i svaret etter hver runde. `left` og `right` kan være `null`: still bare ekte ting i køen.',
+      'Start med en kø som har `root` i seg (eller er tom). Så lenge køen ikke er tom, tar du ut et monster og stiller barna bakerst.',
+      'For å vite hvor et nivå slutter: før hver runde står bare monstre fra ett nivå i køen. Ta ut akkurat `queue.length` monstre, og legg verdiene i en egen array.',
+      'Legg den ferdige arrayen i svaret etter hver runde. `left` og `right` kan være `null`: still bare ekte monstre i køen.',
     ],
     world: (r) => treeWorld(r, things(r, 10)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function levels(root) {
   const result = []
   const queue = root ? [root] : []
@@ -484,21 +484,21 @@ console.log(levels(root))
     title: 'Finn i søketreet',
     level: 'lett',
     topic: 'trær',
-    text: `Tingene står i et søketre fra \`root\`: alt til venstre for en ting har mindre \`value\`, alt til høyre har større. Det gjør det raskt å lete.
+    text: `Monstrene står i et søketre fra \`root\`: alt til venstre for et monster har mindre \`value\`, alt til høyre har større. Det gjør det raskt å lete.
 
-Skriv \`function find(node, value)\` som gir tilbake tingen i treet under \`node\` som har akkurat denne \`value\`, eller \`null\` hvis ingen har den. I hver ting går du bare ett sted videre: til venstre om du leter etter noe mindre, til høyre om det er større.
+Skriv \`function find(node, value)\` som gir tilbake monsteret i treet under \`node\` som har akkurat denne \`value\`, eller \`null\` hvis ingen har den. I hvert monster går du bare ett sted videre: til venstre om du leter etter noe mindre, til høyre om det er større.
 
 Et tomt tre (\`null\`) gir \`null\`. Sjekken teller hvor mange verdier du leser, så den merker om du leter i hele treet.`,
     hints: [
       'Sammenlign `value` med `node.value`. Er de like, er du fremme.',
-      'Er `value` mindre enn `node.value`, kan tingen bare ligge til venstre: `find(node.left, value)`. Ellers til høyre.',
-      'Når du kommer til `null`, er plassen tom og tingen finnes ikke. Det svarer også på et tomt tre: `if (!node) return null`.',
+      'Er `value` mindre enn `node.value`, kan monsteret bare ligge til venstre: `find(node.left, value)`. Ellers til høyre.',
+      'Når du kommer til `null`, er plassen tom og monsteret finnes ikke. Det svarer også på et tomt tre: `if (!node) return null`.',
     ],
     world: (r) => bstWorld(things(r, 9)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function find(node, value) {
   if (!node) return null
-  // Er node tingen du leter etter? Ellers: gå til venstre eller høyre.
+  // Er node monsteret du leter etter? Ellers: gå til venstre eller høyre.
   return null
 }
 
@@ -531,7 +531,7 @@ console.log(find(root, G.value) === G)
         const v = n.value
         Object.defineProperty(n, 'value', { get() { reads++; return v }, configurable: true, enumerable: true })
       }
-      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       const lookups = [...byValue.keys(), 5, 155, 315, 0, -20]
       for (const value of lookups) {
         reads = 0
@@ -539,16 +539,16 @@ console.log(find(root, G.value) === G)
         const want = byValue.get(value) ?? null
         if (got !== want) {
           return want
-            ? `I et søketre med ${nodes.length} ting gav find ${name(got)} når den skulle finne ${value}, men tingen finnes.`
-            : `I et søketre med ${nodes.length} ting gav find ${name(got)} når den skulle finne ${value}, men ingen har den verdien. Svaret skal være null.`
+            ? `I et søketre med ${nodes.length} monstre gav find ${name(got)} når den skulle finne ${value}, men monsteret finnes.`
+            : `I et søketre med ${nodes.length} monstre gav find ${name(got)} når den skulle finne ${value}, men ingen har den verdien. Svaret skal være null.`
         }
-        if (reads > 20) return `find leste ${reads} verdier for å lete etter ${value} i et tre med ${nodes.length} ting. I et søketre går du til venstre eller høyre i hver ting, du trenger ikke lete overalt.`
+        if (reads > 20) return `find leste ${reads} verdier for å lete etter ${value} i et tre med ${nodes.length} monstre. I et søketre går du til venstre eller høyre i hvert monster, du trenger ikke lete overalt.`
       }
       if (find(null, 5) !== null) return 'find(null, 5) skal gi null.'
       const one = t.tree(8)
-      if (find(one, 8) !== one || find(one, 9) !== null) return 'For et tre med én ting skal find gi tingen når verdien er riktig, og ellers null.'
+      if (find(one, 8) !== one || find(one, 9) !== null) return 'For et tre med ett monster skal find gi monsteret når verdien er riktig, og ellers null.'
       const line: any = t.tree([10, null, [20, null, 30]])
-      if (find(line, 30) !== line.right.right || find(line, 5) !== null) return 'find fant ikke riktig ting i et tre som bare går til høyre.'
+      if (find(line, 30) !== line.right.right || find(line, 5) !== null) return 'find fant ikke riktig monster i et tre som bare går til høyre.'
       for (const node of t.slots) {
         if (find(t.root, node.value) !== node) return `find(root, ${node.value}) skal gi ${t.show(node)}, men gav ${t.show(find(t.root, node.value))}.`
       }
@@ -561,18 +561,18 @@ console.log(find(root, G.value) === G)
     title: 'Minst og størst',
     level: 'lett',
     topic: 'trær',
-    text: `I et søketre ligger den minste tingen lengst ut til venstre, og den største lengst ut til høyre. Du trenger ikke sammenligne noe for å finne dem.
+    text: `I et søketre ligger det minste monsteret lengst ut til venstre, og det største lengst ut til høyre. Du trenger ikke sammenligne noe for å finne dem.
 
-Skriv \`function extremes(root)\` som gir tilbake \`[smallest, biggest]\`, de to tingene (ikke verdiene), ved å bare gå til venstre så langt det går, og så til høyre så langt det går.
+Skriv \`function extremes(root)\` som gir tilbake \`[smallest, biggest]\`, de to monstrene (ikke verdiene), ved å bare gå til venstre så langt det går, og så til høyre så langt det går.
 
-Et tomt tre (\`null\`) gir \`null\`. Har treet bare én ting, er den både minst og størst.`,
+Et tomt tre (\`null\`) gir \`null\`. Har treet bare ett monster, er det både minst og størst.`,
     hints: [
-      'Den minste har ingen `left`. Start på toppen og gå til `left` så lenge det finnes en.',
-      'Gjør det samme med `right` for å finne den største. Det er to små løkker.',
+      'Det minste har ingen `left`. Start på toppen og gå til `left` så lenge det finnes en.',
+      'Gjør det samme med `right` for å finne det største. Det er to små løkker.',
       'Husk `if (!root) return null` først, og gi til slutt tilbake `[smallest, biggest]`.',
     ],
     world: (r) => bstWorld(things(r, 9)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function extremes(root) {
   if (!root) return null
   let smallest = root
@@ -630,7 +630,7 @@ console.log(smallest.value, biggest.value)
         watch(n.left)
         watch(n.right)
       }
-      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       for (const { tree, model, live } of trees) {
         let lo = model
         while (lo.left) lo = lo.left
@@ -640,8 +640,8 @@ console.log(smallest.value, biggest.value)
         reads = 0
         const got = extremes(tree)
         if (!Array.isArray(got) || got.length !== 2) return `extremes skal gi en array [smallest, biggest], men gav ${t.show(got)}.`
-        if (got[0] !== live(lo)) return `Den minste er den som står lengst til venstre (${name(live(lo))}), men extremes ga ${name(got[0])} først.`
-        if (got[1] !== live(hi)) return `Den største er den som står lengst til høyre (${name(live(hi))}), men extremes ga ${name(got[1])} sist.`
+        if (got[0] !== live(lo)) return `Det minste er det som står lengst til venstre (${name(live(lo))}), men extremes ga ${name(got[0])} først.`
+        if (got[1] !== live(hi)) return `Det største er det som står lengst til høyre (${name(live(hi))}), men extremes ga ${name(got[1])} sist.`
         if (reads > 10) return `extremes leste ${reads} verdier. I et søketre finner du ytterpunktene uten å se på verdiene: bare gå til venstre og til høyre.`
       }
       if (extremes(null) !== null) return 'extremes(null) skal gi null.'
@@ -654,14 +654,14 @@ console.log(smallest.value, biggest.value)
     title: 'Inn i søketreet',
     level: 'middels',
     topic: 'trær',
-    text: `Tingene står i et søketre fra \`root\`: alt til venstre for en ting har mindre \`value\`, alt til høyre har større. Ved siden av står en ting for seg selv, \`guest\`, som vil være med.
+    text: `Monstrene står i et søketre fra \`root\`: alt til venstre for et monster har mindre \`value\`, alt til høyre har større. Ved siden av står et monster for seg selv, \`guest\`, som vil være med.
 
-Heng \`guest\` inn som et nytt blad der den hører hjemme, så treet fortsatt er et søketre. Gå ned fra \`root\`: er \`guest.value\` mindre enn tingen du står på, går du til venstre, ellers til høyre. Møter du en tom plass, heng \`guest\` der.
+Heng \`guest\` inn som et nytt blad der det hører hjemme, så treet fortsatt er et søketre. Gå ned fra \`root\`: er \`guest.value\` mindre enn monsteret du står på, går du til venstre, ellers til høyre. Møter du en tom plass, heng \`guest\` der.
 
 Ingen andre lenker i treet skal endres.`,
     hints: [
       'Start med `let node = root`. Sammenlign `guest.value` med `node.value` for å se om du skal til venstre eller høyre.',
-      'Ligger det en ting på den siden, flytt `node` dit og gjør det samme igjen. Er plassen `null`, er du fremme.',
+      'Ligger det et monster på den siden, flytt `node` dit og gjør det samme igjen. Er plassen `null`, er du fremme.',
       'Heng gjesten der med `node.left = guest` eller `node.right = guest`. Gjesten har ingen barn, så den blir et blad.',
     ],
     world: (r) => {
@@ -669,7 +669,7 @@ Ingen andre lenker i treet skal endres.`,
       const { nodes } = bstSpecs(specs.slice(0, 9))
       return makeWorld([...nodes, { ...specs[9], left: null, right: null }], { root: at(0), guest: at(9) })
     },
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     views: { guest: 'pointer' },
     scaffold: `let node = root
 while (true) {
@@ -700,7 +700,7 @@ vis(guest)
     check: (t) => {
       const guest = t.live(t.start.guest)!
       const value = guest.value
-      if (t.root !== t.live(t.start.root)) return '`root` skal fortsatt peke på den samme tingen.'
+      if (t.root !== t.live(t.start.root)) return '`root` skal fortsatt peke på det samme monsteret.'
       // Where the guest belongs: the last item on the way down from the start root.
       let wantParent: any = null
       let wantSide = ''
@@ -721,7 +721,7 @@ vis(guest)
       }
       if (!hungUnder) return `${t.show(guest)} henger ikke i treet ennå.`
       if (hungUnder !== parent || hungSide !== wantSide) {
-        return `${t.show(guest)} henger på ${hungSide === 'left' ? 'venstre' : 'høyre'} side av ${t.show(hungUnder)}, men den hører hjemme på ${wantSide === 'left' ? 'venstre' : 'høyre'} side av ${t.show(parent)}.`
+        return `${t.show(guest)} henger på ${hungSide === 'left' ? 'venstre' : 'høyre'} side av ${t.show(hungUnder)}, men det hører hjemme på ${wantSide === 'left' ? 'venstre' : 'høyre'} side av ${t.show(parent)}.`
       }
       if (guest.left !== null || guest.right !== null) return `${t.show(guest)} skal være et blad, men har fått barn.`
       for (let i = 0; i < t.slots.length; i++) {
@@ -730,7 +730,7 @@ vis(guest)
         if (item === guest) continue
         for (const side of ['left', 'right']) {
           const want = copy === wantParent && side === wantSide ? guest : t.live(copy[side])
-          if (item[side] !== want) return `${t.show(item)} har fått en annen ${side} enn den skulle ha: ${t.show(item[side])} i stedet for ${t.show(want)}.`
+          if (item[side] !== want) return `${t.show(item)} har fått en annen ${side} enn det skulle ha: ${t.show(item[side])} i stedet for ${t.show(want)}.`
         }
       }
       return true
@@ -742,13 +742,13 @@ vis(guest)
     title: 'Er det et søketre?',
     level: 'middels',
     topic: 'trær',
-    text: `I et søketre er alt i venstre tre mindre enn tingen, og alt i høyre tre er større. Ikke bare barna: alle tingene under, uansett hvor dypt de ligger. Alle verdiene er forskjellige.
+    text: `I et søketre er alt i venstre tre mindre enn monsteret, og alt i høyre tre er større. Ikke bare barna: alle monstrene under, uansett hvor dypt de ligger. Alle verdiene er forskjellige.
 
-Skriv \`function isSearchTree(node)\` som gir \`true\` eller \`false\` for treet under \`node\`. Et tomt tre (\`null\`) og en enkelt ting er søketrær.
+Skriv \`function isSearchTree(node)\` som gir \`true\` eller \`false\` for treet under \`node\`. Et tomt tre (\`null\`) og et enkelt monster er søketrær.
 
-Se opp for lumske trær: hver ting kan passe fint med sin egen forelder og likevel stå på feil side av noen høyere oppe, for eksempel en 12 langt nede til venstre for en 10. Da er det ikke et søketre. Sjekken prøver slike trær.`,
+Se opp for lumske trær: hvert monster kan passe fint med sin egen forelder og likevel stå på feil side av noen høyere oppe, for eksempel en 12 langt nede til venstre for en 10. Da er det ikke et søketre. Sjekken prøver slike trær.`,
     hints: [
-      'Det holder ikke å sjekke at `node.left.value < node.value` og `node.right.value > node.value`. En ting langt nede kan bryte regelen mot en forelder høyere opp.',
+      'Det holder ikke å sjekke at `node.left.value < node.value` og `node.right.value > node.value`. Et monster langt nede kan bryte regelen mot en forelder høyere opp.',
       'Gi funksjonen to grenser: `node.value` må ligge mellom `min` og `max`. Start med `-Infinity` og `Infinity`.',
       'Går du til venstre, blir `max` til `node.value`. Går du til høyre, blir `min` til `node.value`. Ligger verdien utenfor grensene, er svaret `false`.',
     ],
@@ -763,7 +763,7 @@ Se opp for lumske trær: hver ting kan passe fint med sin egen forelder og likev
       }
       return makeWorld(nodes, { root: at(0) })
     },
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function isSearchTree(node) {
   // Er alt til venstre mindre, og alt til høyre større?
   return true
@@ -825,9 +825,9 @@ console.log(isSearchTree(root))
     title: 'Nærmeste felles forfar',
     level: 'middels',
     topic: 'trær',
-    text: `Fra hver ting i treet går det en vei opp til \`root\`. To ting, \`a\` og \`b\`, har felles forfedre: tingene som har begge under seg. Regner du en ting som sin egen forfar, kan svaret også være \`a\` eller \`b\` selv.
+    text: `Fra hvert monster i treet går det en vei opp til \`root\`. To monstre, \`a\` og \`b\`, har felles forfedre: monstrene som har begge under seg. Regner du et monster som sin egen forfar, kan svaret også være \`a\` eller \`b\` selv.
 
-Skriv \`function lca(root, a, b)\` («lowest common ancestor») som gir tilbake den laveste tingen som har både \`a\` og \`b\` under seg, eller er en av dem. Treet er ikke et søketre, så du kan ikke bruke verdiene. På scenen står \`a\` og \`b\` som flagg.`,
+Skriv \`function lca(root, a, b)\` («lowest common ancestor») som gir tilbake det laveste monsteret som har både \`a\` og \`b\` under seg, eller er ett av dem. Treet er ikke et søketre, så du kan ikke bruke verdiene. På scenen står \`a\` og \`b\` som flagg.`,
     hints: [
       'Spør de to trærne under `root`: ligger `a` eller `b` til venstre? Til høyre?',
       'La funksjonen gi tilbake `root` hvis `root` er `a` eller `b`, og `null` hvis `root` er `null`. Kall den så på `root.left` og `root.right`.',
@@ -860,11 +860,11 @@ Skriv \`function lca(root, a, b)\` («lowest common ancestor») som gir tilbake 
       pointer(world, 'b', pair[1])
       return world
     },
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     views: { a: 'pointer', b: 'pointer' },
     scaffold: `function lca(root, a, b) {
   if (!root) return null
-  // Er root en av a og b? Ellers: spør treet til venstre og treet til høyre.
+  // Er root a eller b? Ellers: spør treet til venstre og treet til høyre.
   return root
 }
 
@@ -887,7 +887,7 @@ console.log(top.value)
     exports: ['lca'],
     check: (t) => {
       const lca = t.fn('lca')
-      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `tingen med ${n.value}` : t.show(n))
+      const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       // Each case is the tree the code gets, the tree the answer is worked out from (the stage's start copy), and how to
       // turn an item of that model into the one the code sees.
       const fresh = [
@@ -932,18 +932,18 @@ console.log(top.value)
     title: 'Den lengste stien',
     level: 'vanskelig',
     topic: 'trær',
-    text: `Hvor langt kan to ting i treet stå fra hverandre? Mellom to ting er det én vei: opp til nærmeste felles forfar og ned igjen. Lengden er antall steg på veien, ikke antall ting.
+    text: `Hvor langt kan to monstre i treet stå fra hverandre? Mellom to monstre er det én vei: opp til nærmeste felles forfar og ned igjen. Lengden er antall steg på veien, ikke antall monstre.
 
-Skriv \`function diameter(root)\` som gir tilbake lengden på den lengste veien mellom to ting i treet. Veien trenger ikke gå gjennom \`root\`. Et tomt tre og et tre med én ting gir 0.`,
+Skriv \`function diameter(root)\` som gir tilbake lengden på den lengste veien mellom to monstre i treet. Veien trenger ikke gå gjennom \`root\`. Et tomt tre og et tre med ett monster gir 0.`,
     hints: [
-      'Den lengste veien har et høyeste punkt, tingen den snur i. Der er veien like lang som de to dypeste sidene under tingen, lagt sammen.',
-      'Skriv en hjelper som gir høyden på treet under en ting, talt i ting. Under hver ting er `left + right` (de to høydene) den lengste veien som snur der.',
-      'Hold en variabel `best` utenfor hjelperen og oppdater den i hver ting med `Math.max(best, left + right)`. Svaret er `best`, ikke høyden til roten.',
+      'Den lengste veien har et høyeste punkt, monsteret den snur i. Der er veien like lang som de to dypeste sidene under monsteret, lagt sammen.',
+      'Skriv en hjelper som gir høyden på treet under et monster, talt i monstre. Under hvert monster er `left + right` (de to høydene) den lengste veien som snur der.',
+      'Hold en variabel `best` utenfor hjelperen og oppdater den i hvert monster med `Math.max(best, left + right)`. Svaret er `best`, ikke høyden til roten.',
     ],
     world: (r) => treeWorld(r, things(r, 10)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function diameter(root) {
-  // Hvor høye er de to sidene under hver ting? Husk den lengste veien som snur der.
+  // Hvor høye er de to sidene under hvert monster? Husk den lengste veien som snur der.
   return 0
 }
 
@@ -952,7 +952,7 @@ console.log(diameter(root))
     solution: `function diameter(root) {
   let best = 0
 
-  // Høyden i antall ting. Underveis husker vi den lengste veien som snur i hver ting.
+  // Høyden i antall monstre. Underveis husker vi den lengste veien som snur i hvert monster.
   function depth(node) {
     if (!node) return 0
     const left = depth(node.left)
@@ -1033,18 +1033,18 @@ console.log(diameter(root))
     title: 'Ut av søketreet',
     level: 'vanskelig',
     topic: 'trær',
-    text: `Tingene står i et søketre fra \`root\`: alt til venstre for en ting har mindre \`value\`, alt til høyre har større. Tingen \`gone\` skal ut. Fjern den, slik at \`root\` fortsatt er et søketre med alle de andre tingene. Ingen verdier skal endres.
+    text: `Monstrene står i et søketre fra \`root\`: alt til venstre for et monster har mindre \`value\`, alt til høyre har større. Monsteret \`gone\` skal ut. Fjern det, slik at \`root\` fortsatt er et søketre med alle de andre monstrene. Ingen verdier skal endres.
 
 Det kommer an på hvor mange barn \`gone\` har:
-- ingen barn: den klippes bare av
-- ett barn: barnet tar plassen dens
-- to barn: den neste større tingen tar plassen, den som står lengst til venstre i høyre tre. Den må først ut av sin gamle plass.
+- ingen barn: det klippes bare av
+- ett barn: barnet tar over plassen
+- to barn: det neste større monsteret tar plassen, det som står lengst til venstre i høyre tre. Det må først ut av sin gamle plass.
 
-Forelderen må peke på tingen som tar over, og \`gone\` kan også være \`root\`. Her har \`gone\` to barn.`,
+Forelderen må peke på monsteret som tar over, og \`gone\` kan også være \`root\`. Her har \`gone\` to barn.`,
     hints: [
-      'Gå ned fra `root` etter `gone.value` og husk forelderen din underveis. Har `gone` ingen forelder, er den `root`.',
-      'Med to barn finner du den neste større ved å gå til `gone.right` og så til `left` så langt det går. Den har ikke noe venstre barn selv.',
-      'Den neste større må først ut av sin gamle plass: dens forelder får dens `right` i stedet. Så overtar den `left` og `right` fra `gone`, og forelderen til `gone` (eller `root`) peker på den.',
+      'Gå ned fra `root` etter `gone.value` og husk forelderen din underveis. Har `gone` ingen forelder, er det `root`.',
+      'Med to barn finner du det neste større ved å gå til `gone.right` og så til `left` så langt det går. Det har ikke noe venstre barn selv.',
+      'Det neste større må først ut av sin gamle plass: la forelderen til det peke på det høyre barnet til det i stedet. Så overtar det `left` og `right` fra `gone`, og forelderen til `gone` (eller `root`) peker på det.',
     ],
     world: (r) => {
       // The first value is a middle one, so the root has two children and there is always something to remove.
@@ -1059,11 +1059,11 @@ Forelderen må peke på tingen som tar over, og \`gone\` kan også være \`root\
       const gone = deep.length ? pick(r, deep) : inner.length ? pick(r, inner) : 0
       return makeWorld(nodes, { root: at(0), gone: at(gone) })
     },
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     views: { gone: 'pointer' },
     scaffold: `function remove(node, target) {
   if (!node) return null
-  // Er node tingen som skal ut? Ellers: fjern den fra venstre eller høyre tre.
+  // Er node monsteret som skal ut? Ellers: fjern det fra venstre eller høyre tre.
   return node
 }
 
@@ -1083,7 +1083,7 @@ root = remove(root, gone)
   // Her er node = target
   if (!node.left) return node.right
   if (!node.right) return node.left
-  // To barn: den neste større står lengst til venstre i høyre tre
+  // To barn: det neste større står lengst til venstre i høyre tre
   let next = node.right
   while (next.left) next = next.left
   next.right = remove(node.right, next)
@@ -1103,7 +1103,7 @@ vis('ferdig')
       let problem = ''
       const walk = (n: any): void => {
         if (!n || problem) return
-        if (typeof n !== 'object') { problem = `I treet står det ${t.show(n)}, som ikke er en ting.`; return }
+        if (typeof n !== 'object') { problem = `I treet står det ${t.show(n)}, som ikke er et monster.`; return }
         if (seen.has(n) || seen.size > 100) { problem = `${t.show(n)} står flere steder i treet, eller treet går i ring.`; return }
         seen.add(n)
         walk(n.left)
@@ -1116,9 +1116,9 @@ vis('ferdig')
       for (const node of t.slots) {
         if (node !== gone && !seen.has(node)) return `${t.show(node)} er ikke med i treet lenger. Bare ${t.show(gone)} skal ut.`
       }
-      if (order.length !== t.slots.length - 1) return `Treet har ${order.length} ting, men skal ha ${t.slots.length - 1}.`
+      if (order.length !== t.slots.length - 1) return `Treet har ${order.length} monstre, men skal ha ${t.slots.length - 1}.`
       for (let i = 0; i < t.slots.length; i++) {
-        if (t.slots[i].value !== t.start.slots[i].value) return `Verdien til ${t.show(t.slots[i])} er endret; flytt tingene, ikke verdiene.`
+        if (t.slots[i].value !== t.start.slots[i].value) return `Verdien til ${t.show(t.slots[i])} er endret; flytt monstrene, ikke verdiene.`
       }
       for (let i = 1; i < order.length; i++) {
         if (order[i - 1].value >= order[i].value) return `Treet er ikke et søketre: ${t.show(order[i])} (${order[i].value}) står på feil side av ${t.show(order[i - 1])} (${order[i - 1].value}).`
@@ -1132,25 +1132,25 @@ vis('ferdig')
     title: 'Bygg et balansert tre',
     level: 'middels',
     topic: 'trær',
-    text: `Tingene i \`items\` står sortert etter \`value\`, den minste først, og \`root\` er tom (\`null\`). Heng alle tingene sammen til et søketre i \`root\`, med \`left\` og \`right\`, så lavt som mulig.
+    text: `Monstrene i \`items\` står sortert etter \`value\`, det minste først, og \`root\` er tom (\`null\`). Heng alle monstrene sammen til et søketre i \`root\`, med \`left\` og \`right\`, så lavt som mulig.
 
-Et søketre blir lavest når de to sidene har omtrent like mange ting. Ta tingen midt i lista til topp, la de minste bli venstre tre og de største høyre tre, og gjør det samme i hver av dem.
+Et søketre blir lavest når de to sidene har omtrent like mange monstre. Ta monsteret midt i lista til topp, la de minste bli venstre tre og de største høyre tre, og gjør det samme i hvert av dem.
 
-Alle tingene skal være med, og ingen verdier skal endres. Med \`n\` ting kan treet ikke bli lavere enn \`Math.ceil(Math.log2(n + 1))\` nivåer, og det er så lavt det skal bli.`,
+Alle monstrene skal være med, og ingen verdier skal endres. Med \`n\` monstre kan treet ikke bli lavere enn \`Math.ceil(Math.log2(n + 1))\` nivåer, og det er så lavt det skal bli.`,
     hints: [
-      'Skriv en funksjon `build(from, to)` som bygger et tre av tingene fra plass `from` og opp til (men ikke med) plass `to`, og gir tilbake toppen.',
+      'Skriv en funksjon `build(from, to)` som bygger et tre av monstrene fra plass `from` og opp til (men ikke med) plass `to`, og gir tilbake toppen.',
       'Midten er `Math.floor((from + to) / 2)`. Den blir toppen. Venstre tre bygges av plassene før den, høyre tre av plassene etter.',
-      'Er `from >= to`, er det ingen ting igjen: gi `null`. Til slutt: `root = build(0, items.length)`.',
+      'Er `from >= to`, er det ingen monstre igjen: gi `null`. Til slutt: `root = build(0, items.length)`.',
     ],
     world: (r) => {
       const specs = things(r, int(r, 7, 10))
       const order = specs.map((_, i) => i).sort((a, b) => (specs[a].value as number) - (specs[b].value as number))
       return arrayWorld(specs, order, 'items', { root: null })
     },
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function build(from, to) {
   if (from >= to) return null
-  // Ta tingen midt mellom from og to til topp, og bygg venstre og høyre tre av resten
+  // Ta monsteret midt mellom from og to til topp, og bygg venstre og høyre tre av resten
   return null
 }
 
@@ -1175,26 +1175,26 @@ root = build(0, items.length)
       let problem = ''
       const height = (n: any): number => {
         if (!n || problem) return 0
-        if (typeof n !== 'object') { problem = `I treet står det ${t.show(n)}, som ikke er en ting.`; return 0 }
+        if (typeof n !== 'object') { problem = `I treet står det ${t.show(n)}, som ikke er et monster.`; return 0 }
         if (seen.has(n) || seen.size > 100) { problem = `${t.show(n)} står flere steder i treet, eller treet går i ring.`; return 0 }
         seen.add(n)
         const left = height(n.left)
         order.push(n)
         return 1 + Math.max(left, height(n.right))
       }
-      if (!t.root) return '`root` er fortsatt tom. Sett `root` til tingen som skal stå øverst.'
+      if (!t.root) return '`root` er fortsatt tom. Sett `root` til monsteret som skal stå øverst.'
       const levels = height(t.root)
       if (problem) return problem
       for (const node of want) {
         if (!seen.has(node)) return `${t.show(node)} er ikke med i treet.`
       }
-      if (order.length !== want.length) return `Treet har ${order.length} ting, men skal ha ${want.length}.`
+      if (order.length !== want.length) return `Treet har ${order.length} monstre, men skal ha ${want.length}.`
       for (let i = 0; i < want.length; i++) {
-        if (t.slots[i].value !== t.start.slots[i].value) return `Verdien til ${t.show(t.slots[i])} er endret; hent tingene fra \`items\`, ikke lag nye.`
+        if (t.slots[i].value !== t.start.slots[i].value) return `Verdien til ${t.show(t.slots[i])} er endret; hent monstrene fra \`items\`, ikke lag nye.`
         if (order[i] !== want[i]) return `Treet er ikke et søketre: ${t.show(order[i])} står på feil side av ${t.show(order[i - 1] ?? want[i])}.`
       }
       const lowest = Math.ceil(Math.log2(want.length + 1))
-      if (levels > lowest) return `Treet har ${levels} nivåer, men ${want.length} ting kan stå på ${lowest}. Ta alltid tingen i midten til topp.`
+      if (levels > lowest) return `Treet har ${levels} nivåer, men ${want.length} monstre kan stå på ${lowest}. Ta alltid monsteret i midten til topp.`
       return true
     },
     source: 'https://en.wikipedia.org/wiki/Binary_search_tree#Optimal_binary_search_trees',
@@ -1204,12 +1204,12 @@ root = build(0, items.length)
     title: 'Treet fra to turer',
     level: 'vanskelig',
     topic: 'trær',
-    text: `Treet har falt fra hverandre: tingene står løse, uten \`left\` og \`right\`. Men noen husket to turer gjennom det. \`pre\` er tingene i pre-orden (seg selv, så venstre, så høyre), og \`ino\` er de samme tingene i in-orden (venstre, seg selv, så høyre).
+    text: `Treet har falt fra hverandre: monstrene står løse, uten \`left\` og \`right\`. Men noen husket to turer gjennom det. \`pre\` er monstrene i pre-orden (seg selv, så venstre, så høyre), og \`ino\` er de samme monstrene i in-orden (venstre, seg selv, så høyre).
 
-Bygg treet opp igjen: sett \`left\` og \`right\` på tingene, og la \`root\` peke på roten. To turer er nok til å finne fram, så lenge ingen ting står to ganger.`,
+Bygg treet opp igjen: sett \`left\` og \`right\` på monstrene, og la \`root\` peke på roten. To turer er nok til å finne fram, så lenge ingen monstre står to ganger.`,
     hints: [
-      'Den første i `pre` er roten. Finn den i `ino`: alt til venstre for den der er venstre deltre, alt til høyre er høyre deltre.',
-      'Venstre deltre har like mange ting som det står til venstre for roten i `ino`. De kommer rett etter roten i `pre`, og høyre deltre kommer etter dem.',
+      'Det første i `pre` er roten. Finn den i `ino`: alt til venstre for den der er venstre deltre, alt til høyre er høyre deltre.',
+      'Venstre deltre har like mange monstre som det står til venstre for roten i `ino`. De kommer rett etter roten i `pre`, og høyre deltre kommer etter dem.',
       'Skriv en funksjon `build(preStart, inStart, size)` som gir tilbake roten for et deltre, og kaller seg selv for venstre og høyre del. Et deltre med størrelse 0 er `null`.',
     ],
     world: (r) => {
@@ -1237,14 +1237,14 @@ Bygg treet opp igjen: sett \`left\` og \`right\` på tingene, og la \`root\` pek
         walk(right[i])
       }
       walk(0)
-      // The ting fields are null; the roots hold the two walks.
+      // The monsters' fields are null; the roots hold the two walks.
       return makeWorld(items.map((s) => ({ ...s, left: null, right: null })), { pre: pre.map(at), ino: ino.map(at), root: null })
     },
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function build(preStart, inStart, size) {
   if (size === 0) return null
   const node = pre[preStart]
-  // Hvor står node i ino? Hvor mange ting er til venstre for den?
+  // Hvor står node i ino? Hvor mange monstre er til venstre for det?
   return node
 }
 
@@ -1280,8 +1280,8 @@ root = build(0, 0, pre.length)
         walk(node.right)
       }
       walk(t.root)
-      if (loop) return 'Treet går i ring: en ting kan ikke være under seg selv.'
-      if (gotPre.length !== pre.length) return `Treet fra root har ${gotPre.length} ting, men skal ha alle ${pre.length}.`
+      if (loop) return 'Treet går i ring: et monster kan ikke være under seg selv.'
+      if (gotPre.length !== pre.length) return `Treet fra root har ${gotPre.length} monstre, men skal ha alle ${pre.length}.`
       for (let i = 0; i < pre.length; i++) {
         if (gotPre[i] !== pre[i]) return `I pre-orden skal plass ${i + 1} være ${t.show(pre[i])}, men treet ditt gir ${t.show(gotPre[i])}.`
       }
@@ -1297,16 +1297,16 @@ root = build(0, 0, pre.length)
     title: 'Brann i treet',
     level: 'vanskelig',
     topic: 'trær',
-    text: `Det tar fyr i en ting i treet. Hvert minutt sprer brannen seg til alle naboene til de som brenner: barna (\`left\` og \`right\`) og forelderen. Skriv \`function burnTime(root, start)\` som gir tilbake hvor mange minutter det tar før hele treet brenner, når det tar fyr i \`start\`.
+    text: `Det tar fyr i et monster i treet. Hvert minutt sprer brannen seg til alle naboene til de som brenner: barna (\`left\` og \`right\`) og forelderen. Skriv \`function burnTime(root, start)\` som gir tilbake hvor mange minutter det tar før hele treet brenner, når det tar fyr i \`start\`.
 
-Tingene vet ikke hvem som er forelderen deres. Det må du finne ut selv.`,
+Monstrene vet ikke hvem som er forelderen deres. Det må du finne ut selv.`,
     hints: [
-      'Gå gjennom treet én gang og husk forelderen til hver ting i en `Map`.',
-      'Nå er treet en graf der hver ting har opptil tre naboer: `left`, `right` og forelderen.',
+      'Gå gjennom treet én gang og husk forelderen til hvert monster i en `Map`.',
+      'Nå er treet en graf der hvert monster har opptil tre naboer: `left`, `right` og forelderen.',
       'Spre brannen bredden først fra `start`, lag for lag. Antall lag etter det første er svaret. Merk hvem som brenner, så ingen tar fyr to ganger.',
     ],
     world: (r) => treeWorld(r, things(r, 9)),
-    ting: TREE_TING,
+    monster: TREE_MONSTER,
     scaffold: `function burnTime(root, start) {
   // Finn foreldrene, og spre brannen lag for lag
   return 0
@@ -1383,7 +1383,7 @@ console.log(burnTime(root, E))
         for (const start of all) {
           const want = reference(root, start).most
           const got = burnTime(root, start)
-          if (got !== want) return `Når det tar fyr i tingen med verdien ${start.value}, gav burnTime ${t.show(got)}, men det tar ${want} minutter.`
+          if (got !== want) return `Når det tar fyr i monsteret med verdien ${start.value}, gav burnTime ${t.show(got)}, men det tar ${want} minutter.`
         }
       }
       return true

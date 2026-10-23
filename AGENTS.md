@@ -1,6 +1,6 @@
 # Kodekata: notes for agents
 
-JavaScript tasks with pixel creatures at kata.phareim.no. Read `README.md` first; it describes the tasks, the stage,
+JavaScript tasks with pixel monsters at kata.phareim.no. Read `README.md` first; it describes the tasks, the stage,
 how code runs and where things live.
 
 - UI text and task texts are Norwegian bokmål, natural and in our own words (never copied from LeetCode, Codewars or
@@ -22,7 +22,7 @@ how code runs and where things live.
   column 0 and the code that calls them after; set `opening` when the rest of the scaffold is part of the answer. A check message says what is wrong in a sentence, naming items by letter
   (`t.show`). Don't let a check loop on data the code controls without a bound (the code can change anything).
 - A root may not share a name with `t`'s own fields (`out`, `slots`, `start`, `fn` …): the check would read `t`'s.
-  A plain object held by a root becomes an item on the stage; give it `color`/`shape` or prefer a Ting.
+  A plain object held by a root becomes an item on the stage; give it `color`/`shape` or prefer a Monster.
 - After adding or renaming tasks: `UPDATE_DOCS=1 npx vitest run test/docs.test.ts` regenerates the table in
   `docs/tasks.md` (`npm test` fails until it matches).
 - Items are memory slots, not variables: slot order is kept by both sides, new items are appended, and `label()`
@@ -33,8 +33,15 @@ how code runs and where things live.
 - The playground keeps eight items (`ITEM_COUNT`), Petter's call (2026-10-22: "gjør det enklere"), and its storage
   keys from before the tasks (`code-kata:code`, `code-kata:ting`). Nothing may be saved before the first route
   (`mode` is null until then), or the empty editors overwrite the playground.
-- The Ting class and the code compile as one source (`worker.js`: class, `__kata_build__`, code, exports); `place()`
-  maps a line back to its editor. Keep that order, or `Ting` in the code stops being the items' class.
+- The Monster class and the code compile as one source (`worker.js`: class, `__kata_build__`, code, exports); `place()`
+  maps a line back to its editor. Keep that order, or `Monster` in the code stops being the items' class.
+- The creatures are «monstre» (Petter, 2026-10-23; «ting» before). «Monster» is neuter: et monster, monsteret,
+  monstre, monstrene, so «det første», «hvert monster», «ett av dem», «et stort monster». Saved code and classes still
+  say `Ting`: the worker builds from whichever the class editor declares (Monster first) and gives the other name to
+  the same class (`classNames()` in `worker.js`; `test/engine.test.ts` and every task's solution with a `class Ting`
+  check it). The `ting` storage key and progress field are data and keep their names.
+- A blob's look (`blobLook` in `src/stage/creatures.ts`) is the stage's: from its letter and value when first drawn,
+  never written to the item. A task's `shape` wins; checks read only `shape` and `color`.
 - The pixel font is for the chrome only, at whole multiples of 8 px, uppercase through `.px`. Code, console output and
   task text stay in JetBrains Mono with ligatures off. Code is 16 px on touch screens, or iOS zooms in on focus.
 - `src/run/worker.js` is imported with `?raw` and started from a `data:` URL: it must stay one self-contained plain

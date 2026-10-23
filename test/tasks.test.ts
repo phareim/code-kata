@@ -3,7 +3,7 @@
  * scaffold behind hint 1 do not, and none of them breaks the check.
  */
 import { describe, expect, it } from 'vitest'
-import { TING_CLASS } from '../src/starter'
+import { MONSTER_CLASS } from '../src/starter'
 import { seeded } from '../src/tasks/build'
 import { ALL_TASKS, TASKS } from '../src/tasks/index'
 import { hasScaffold, opening, scaffolded, variables } from '../src/tasks/opening'
@@ -13,10 +13,10 @@ import { runWorker } from './harness'
 // Seeds far apart: neighbouring seeds give worlds that look alike.
 const SEEDS = [1, 77, 4242]
 
-function run(task: Task, code: string, ting: string, seed: number) {
+function run(task: Task, code: string, cls: string, seed: number) {
   return runWorker({
     code,
-    classSource: ting,
+    classSource: cls,
     world: task.world(seeded(seed)),
     task: { check: String(task.check), exports: task.exports },
   })
@@ -66,17 +66,17 @@ describe('the bank', () => {
         expect(task.scaffold, `${task.id}: ${name}`).toMatch(declared)
         expect(opening(task), `${task.id}: ${name}`).not.toMatch(declared)
       }
-      if (!task.solutionTing) expect(hasScaffold(task), task.id).toBe(true)
+      if (!task.solutionMonster) expect(hasScaffold(task), task.id).toBe(true)
     }
   })
 })
 
 describe.each(TASKS.map((task) => [task.id, task] as const))('%s', (_, task) => {
-  const ting = task.ting ?? TING_CLASS
+  const cls = task.monster ?? MONSTER_CLASS
 
   it('is solved by its solution', async () => {
     for (const seed of SEEDS) {
-      const result = await run(task, task.solution, task.solutionTing ?? ting, seed)
+      const result = await run(task, task.solution, task.solutionMonster ?? cls, seed)
       expect(result.end, `seed ${seed}: ${JSON.stringify(result.end)}`).toMatchObject({ type: 'done' })
       expect(result.verdict, `seed ${seed}`).not.toBeNull()
       expect(result.verdict!.message, `seed ${seed}`).toBe('')
@@ -84,9 +84,18 @@ describe.each(TASKS.map((task) => [task.id, task] as const))('%s', (_, task) => 
     }
   })
 
+  // A class saved before the rename (2026-10-23) says Ting: the code, which says Monster, runs with it all the same.
+  it('is solved with the class named Ting, as visitors may have it saved', async () => {
+    const old = (task.solutionMonster ?? cls).replace(/\bclass Monster\b/, 'class Ting')
+    expect(old).toMatch(/\bclass Ting\b/)
+    const result = await run(task, task.solution, old, SEEDS[0])
+    expect(result.end, JSON.stringify(result.end)).toMatchObject({ type: 'done' })
+    expect(result.verdict!.message).toBe('')
+  })
+
   it('is not solved by its opening, and says why', async () => {
     for (const seed of SEEDS) {
-      const result = await run(task, opening(task), ting, seed)
+      const result = await run(task, opening(task), cls, seed)
       // A call to an export the code has yet to declare gets a verdict too; another error (a class task's code
       // calling a method the class lacks) is the code's own.
       if (result.end.type === 'error' && result.end.name !== 'ReferenceError') continue
@@ -99,7 +108,7 @@ describe.each(TASKS.map((task) => [task.id, task] as const))('%s', (_, task) => 
 
   it('is not solved by its scaffold, and says why', async () => {
     for (const seed of SEEDS) {
-      const result = await run(task, scaffolded(task), ting, seed)
+      const result = await run(task, scaffolded(task), cls, seed)
       if (result.end.type === 'error') continue
       expect(result.end.type, `seed ${seed}`).toBe('done')
       expect(result.verdict, `seed ${seed}`).not.toBeNull()

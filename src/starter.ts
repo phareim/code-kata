@@ -1,7 +1,7 @@
 /** What a first visit opens with; after that the editor keeps the visitor's own code. */
-export const STARTER = `// Tingene over koden er en lenket liste av Ting: klassen står over tingene.
-// Hver har value, color og next, og next peker på neste. head peker på den første.
-// Bokstavene A, B, C … er tingene selv; head kan du flytte.
+export const STARTER = `// Monstrene over koden er en lenket liste av Monster: klassen står over monstrene.
+// Hvert monster har value, color og next, og next peker på neste. head peker på det første.
+// Bokstavene A, B, C … er monstrene selv; head kan du flytte.
 
 let node = head
 while (node) {
@@ -10,12 +10,12 @@ while (node) {
 }
 
 // Prøv: head = head.next, A.color = 'gold'
-// eller head = new Ting({ value: 5, color: 'lime', next: head })
+// eller head = new Monster({ value: 5, color: 'lime', next: head })
 `
 
 /** The class every item is made of, until the visitor changes it. */
-export const TING_CLASS = `// Legg til eller ta bort et felt og trykk «Bruk».
-class Ting {
+export const MONSTER_CLASS = `// Legg til eller ta bort et felt og trykk «Bruk».
+class Monster {
   value = 0
   color = 'pink'
   next = null
@@ -48,4 +48,28 @@ while (node) {
 
 // Prøv: head = head.next, A.next = null eller A.color = 'gold'
 `,
+  `// Tingene over koden er en lenket liste av Ting: klassen står over tingene.
+// Hver har value, color og next, og next peker på neste. head peker på den første.
+// Bokstavene A, B, C … er tingene selv; head kan du flytte.
+
+let node = head
+while (node) {
+  console.log(node.value, node.color)
+  node = node.next
+}
+
+// Prøv: head = head.next, A.color = 'gold'
+// eller head = new Ting({ value: 5, color: 'lime', next: head })
+`,
+]
+
+/** The playground's class from before the items were monsters (until 2026-10-23); saved unchanged, it gets the new one. */
+export const OLD_CLASSES = [
+  `// Legg til eller ta bort et felt og trykk «Bruk».
+class Ting {
+  value = 0
+  color = 'pink'
+  next = null
+  constructor(props) { Object.assign(this, props) }
+}`,
 ]
