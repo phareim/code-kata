@@ -200,12 +200,15 @@ async function handleQuickTalk(request: Request, env: Env, ctx: Context | undefi
   if (!env.KATA_ANTHROPIC_KEY) return json({ error: 'off' }, 503)
   const text = await request.text()
   if (text.length > MAX_BODY) return json({ error: 'long' }, 413)
-  let req: ReturnType<typeof quickRequest>
+  let raw: unknown = null
   try {
-    req = quickRequest(JSON.parse(text))
+    raw = JSON.parse(text)
   } catch {
-    req = null
+    // Not JSON: a bad request below.
   }
+  // A conversation's turn without an account comes from a page whose session ended: say so, as before.
+  if (raw && typeof raw === 'object' && !('question' in raw)) return json({ user: null }, 401)
+  const req = quickRequest(raw)
   if (req === 'long') return json({ error: 'long' }, 413)
   if (!req) return json({ error: 'Bad request' }, 400)
   const { task, question, code, ting } = req
