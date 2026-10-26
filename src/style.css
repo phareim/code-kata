@@ -1117,3 +1117,74 @@ body.is-resizing { user-select: none; -webkit-user-select: none; }
   .talk-line.is-writing .talk-text:empty::after,
   .talk-line.is-writing .talk-text > :last-child::after { animation: none; }
 }
+
+/*
+ * The code's right-click menu, the rename box and a notice (src/editor/menu.ts): fixed to the page above the panes.
+ * Cyan is you, so the item under the pointer or the keys is cyan; a notice is a warning, so gold.
+ */
+.code-menu, .code-rename, .code-notice {
+  position: fixed;
+  z-index: 50;
+  background: var(--bg);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
+}
+.code-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 280px;
+  padding: 8px 0;
+}
+.code-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 8px 16px;
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.code-menu-item .px { font-size: 16px; line-height: 1; }
+.code-menu-item kbd {
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-variant-ligatures: none;
+  color: var(--muted);
+}
+.code-menu { outline: none; }
+.code-menu-item:focus {
+  outline: none;
+  color: var(--bg);
+  background: var(--cyan);
+}
+.code-menu-item:focus kbd { color: var(--shade); }
+.code-menu-item:disabled { color: var(--dim); cursor: default; }
+.code-menu-item:disabled kbd { color: var(--dim); }
+.code-menu-line { height: 2px; margin: 6px 12px; background: var(--dusk); }
+
+.code-rename { width: 300px; padding: 12px; }
+.code-rename input {
+  width: 100%;
+  padding: 6px 8px;
+  font-family: var(--font-code);
+  font-size: var(--code-size);
+  font-variant-ligatures: none;
+  color: var(--hi);
+  caret-color: var(--cyan);
+  background: var(--shade);
+  border: 0;
+  border-radius: 0;
+  outline: 2px solid var(--cyan);
+}
+.code-rename input::selection { background: rgba(154, 79, 240, 0.6); }
+.code-rename-note, .code-notice {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.code-rename-note { margin: 8px 0 0; }
+.code-rename-note.is-error { color: var(--red); }
+.code-notice { --edge: var(--gold); max-width: 320px; padding: 8px 12px; color: var(--gold); }

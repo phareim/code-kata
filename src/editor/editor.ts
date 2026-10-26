@@ -18,6 +18,7 @@ import {
   rectangularSelection,
 } from '@codemirror/view'
 import { kataJavascript } from './completion'
+import { editorMenu, refactorKeymap } from './menu'
 import { neonHighlight, neonTheme } from './theme'
 
 export interface EditorOptions {
@@ -77,7 +78,8 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
       { key: 'Mod-Enter', run: () => { options.onRun(); return true } },
       { key: 'Tab', run: acceptCompletion },
     ])),
-    keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, indentWithTab]),
+    editorMenu,
+    keymap.of([...refactorKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, indentWithTab]),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) options.onChange(update.state.doc.toString())
     }),
