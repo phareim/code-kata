@@ -31,6 +31,12 @@ Live: https://kata.phareim.no (public; signing in is optional and only carries t
 - **Editor**: CodeMirror 6 with JavaScript highlighting, bracket matching, search and undo, and autocomplete as you
   type (Tab or Enter): the code's own names, the roots (`head`, `items`, `root` …), `Monster`, `vis` and the items'
   letters, keywords and snippets, the runner's globals with their members, and common members after any other dot.
+  A right click opens a menu (`src/editor/menu.ts`) with VS Code's shortcuts: «Gi nytt navn» (F2) renames a
+  variable through its scopes, or a property or method everywhere in that editor, and keeps a shorthand `{ a }` the
+  same object; «Gå til definisjon» (F12); «Trekk ut til konstant» moves the selected expression into a `const` before
+  its statement and opens the rename on it; «Formater» (Shift+Alt+F) indents again and drops trailing spaces and
+  extra empty lines; and the line commands (comment, move, copy, delete, select all matches) and the clipboard. The
+  analysis is in `src/editor/refactor.ts`, on the Lezer tree. A touch screen keeps the browser's own menu.
 - **Layout**: every pane but the code folds to its bar (the chevron by its title; a folded task card keeps its title
   and the verdict, a folded console its status). On a screen 900 px or wider the gaps are handles: the one between
   the columns sets their widths, the ones between panes their heights, and a double click on a handle puts that part
