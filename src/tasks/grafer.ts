@@ -120,6 +120,53 @@ while (queue.length) {
   }
 }
 `,
+    java: {
+      // A field can't be added to an item on the fly in Java, so the class has it from the start.
+      monster: `// Legg til eller ta bort et felt og trykk «Bruk».
+class Monster {
+    String color = "pink";
+    List<Monster> neighbors = new ArrayList<>();
+    int steps = -1;
+}`,
+      text: `Monstrene i \`nodes\` er venner, og vennene til hvert monster står i \`neighbors\`. A vil vite hvor langt unna de andre er.
+
+Klassen har et felt \`steps\` som er -1 til monsteret er nådd. Sett det til hvor mange vennskap det er fra A til monsteret, den korteste veien. A selv skal ha \`steps = 0\`.
+
+Gå bredden først: A, så alle vennene til A, så vennene deres, og så videre.`,
+      hints: [
+        'Bruk en kø: start med `A.steps = 0` og `Queue<Monster> queue = new ArrayDeque<>()`, og still A i den med `queue.add(A)`.',
+        'Ta det første ut av køen med `queue.poll()`. For hver venn som fortsatt har `steps == -1`: sett `steps` én høyere, og still vennen bakerst i køen.',
+        'Gi gjerne monstrene farge etter avstanden, for eksempel med `String[] colors = { "pink", "cyan", "gold", "lime" }` og `node.color = colors[node.steps]`, så ser du lagene.',
+      ],
+      scaffold: `void main() {
+    A.steps = 0;
+    Queue<Monster> queue = new ArrayDeque<>();
+    queue.add(A);
+    while (!queue.isEmpty()) {
+        Monster node = queue.poll();
+        // Gi vennene til node steps, og still dem i køen
+    }
+}
+`,
+      solution: `void main() {
+    String[] colors = { "pink", "cyan", "gold", "lime", "violet", "orange", "red", "teal" };
+    A.steps = 0;
+    Queue<Monster> queue = new ArrayDeque<>();
+    queue.add(A);
+    while (!queue.isEmpty()) {
+        Monster node = queue.poll();
+        node.color = colors[node.steps];
+        vis(node);
+        for (Monster friend : node.neighbors) {
+            if (friend.steps == -1) {
+                friend.steps = node.steps + 1;
+                queue.add(friend);
+            }
+        }
+    }
+}
+`,
+    },
     check: (t) => {
       const start = t.slots[0]
       const dist = new Map([[start, 0]])
@@ -178,6 +225,38 @@ console.log(popular(nodes).value)
 console.log(popular(nodes).value)
 `,
     exports: ['popular'],
+    java: {
+      code: {
+        'function popular(nodes)': 'Monster popular(List<Monster> nodes)',
+        'node.neighbors.length': 'node.neighbors.size()',
+        'nodes[0]': 'nodes.get(0)',
+      },
+      scaffold: `Monster popular(List<Monster> nodes) {
+    if (nodes.isEmpty()) return null;
+    Monster best = nodes.get(0);
+    // Gå gjennom resten: har noen flere venner enn best?
+    return best;
+}
+
+void main() {
+    IO.println(popular(nodes).value);
+}
+`,
+      solution: `Monster popular(List<Monster> nodes) {
+    if (nodes.isEmpty()) return null;
+    Monster best = nodes.get(0);
+    for (Monster node : nodes) {
+        vis(node, best);
+        if (node.neighbors.size() > best.neighbors.size()) best = node;
+    }
+    return best;
+}
+
+void main() {
+    IO.println(popular(nodes).value);
+}
+`,
+    },
     check: (t) => {
       const popular = t.fn('popular')
       const make = (n: number, edges: number[][]): any[] => {
@@ -254,6 +333,32 @@ console.log(friends(A, B))
 console.log(friends(A, B))
 `,
     exports: ['friends'],
+    java: {
+      code: {
+        'function friends(a, b)': 'boolean friends(Monster a, Monster b)',
+        includes: 'contains',
+        'a.neighbors.includes(b)': 'a.neighbors.contains(b)',
+        'return a.neighbors.includes(b) && b.neighbors.includes(a)': 'return a.neighbors.contains(b) && b.neighbors.contains(a)',
+      },
+      scaffold: `boolean friends(Monster a, Monster b) {
+    // Står b hos a, og a hos b?
+    return a.neighbors.contains(b);
+}
+
+void main() {
+    IO.println(friends(A, B));
+}
+`,
+      solution: `boolean friends(Monster a, Monster b) {
+    vis(a, b);
+    return a.neighbors.contains(b) && b.neighbors.contains(a);
+}
+
+void main() {
+    IO.println(friends(A, B));
+}
+`,
+    },
     check: (t) => {
       const friends = t.fn('friends')
       const make = (n: number): any[] => Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
@@ -323,6 +428,41 @@ vis(a, b)
 befriend(a, b)
 `,
     exports: ['befriend'],
+    java: {
+      text: `To av monstrene, \`a\` og \`b\`, kjenner ikke hverandre ennå. De står som flagg på scenen. Vennene til hvert monster står i \`neighbors\`.
+
+Skriv \`void befriend(Monster x, Monster y)\` som gjør \`x\` og \`y\` til venner begge veier: \`y\` kommer inn i \`x.neighbors\`, og \`x\` i \`y.neighbors\`. Står ett av dem der fra før, skal ingen komme to ganger. Å kalle metoden to ganger skal ikke endre noe.
+
+Kall den på \`a\` og \`b\`. Alt annet i grafen skal være som før.`,
+      hints: [
+        'Legg `y` til hos `x` med `add`, og `x` til hos `y`. Det er to linjer.',
+        'Vær forsiktig så ingen kommer to ganger: `if (!x.neighbors.contains(y)) x.neighbors.add(y)`. Gjør det for hver retning for seg.',
+        'Husk å kalle metoden til slutt, i `main`: `befriend(a, b)`.',
+      ],
+      // Spelled out: javaRunCode would take the indented call to befriend for its declaration.
+      opening: `void main() {
+    befriend(a, b);
+}`,
+      scaffold: `void befriend(Monster x, Monster y) {
+    // Legg y hos x og x hos y, men ikke hvis de står der fra før
+}
+
+void main() {
+    befriend(a, b);
+}
+`,
+      solution: `void befriend(Monster x, Monster y) {
+    if (!x.neighbors.contains(y)) x.neighbors.add(y);
+    if (!y.neighbors.contains(x)) y.neighbors.add(x);
+    vis(x, y);
+}
+
+void main() {
+    vis(a, b);
+    befriend(a, b);
+}
+`,
+    },
     check: (t) => {
       const befriend = t.fn('befriend')
       const make = (n: number): any[] => Array.from({ length: n }, (_, i) => t.monster({ value: i, neighbors: [] }))
@@ -390,6 +530,30 @@ nodes = nodes.filter((node) => node !== gone)
 gone.neighbors = []
 vis('borte')
 `,
+    java: {
+      hints: [
+        'Gå gjennom alle monstrene i `nodes`. `remove(gone)` tar `gone` ut av en liste, og gjør ingenting hvis det ikke står der.',
+        'For hver `node`: `node.neighbors.remove(gone)`.',
+        'Ta `gone` ut av `nodes` på samme måte, men etter løkka: en liste kan ikke endres mens en `for`-løkke går gjennom den. Tøm til slutt `gone.neighbors` med `clear()`.',
+      ],
+      scaffold: `void main() {
+    for (Monster node : nodes) {
+        // Ta gone ut av node.neighbors
+    }
+    // Ta gone ut av nodes, og tøm gone.neighbors
+}
+`,
+      solution: `void main() {
+    for (Monster node : nodes) {
+        node.neighbors.remove(gone);
+        vis(node, gone);
+    }
+    nodes.remove(gone);
+    gone.neighbors.clear();
+    vis("borte");
+}
+`,
+    },
     check: (t) => {
       const gone = t.live(t.start.gone)!
       const same = (p: any[], q: any[]) => p.length === q.length && p.every((item, i) => item === q[i])
@@ -455,6 +619,47 @@ console.log(dfs(A).map((node) => node.value))
 console.log(dfs(A).map((node) => node.value))
 `,
     exports: ['dfs'],
+    java: {
+      text: `Skriv \`List<Monster> dfs(Monster start)\` som gir tilbake en liste med monstrene i den rekkefølgen en rekursiv dybde-først-leting besøker dem. Fra \`start\` går du til første venn i \`neighbors\`, derfra videre til den første av vennens venner som ikke er besøkt, og så langt det går. Sitter du fast, går du et skritt tilbake og prøver neste venn. Hvert monster kommer med bare én gang.
+
+Vennene prøves i den rekkefølgen de står i \`neighbors\`. Sjekken sammenligner med den nøyaktige rekkefølgen, så svaret må bli det samme som med rekursjon.`,
+      hints: [
+        'Hold orden på de besøkte i et `Set<Monster>`, og på rekkefølgen i en `List<Monster>` du fyller på.',
+        'Lag en hjelpemetode `void visit(Monster node, Set<Monster> seen, List<Monster> order)` som legger `node` i settet og i lista, og så kaller `visit` for hver venn som ikke er besøkt.',
+        'Sjekk `seen.contains(friend)` rett før du går til en venn, ikke bare før løkka: vennen kan ha blitt besøkt mens du var på vei dypere.',
+      ],
+      scaffold: `List<Monster> dfs(Monster start) {
+    Set<Monster> seen = new HashSet<>();
+    List<Monster> order = new ArrayList<>();
+    // Besøk start, og så vennene til start én etter én, dypt først
+    return order;
+}
+
+void main() {
+    IO.println(dfs(A).stream().map(node -> node.value).toList());
+}
+`,
+      solution: `List<Monster> dfs(Monster start) {
+    Set<Monster> seen = new HashSet<>();
+    List<Monster> order = new ArrayList<>();
+    visit(start, seen, order);
+    return order;
+}
+
+void visit(Monster node, Set<Monster> seen, List<Monster> order) {
+    seen.add(node);
+    order.add(node);
+    vis(node);
+    for (Monster friend : node.neighbors) {
+        if (!seen.contains(friend)) visit(friend, seen, order);
+    }
+}
+
+void main() {
+    IO.println(dfs(A).stream().map(node -> node.value).toList());
+}
+`,
+    },
     check: (t) => {
       const dfs = t.fn('dfs')
       const make = (n: number, edges: number[][]): any[] => {
@@ -551,6 +756,58 @@ console.log(route(A, H)?.map((node) => node.value))
 console.log(route(A, H)?.map((node) => node.value))
 `,
     exports: ['route'],
+    java: {
+      text: `Hvert steg går fra et monster til en av vennene i \`neighbors\`. Skriv \`List<Monster> route(Monster a, Monster b)\` som gir tilbake en liste med monstrene på veien fra \`a\` til \`b\` (begge er med), med så få steg som mulig. Er \`a\` og \`b\` samme monster, er veien bare \`List.of(a)\`. Finnes det ingen vei, gir den \`null\`.
+
+Gå bredden først og husk for hvert monster hvem du kom fra. Når du er framme, går du baklengs fra \`b\` og snur rekkefølgen.`,
+      hints: [
+        'Gå bredden først med en kø, som i «Hvor mange steg unna?». Lagre hvem du kom fra i et `Map`: `from.put(friend, node)`.',
+        'Når du har funnet `b`, bygg veien baklengs: start i `b` og følg `from` tilbake til `a`. Legg hvert monster først i lista med `path.add(0, node)`, eller snu den til slutt med `Collections.reverse(path)`.',
+        'Står ikke `b` i `from` når køen er tom, finnes det ingen vei: gi `null`.',
+      ],
+      scaffold: `List<Monster> route(Monster a, Monster b) {
+    Map<Monster, Monster> from = new HashMap<>();
+    from.put(a, null);
+    Queue<Monster> queue = new ArrayDeque<>();
+    queue.add(a);
+    // Gå bredden først og husk hvem du kom fra. Bygg veien baklengs fra b.
+    return null;
+}
+
+void main() {
+    List<Monster> path = route(A, H);
+    IO.println(path == null ? "ingen vei" : path.stream().map(node -> node.value).toList());
+}
+`,
+      solution: `List<Monster> route(Monster a, Monster b) {
+    Map<Monster, Monster> from = new HashMap<>();
+    from.put(a, null);
+    Queue<Monster> queue = new ArrayDeque<>();
+    queue.add(a);
+    while (!queue.isEmpty()) {
+        Monster node = queue.poll();
+        vis(node);
+        if (node == b) break;
+        for (Monster friend : node.neighbors) {
+            if (!from.containsKey(friend)) {
+                from.put(friend, node);
+                queue.add(friend);
+            }
+        }
+    }
+    if (!from.containsKey(b)) return null;
+    List<Monster> path = new ArrayList<>();
+    for (Monster node = b; node != null; node = from.get(node)) path.add(0, node);
+    vis("veien", path);
+    return path;
+}
+
+void main() {
+    List<Monster> path = route(A, H);
+    IO.println(path == null ? "ingen vei" : path.stream().map(node -> node.value).toList());
+}
+`,
+    },
     check: (t) => {
       const route = t.fn('route')
       const make = (n: number, edges: number[][]): any[] => {
@@ -675,6 +932,51 @@ console.log(groups(nodes))
 console.log(groups(nodes))
 `,
     exports: ['groups'],
+    java: {
+      code: { 'function groups(nodes)': 'int groups(List<Monster> nodes)' },
+      scaffold: `int groups(List<Monster> nodes) {
+    Set<Monster> seen = new HashSet<>();
+    int count = 0;
+    // Gå gjennom nodes. Et monster du ikke har sett, er en ny gjeng: besøk alle i den.
+    return count;
+}
+
+void main() {
+    IO.println(groups(nodes));
+}
+`,
+      solution: `int groups(List<Monster> nodes) {
+    String[] colors = { "pink", "cyan", "gold", "lime", "violet" };
+    Set<Monster> seen = new HashSet<>();
+    int count = 0;
+    for (Monster start : nodes) {
+        if (seen.contains(start)) continue;
+        // En ny gjeng: gi alle i den samme farge
+        String color = colors[count % colors.length];
+        count++;
+        seen.add(start);
+        Deque<Monster> todo = new ArrayDeque<>();
+        todo.push(start);
+        while (!todo.isEmpty()) {
+            Monster node = todo.pop();
+            node.color = color;
+            vis(node);
+            for (Monster friend : node.neighbors) {
+                if (!seen.contains(friend)) {
+                    seen.add(friend);
+                    todo.push(friend);
+                }
+            }
+        }
+    }
+    return count;
+}
+
+void main() {
+    IO.println(groups(nodes));
+}
+`,
+    },
     check: (t) => {
       const groups = t.fn('groups')
       const make = (n: number, edges: number[][]): any[] => {
@@ -784,6 +1086,59 @@ console.log(twoTeams(nodes))
 console.log(twoTeams(nodes))
 `,
     exports: ['twoTeams'],
+    java: {
+      text: `Monstrene i \`nodes\` skal deles i to lag, rosa og turkis, så ingen står på samme lag som en venn. Skriv \`boolean twoTeams(List<Monster> nodes)\` som setter \`color\` til \`"pink"\` eller \`"cyan"\` på hvert monster, slik at to venner aldri får samme farge, og gir tilbake \`true\`.
+
+Det går ikke alltid. Danner vennene en ring med et odde antall monstre, som tre som alle er venner, kan det ikke lages to lag. Da skal metoden gi tilbake \`false\`, og ingen farger skal være endret. En tom \`nodes\` gir \`true\`.
+
+\`nodes\` kan ha flere adskilte grupper, og hver av dem må få lag. Sjekken prøver også en trekant.`,
+      hints: [
+        'Gå bredden først. Gi det første monsteret en farge, vennene til det den andre, vennene deres den første igjen, og så videre.',
+        'Har en venn allerede fått samme farge som monsteret du står på, går det ikke: svaret er `false`.',
+        'Husk fargene monstrene hadde (for eksempel i et `Map<Monster, String>`) og sett dem tilbake før du gir `false`. Start et nytt søk fra hvert monster som ikke har fått lag ennå, for det kan være flere grupper.',
+      ],
+      scaffold: `boolean twoTeams(List<Monster> nodes) {
+    // Gi hvert monster "pink" eller "cyan", så ingen venner får samme farge
+    return true;
+}
+
+void main() {
+    IO.println(twoTeams(nodes));
+}
+`,
+      solution: `boolean twoTeams(List<Monster> nodes) {
+    Map<Monster, String> before = new HashMap<>();
+    for (Monster node : nodes) before.put(node, node.color);
+    Map<Monster, String> team = new HashMap<>();
+    for (Monster start : nodes) {
+        if (team.containsKey(start)) continue;
+        team.put(start, "pink");
+        Queue<Monster> queue = new ArrayDeque<>();
+        queue.add(start);
+        while (!queue.isEmpty()) {
+            Monster node = queue.poll();
+            node.color = team.get(node);
+            vis(node);
+            for (Monster friend : node.neighbors) {
+                if (!team.containsKey(friend)) {
+                    team.put(friend, team.get(node).equals("pink") ? "cyan" : "pink");
+                    queue.add(friend);
+                } else if (team.get(friend).equals(team.get(node))) {
+                    // To venner på samme lag: det går ikke. Sett fargene tilbake.
+                    before.forEach((item, color) -> item.color = color);
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+void main() {
+    IO.println(twoTeams(nodes));
+}
+`,
+    },
     check: (t) => {
       const twoTeams = t.fn('twoTeams')
       const paint = ['gold', 'lime', 'red', 'orange', 'violet', 'teal', 'gold', 'lime']
@@ -882,6 +1237,57 @@ console.log(order(nodes)?.map((node) => node.value))
 console.log(order(nodes)?.map((node) => node.value))
 `,
     exports: ['order'],
+    java: {
+      text: `Monstrene skal gjøres i en bestemt rekkefølge. Pilene på scenen viser hva som må komme først: en pil fra A til B betyr at A må gjøres før B, og \`A.neighbors\` lister dem A peker på. Det er altså ikke venner lenger, bare piler som går én vei.
+
+Skriv \`List<Monster> order(List<Monster> nodes)\` som gir tilbake alle monstrene i en rekkefølge der hver pil peker framover: hvert monster kommer før alle i sin \`neighbors\`. Det finnes ofte flere riktige rekkefølger, og en av dem holder. En tom \`nodes\` gir en tom liste.
+
+Danner pilene en ring, finnes det ingen rekkefølge. Da skal \`order\` gi tilbake \`null\`. Sjekken prøver også det.`,
+      hints: [
+        'Et monster kan gjøres først når ingen pil peker på det. Tell for hvert monster hvor mange piler som peker inn, for eksempel i et `Map<Monster, Integer>`.',
+        'Still alle med 0 innpiler i en kø. Ta ut ett, legg det i svaret, og trekk 1 fra innpilene til hvert monster i `neighbors` til det. Blir ett av dem 0, stiller du det i køen.',
+        'Er svaret kortere enn `nodes` når køen er tom, står noen igjen i en ring der alle venter på hverandre: gi `null`.',
+      ],
+      scaffold: `List<Monster> order(List<Monster> nodes) {
+    List<Monster> result = new ArrayList<>();
+    // Hvor mange piler peker inn på hvert monster? Begynn med dem som ingen peker på.
+    return result;
+}
+
+void main() {
+    List<Monster> result = order(nodes);
+    IO.println(result == null ? "ingen rekkefølge" : result.stream().map(node -> node.value).toList());
+}
+`,
+      solution: `List<Monster> order(List<Monster> nodes) {
+    Map<Monster, Integer> waiting = new HashMap<>();
+    for (Monster node : nodes) waiting.put(node, 0);
+    for (Monster node : nodes) {
+        for (Monster next : node.neighbors) waiting.put(next, waiting.get(next) + 1);
+    }
+    Queue<Monster> ready = new ArrayDeque<>();
+    for (Monster node : nodes) {
+        if (waiting.get(node) == 0) ready.add(node);
+    }
+    List<Monster> result = new ArrayList<>();
+    while (!ready.isEmpty()) {
+        Monster node = ready.poll();
+        result.add(node);
+        vis(node);
+        for (Monster next : node.neighbors) {
+            waiting.put(next, waiting.get(next) - 1);
+            if (waiting.get(next) == 0) ready.add(next);
+        }
+    }
+    return result.size() == nodes.size() ? result : null;
+}
+
+void main() {
+    List<Monster> result = order(nodes);
+    IO.println(result == null ? "ingen rekkefølge" : result.stream().map(node -> node.value).toList());
+}
+`,
+    },
     check: (t) => {
       const order = t.fn('order')
       const make = (n: number, arrows: number[][]): any[] => {
@@ -983,6 +1389,60 @@ console.log(cheapest(A, H))
 console.log(cheapest(A, H))
 `,
     exports: ['cheapest'],
+    java: {
+      text: `Å gå fra et monster til en av vennene koster forskjellen på verdiene deres, alltid et positivt tall: fra 12 til 30 koster 18, og tilbake igjen også 18. En vei koster summen av stegene.
+
+Skriv \`double cheapest(Monster a, Monster b)\` som gir tilbake hva den billigste veien fra \`a\` til \`b\` koster. Den har ikke nødvendigvis færrest steg. Fra et monster til seg selv koster det 0, og finnes det ingen vei, gir den \`Double.POSITIVE_INFINITY\`.
+
+Bruk Dijkstras metode: ta alltid ut det uferdige monsteret som er billigst å nå. En vanlig \`ArrayList\` holder som kø.`,
+      hints: [
+        'Hold et `Map<Monster, Integer>` `best` med billigste kjente pris til hvert monster, først bare `a` med 0, og en liste `todo` med monstrene som skal besøkes.',
+        'Ta ut monsteret i `todo` med lavest pris i `best`. For hver venn: prisen er `best.get(node) + Math.abs(node.value - friend.value)`. Er det billigere enn det du har fra før, lagrer du den og legger vennen i `todo`.',
+        'Er monsteret du tar ut `b`, er prisen endelig. Blir `todo` tom uten at du kom til `b`, gir du `Double.POSITIVE_INFINITY`.',
+      ],
+      scaffold: `double cheapest(Monster a, Monster b) {
+    Map<Monster, Integer> best = new HashMap<>();
+    best.put(a, 0);
+    List<Monster> todo = new ArrayList<>();
+    todo.add(a);
+    // Ta alltid ut det billigste i todo, og oppdater prisen til vennene
+    return Double.POSITIVE_INFINITY;
+}
+
+void main() {
+    IO.println(cheapest(A, H));
+}
+`,
+      solution: `double cheapest(Monster a, Monster b) {
+    Map<Monster, Integer> best = new HashMap<>();
+    best.put(a, 0);
+    Set<Monster> done = new HashSet<>();
+    List<Monster> todo = new ArrayList<>();
+    todo.add(a);
+    while (!todo.isEmpty()) {
+        // Ta ut det billigste
+        todo.sort((x, y) -> best.get(x) - best.get(y));
+        Monster node = todo.remove(0);
+        if (done.contains(node)) continue;
+        done.add(node);
+        vis(node);
+        if (node == b) return best.get(b);
+        for (Monster friend : node.neighbors) {
+            int price = best.get(node) + Math.abs(node.value - friend.value);
+            if (!best.containsKey(friend) || price < best.get(friend)) {
+                best.put(friend, price);
+                todo.add(friend);
+            }
+        }
+    }
+    return Double.POSITIVE_INFINITY;
+}
+
+void main() {
+    IO.println(cheapest(A, H));
+}
+`,
+    },
     check: (t) => {
       const cheapest = t.fn('cheapest')
       const make = (values: number[], edges: number[][]): any[] => {
@@ -1096,6 +1556,50 @@ console.log(hasCycle(nodes))
 console.log(hasCycle(nodes))
 `,
     exports: ['hasCycle'],
+    java: {
+      code: { 'function hasCycle(nodes)': 'boolean hasCycle(List<Monster> nodes)' },
+      hints: [
+        'Gå dypt fra hvert monster som ikke er besøkt, med en hjelpemetode `boolean visit(Monster node, Map<Monster, String> state)`. Hold orden på tilstanden til hvert monster i kartet: ikke i kartet er hvit, `"grå"` er under besøk, `"svart"` er ferdig.',
+        'Når du går inn i et monster, merk det grått. Når alle det venter på er undersøkt, merk det svart.',
+        'Møter du et grått monster, er det en ring: `true`. Et svart monster er ferdig undersøkt og kan hoppes over. Derfor er en diamant ikke en ring.',
+      ],
+      scaffold: `boolean hasCycle(List<Monster> nodes) {
+    Map<Monster, String> state = new HashMap<>(); // ikke i kartet = hvit, "grå" = under besøk, "svart" = ferdig
+    // Gå dypt fra hvert hvitt monster. Møter du et grått, er det en ring.
+    return false;
+}
+
+void main() {
+    IO.println(hasCycle(nodes));
+}
+`,
+      solution: `boolean hasCycle(List<Monster> nodes) {
+    Map<Monster, String> state = new HashMap<>(); // ikke i kartet = hvit, "grå" = under besøk, "svart" = ferdig
+    for (Monster node : nodes) {
+        if (!state.containsKey(node) && visit(node, state)) return true;
+    }
+    return false;
+}
+
+boolean visit(Monster node, Map<Monster, String> state) {
+    state.put(node, "grå");
+    vis(node);
+    for (Monster next : node.neighbors) {
+        if ("grå".equals(state.get(next))) {
+            vis("ring!", next);
+            return true;
+        }
+        if (!state.containsKey(next) && visit(next, state)) return true;
+    }
+    state.put(node, "svart");
+    return false;
+}
+
+void main() {
+    IO.println(hasCycle(nodes));
+}
+`,
+    },
     check: (t) => {
       const hasCycle = t.fn('hasCycle')
       const make = (n: number, arrows: number[][]): any[] => {

@@ -1,10 +1,10 @@
 # Kodekata
 
-Small JavaScript tasks where pixel monsters («monstre») ask you to sort, tidy and move them: reverse a list, bubble-sort a row,
-build a Tower of Hanoi, mirror a tree, find the way through a graph, flood-fill a grid, read a word off a row of
-letters. Write a few lines, run them in
-the browser, and watch the monsters do what the code says. Neon Coast's pixel look from phareim.no (the night
-palette, Neon Shrine's 5×7 font, notched boxes).
+Small tasks in JavaScript or Java where pixel monsters («monstre») ask you to sort, tidy and move them: reverse a list,
+bubble-sort a row, build a Tower of Hanoi, mirror a tree, find the way through a graph, flood-fill a grid, read a word
+off a row of letters. Write a few lines, run them in the browser (Java too: javac and TeaVM compiled to WebAssembly),
+and watch the monsters do what the code says. Switch language halfway and Claude writes what you have so far in the
+other one. Neon Coast's pixel look from phareim.no (the night palette, Neon Shrine's 5×7 font, notched boxes).
 
 Live: https://kata.phareim.no (public; signing in is optional and only carries the progress along; 144 tasks, every one solved in Chrome against the built site 2026-10-24; the first 131 also in WebKit 2026-10-23).
 
@@ -28,6 +28,10 @@ Live: https://kata.phareim.no (public; signing in is optional and only carries t
   questions (the alternatives, elegant or clunky, how to make it easier to read); signed in, it is a conversation
   that opens with those questions and goes on with whatever you ask (below).
 - **Lekeplass** (`#/lekeplass`): the free playground, eight monsters in a list and no task (below).
+- **JS · Java** by «Kode»: the language the code is in (below, «Languages»). Every task can be done in either; each
+  language keeps its own code and class per task. Switching after writing code of one's own has Claude write that
+  code in the other language, as an edit (Cmd/Ctrl+Z gives back what that language had); switching back without a
+  change gives back exactly what was there. The pick is remembered per browser.
 - **Editor**: CodeMirror 6 with JavaScript highlighting, bracket matching, search and undo, and autocomplete as you
   type (Tab or Enter): the code's own names, the roots (`head`, `items`, `root` …), `Monster`, `vis` and the items'
   letters, keywords and snippets, the runner's globals with their members, and common members after any other dot.
@@ -151,6 +155,67 @@ way to the new one. The storage keys (`code-kata:ting`, the `ting` field of a ta
   worker measures the engine's line offset once with a probe. Chrome reports a SyntaxError without a line, so the page
   takes the line where CodeMirror's parser fails. Firefox is untested; the worker reads its `lineNumber` too.
 
+## Languages
+
+A task is one task in two languages. The items, the check and the prose are the task's own; a language is a binding
+of it: the code the editor opens with, the skeleton behind hint 1, the solution, the class the items are made of, and
+the code in the text and the hints as that language says it (`java` on a task, `JavaTask` in `src/tasks/types.ts`;
+`src/tasks/lang.ts` picks the right one). A task without a `java` part is in JavaScript only, and its Java button is
+off. Adding a language means adding such a binding and a runner for it, not changing the bank's checks.
+
+### How Java runs
+
+- **The compiler**: OpenJDK's javac (language level Java 25) and TeaVM, themselves compiled to WebAssembly
+  (`@live-codes/java-wasm`, pinned): about 8 MB, fetched the first time a visitor runs Java and kept in a worker of
+  its own (`src/java/compile-worker.js`, started from a data: URL like the runner, so it has an opaque origin too; the
+  page fetches the files and hands them over). A run compiles the class, the code and the bridge to a WebAssembly
+  (WasmGC) module in a second or two; the same source again is kept and not compiled anew. The class library is
+  TeaVM's, about Java 21's API (`java.util`, streams, records; not `java.text.Collator`).
+- **The code** is the body of `final class Main`, as in a Java 25 compact source file: methods (no `static` needed),
+  fields, member classes and records, and `void main()`, which holds the statements that run. `java.util.*`,
+  `java.util.function.*` and `java.util.stream.*` are imported; `IO.println` prints (Java 25's `IO`, which the class
+  library lacks, is the bridge's). The class editor holds top-level classes: `class Monster` with typed fields and no
+  constructor. An item prints like the console prints one unless its class has a `toString()`.
+- **The roots** are static fields of `KataWorld`, which `Main` extends, with types from how the task starts (an item:
+  `Monster`; a row: `List<Monster>`; a grid: `String[][]`; a word: `String`; `java.roots` where the start doesn't say);
+  the letters A … Z are static final fields holding the items. `vis(…)` is a static method there.
+- **The bridge** (`src/java/compose.ts` writes the generated half, `src/java/Kata.java` is the fixed one): the Java
+  objects are mirrored to JavaScript objects by id, so the stage, vis() and the check use the mirrors as they use a
+  JavaScript run's items; each class of the code's gets a JavaScript class of its name (items extend the item
+  class's), with its methods calling back into Java. A check's call into the code converts its arguments as the
+  method's parameters ask (a row of monsters to a `List<Monster>`, a JavaScript function to the interface the
+  parameter names: `BiConsumer`, `Comparator`, one of the code's own), and writes back what the call did to them; an
+  item the check passed comes back as the same object. Private fields aren't mirrored, as `#private` ones aren't in
+  JavaScript.
+- **Errors**: a compile error names its line in the class or the code (all of javac's errors are listed); a call to a
+  method the task asks for and the code hasn't written yet gets «Fant ikke metoden …» as its verdict. An exception
+  comes back with its class, message and line; a trap (`NullPointerException`, an index out of bounds, a stack
+  overflow) is named as Java names it and placed with TeaVM's deobfuscator. A loop that never ends is stopped after
+  10 seconds, as in JavaScript.
+- **A check** runs the same either way. `t.lang` says which: a check that watches how the code works (a getter that
+  counts reads, a ban on `Array.prototype.sort`, a `Proxy`) can only do so in JavaScript, and verifies the result in
+  Java.
+
+### Changing language
+
+«Bytt språk» is the switch by «Kode». The code is the visitor's in each language. When they switch after writing
+code of their own (not the opening, not unchanged since it was last translated), the page asks `POST /api/translate`
+(`worker/translate.ts`) with the task id, the two languages, the code and the class. The Worker puts the frame the
+code fits into in the target language from the bank (the roots and their types, the class, the skeleton behind
+hint 1) and asks Claude Haiku 5.5 at low effort for the code, as structured output. Nothing proves the visitor solved
+the task, so the prompt never has a solution; the code goes in `<visitor_code>` with our tags defused, as in the
+fixed questions. 60 translations per address per day and $0.50 a day for all of them (`TalkBudget`, key
+`translate`). The answer lands as an edit; a translation that comes after the visitor started typing is dropped.
+Which code each language's code was made from is kept per browser (`code-kata:translated`), so going back and forth
+without a change translates nothing.
+
+### Licences
+
+The compiler's files are served as the package ships them. javac is OpenJDK's, GPLv2 with the Classpath Exception;
+TeaVM and teavm-javac are Apache-2.0. The package's notices, with the pointers to the corresponding source, are
+served at `/licenses/java-wasm.md` (a copy of its `THIRD-PARTY-NOTICES.md`; its own licence beside it), linked from the
+console line that says the compiler is being fetched. Update the copies with the package.
+
 ## Progress on the account
 
 The page works from localStorage, signed in or not. A visitor signed in at auth.phareim.no (the `session_token`
@@ -194,6 +259,8 @@ as it stands; the answers stay in the page per task until it reloads, and «Ny s
   Claude is their code, inside `<visitor_code>` with anything that would close or open one of the prompt's tags
   defused, and the system prompt says comments and strings in it are code, not instructions.
 - Claude Haiku 5.5 at effort low (no fallback exists for Haiku), at most 3000 tokens, one turn, nothing kept.
+- In Java (the page sends `lang: 'java'`) the prompt has the task as it reads in Java, its Java class and how Java runs
+  here; still no solution.
 - Nothing proves this visitor solved the task (their progress is in their browser), so this prompt has the task's
   text, hints and class but **not the reference solution**, and Claude is told not to write a whole solution for code
   that doesn't solve the task yet. The button only shows on a solved task, but that is the page's courtesy, not a gate.
@@ -218,6 +285,9 @@ en elegant eller en krøkkete løsning?») and streams the answer; after that th
   the gate that keeps it from giving answers away); the page sends its progress up first.
 - The conversation is kept on the account (`c:<task id>` in `ProgressStore`), append-only with Claude's whole
   answers, and shown again when the sheet reopens. The code goes along only when it changed since Claude saw it.
+- In Java the system prompt stays as it is (so the cached prefix and the kept turns do too): the first message about
+  Java code carries how Java runs here and the task's Java class, and, once the account has solved the task in Java
+  (`java.solved`), the Java solution. The conversation remembers what it was told (`java: 'context' | 'solution'`).
 - Limits: 20 answers per account per day, 24 messages per conversation, and $2 a day for the whole site
   (`TalkBudget`, counted from each answer's usage at Opus 5 prices, the dearest a fallback can land on). The numbers
   are at the top of `worker/talk.ts`.
@@ -236,7 +306,12 @@ A task is an object in one of the topic files in `src/tasks/` (`types.ts` has th
   number takes a `COLOR_` class and builds its items with `colored` instead of `things`; `npm test` checks that the
   class and the items agree on `value`.
 - `scaffold`: a skeleton of the answer, behind hint 1's button, and `solution` (and `solutionMonster` when the task is
-  about the class). The editor opens with less (`src/tasks/opening.ts`): a comment that names the roots, and, for a
+  about the class).
+- `java`: the task in Java (`JavaTask`): `scaffold`, `solution`, and when needed `opening`, `monster`,
+  `solutionMonster`, `prelude` (types the task gives the code, such as a record a method returns), `roots` (a root's
+  type the start doesn't tell), and the text and hints as they read in Java: `code` maps a span in backticks to its
+  Java (`'while (node)': 'while (node != null)'`), `text` and `hints` replace them whole. Methods at column 0 without
+  `static`, the closing `}` at column 0, then `void main()` with what runs them; four-space indent. The editor opens with less (`src/tasks/opening.ts`): a comment that names the roots, and, for a
   task with `exports`, the scaffold without their declarations (a declaration runs from `function name` or
   `class Name` at column 0 to a `}` at column 0); a class task keeps its whole scaffold. `opening` overrides the code
   under the comment when the rest of the scaffold is part of the answer too.
@@ -246,7 +321,9 @@ A task is an object in one of the topic files in `src/tasks/` (`types.ts` has th
 - `views`: a view for a root its shape doesn't give away, such as `{ nodes: 'graph' }`.
 
 `npm test` runs every task through the real worker in Node: its solution must pass on three seeds, its opening and its
-scaffold must not, and the check must not break. Code that calls an export it never declared gets «Fant ikke
+scaffold must not, and the check must not break. The same for every task in Java (`test/java-<topic>.test.ts`),
+through the real compiler; what it compiled is kept in `node_modules/.cache/kata-java`, so only changed code compiles
+again (a cold cache takes several minutes). Code that calls an export it never declared gets «Fant ikke
 funksjonen …» as its verdict, beside the error. It also keeps the table in `docs/tasks.md` in step with the bank
 (`UPDATE_DOCS=1 npx vitest run test/docs.test.ts` rewrites it). `scripts/smoke-tasks.mjs` then solves every task in
 the built site in Chrome and WebKit, which also covers the checks as minified source.
@@ -264,15 +341,24 @@ the built site in Chrome and WebKit, which also covers the checks as minified so
 - `src/world/world.ts`: the items' data, the palette, letters, random sets, walking a list, what the roots reach.
 - `src/world/objects.ts`: the objects pane.
 - `src/editor/`: the CodeMirror setup, completion sources and the theme.
-- `src/run/runner.ts`: starts, stops and times out the worker.
+- `src/run/runner.ts`: starts, stops and times out the worker; in Java, compiles first (`src/java/run.ts`, loaded the
+  first time a visitor runs Java).
+- `src/java/`: Java: `compose.ts` (the source and the generated bridge), `Kata.java` (the fixed bridge), `parse.ts`
+  (declarations, with Lezer), `compiler.ts` and `compile-worker.js` (the compiler), `diagnostics.ts` (javac's errors
+  on their lines), `runtime.ts` (TeaVM's loader for the workers).
+- `src/tasks/java.ts`, `src/tasks/lang.ts`: a task in Java (its class, roots, opening, text), and a task in a language.
 - `src/run/worker.js`: the worker: console capture, value formatting, timers, error lines, the items in and out,
   `vis()`, the check.
 - `src/starter.ts`: the playground's code and class (and the earlier starters it replaces).
-- `worker/index.ts`: the Worker behind `/api/progress` and `/api/talk`, the account's store (`ProgressStore`) and
+- `worker/translate.ts`: the translations for the language switch.
+- `worker/index.ts`: the Worker behind `/api/progress`, `/api/talk` and `/api/translate`, the account's store (`ProgressStore`) and
   the talks' daily budget (`TalkBudget`, the fixed questions' per-address count too); `worker/talk.ts`: the prompts,
   the limits and the calls to Claude (Opus for a conversation, Haiku for a fixed question).
 - `src/app/talk.ts`: the «Snakk om det» sheet and the fixed `QUESTIONS`; `src/app/text.ts` renders task texts and
   Claude's replies.
+- `test/java.ts`: Java for the tests (the compiler in Node, its cache, a run through the worker); `test/java.test.ts` the
+  bridge, `test/java-tasks.ts` and `test/java-<topic>.test.ts` every task in Java, `test/translate.test.ts` the
+  translations.
 - `test/harness.ts`: runs `worker.js` in a Node vm the way the page runs it; `test/tasks.test.ts` uses it for every
   task, `test/docs.test.ts` keeps `docs/tasks.md` current, `test/sync.test.ts` covers the merge,
   the Worker and the page's sync, `test/talk.test.ts` the talk (with a fake Messages API).

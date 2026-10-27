@@ -14,7 +14,9 @@ export interface Method {
   params: Param[]
   isStatic: boolean
   isPrivate: boolean
-  /** The method's own type parameters, each with its bound: what a cast to one says. */
+  /** No body: an interface's abstract method, which a function from the check can stand in for. */
+  isAbstract: boolean
+  /** The method's own type parameters and its class's, each with its bound: what a cast to one says. */
   typeVars: Map<string, string>
 }
 export interface Field { name: string; type: string; isStatic: boolean; isPrivate: boolean; isFinal: boolean }
@@ -31,6 +33,8 @@ export interface JClass {
   components: Param[]
   methods: Method[]
   ctors: Param[][]
+  /** Its type parameters (class Box<T>), each with its bound. */
+  typeVars: Map<string, string>
   /** Where its closing brace is in the source it was read from; -1 when the body doesn't close. */
   close: number
 }
@@ -93,6 +97,7 @@ function readClass(src: string, n: SyntaxNode, member: boolean): JClass {
   const kind = n.name === 'RecordDeclaration' ? 'record' : n.name === 'EnumDeclaration' ? 'enum'
     : n.name === 'InterfaceDeclaration' ? 'interface' : 'class'
   const mods = modifiers(src, n)
+  const vars = typeVars(src, n)
   const sup = child(n, 'Superclass')
   const body = child(n, 'ClassBody') ?? child(n, 'RecordBody') ?? child(n, 'EnumBody') ?? child(n, 'InterfaceBody')
   const inner = body ? readMembers(src, body, false) : { classes: [], methods: [], fields: [] }
@@ -127,8 +132,9 @@ function readClass(src: string, n: SyntaxNode, member: boolean): JClass {
     extendsName: sup ? text(src, sup).replace(/^extends\s+/, '').replace(/<.*$/s, '').trim() : null,
     fields: inner.fields,
     components,
-    methods: inner.methods,
+    methods: inner.methods.map((m) => ({ ...m, typeVars: new Map([...vars, ...m.typeVars]) })),
     ctors,
+    typeVars: vars,
     close: body && src[body.to - 1] === '}' ? body.to - 1 : -1,
   }
 }
@@ -158,6 +164,7 @@ function readMembers(src: string, body: SyntaxNode, member: boolean): Members {
         params: params(src, child(c, 'FormalParameters')),
         isStatic: /\bstatic\b/.test(mods),
         isPrivate: /\bprivate\b/.test(mods),
+        isAbstract: !c.getChild('Block') && !/\b(default|static)\b/.test(mods),
         typeVars: typeVars(src, c),
       })
     }

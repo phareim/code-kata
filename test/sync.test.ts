@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanTask, mergeTask } from '../src/app/merge'
+import { cleanTask, mergeTask, sameTask } from '../src/app/merge'
 import type { TaskState } from '../src/app/progress'
 import worker, { sessionToken } from '../worker/index'
 import { fakeEnv } from './fake-env'
@@ -40,6 +40,17 @@ describe('mergeTask', () => {
     expect(mergeTask(takenBack, up)).toEqual(takenBack)
     expect(mergeTask(up, { hints: 1 })).toEqual({ ...up, hints: 1 })
   })
+
+  it('merges the task in Java on its own: its first solve, its code and class by its own time', () => {
+    const js = { code: 'let a', at: '2026-10-27T09:00:00.000Z' }
+    const older = { java: { code: 'int a;', at: '2026-10-27T08:00:00.000Z', solved: '2026-10-27T08:30:00.000Z' } }
+    const newer = { java: { code: 'int b;', at: '2026-10-27T10:00:00.000Z' } }
+    expect(mergeTask({ ...js, ...older }, newer)).toEqual({ ...js, java: { code: 'int b;', at: '2026-10-27T10:00:00.000Z', solved: '2026-10-27T08:30:00.000Z' } })
+    expect(mergeTask(newer, older)).toEqual({ java: { code: 'int b;', at: '2026-10-27T10:00:00.000Z', solved: '2026-10-27T08:30:00.000Z' } })
+    expect(mergeTask(js, { hints: 1 })).toEqual({ ...js, hints: 1 })
+    expect(sameTask(older, { java: { ...older.java } })).toBe(true)
+    expect(sameTask(older, newer)).toBe(false)
+  })
 })
 
 describe('cleanTask', () => {
@@ -50,6 +61,10 @@ describe('cleanTask', () => {
     expect(cleanTask({ vote: 'up', votedAt: '2026-10-23T00:00:00.000Z' })).toEqual({ vote: 'up', votedAt: '2026-10-23T00:00:00.000Z' })
     expect(cleanTask({ vote: 'meh', votedAt: 'never' })).toEqual({})
     expect(cleanTask({ code: 'x'.repeat(70_000), at: '2026-10-23T00:00:00.000Z' })).toBeNull()
+    expect(cleanTask({ java: { code: 'int a;', ting: 'class Monster {}', solved: '2026-10-27T00:00:00.000Z', evil: 1 } }))
+      .toEqual({ java: { code: 'int a;', ting: 'class Monster {}', solved: '2026-10-27T00:00:00.000Z' } })
+    expect(cleanTask({ java: { code: 3, solved: 'never' } })).toEqual({})
+    expect(cleanTask({ java: { code: 'x'.repeat(70_000) } })).toBeNull()
     expect(cleanTask([1])).toBeNull()
     expect(cleanTask('x')).toBeNull()
   })

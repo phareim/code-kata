@@ -26,6 +26,16 @@ export interface TaskState {
   vote?: Vote
   /** When the vote last changed, taken back included (ISO time): the newer vote wins when two browsers meet. */
   votedAt?: string
+  /** The task in Java: its own code and class, and when it was first solved in Java. `solved` above is any language. */
+  java?: LangState
+}
+
+/** A task in a language other than JavaScript (whose fields are the task state's own, from before there were more). */
+export interface LangState {
+  code?: string
+  ting?: string
+  at?: string
+  solved?: string
 }
 
 export type Vote = 'up' | 'down'
@@ -60,6 +70,13 @@ export function updateTask(id: string, patch: Partial<TaskState>, urgent = false
   for (const key of Object.keys(next) as (keyof TaskState)[]) if (next[key] === undefined) delete next[key]
   if (next.code !== before.code || next.ting !== before.ting) next.at = new Date().toISOString()
   if (next.vote !== before.vote) next.votedAt = new Date().toISOString()
+  if (next.java) {
+    const java: LangState = { ...next.java }
+    for (const key of Object.keys(java) as (keyof LangState)[]) if (java[key] === undefined) delete java[key]
+    if (java.code !== before.java?.code || java.ting !== before.java?.ting) java.at = new Date().toISOString()
+    if (Object.keys(java).length) next.java = java
+    else delete next.java
+  }
   if (sameTask(before, next)) return
   states[id] = next
   save()
@@ -70,11 +87,30 @@ export function isSolved(id: string): boolean {
   return !!states[id]?.solved
 }
 
-/** Marks a task solved; true the first time. */
-export function markSolved(id: string): boolean {
+/** Marks a task solved, in a language; true the first time in that language. */
+export function markSolved(id: string, lang: 'js' | 'java' = 'js'): boolean {
+  const now = new Date().toISOString()
+  const state = taskState(id)
+  if (lang === 'java') {
+    if (state.java?.solved) return false
+    updateTask(id, { solved: state.solved ?? now, java: { ...state.java, solved: now } }, true)
+    return true
+  }
   if (isSolved(id)) return false
-  updateTask(id, { solved: new Date().toISOString() }, true)
+  updateTask(id, { solved: now }, true)
   return true
+}
+
+/** The code and class saved for a task in a language (undefined: the opening, the task's class). */
+export function savedIn(id: string, lang: 'js' | 'java'): { code?: string; ting?: string } {
+  const state = taskState(id)
+  return lang === 'java' ? { code: state.java?.code, ting: state.java?.ting } : { code: state.code, ting: state.ting }
+}
+
+/** Saves a task's code and class in a language. */
+export function saveIn(id: string, lang: 'js' | 'java', code: string | undefined, ting: string | undefined): void {
+  if (lang === 'js') updateTask(id, { code, ting })
+  else updateTask(id, { java: { ...taskState(id).java, code, ting } })
 }
 
 export function lastTask(): string | null {

@@ -539,7 +539,7 @@ function placeJava(line, lines) {
  * class of the same name (one that extends the item class extends its mirror), with its methods calling back into
  * Java, so a check can call them on an item.
  */
-function javaBridge(meta, slots, call) {
+function javaBridge(meta, slots, call, recording) {
   const byId = []
   const ids = new Map()
   const classes = new Map()
@@ -571,6 +571,9 @@ function javaBridge(meta, slots, call) {
     byId[id] = v
   }
   let thrown = null
+  // An error a function of the check's threw while Java called it: thrown again, itself, once Java is out.
+  const NONE = {}
+  let jsError = NONE
   const api = {
     root: (name) => self[name],
     setRoot: (name, v) => { self[name] = v },
@@ -597,9 +600,35 @@ function javaBridge(meta, slots, call) {
       else if (v instanceof Map || v instanceof Set) v.clear()
       else for (const k of Object.keys(v)) delete v[k]
     },
+    // A field, unless it holds the value already (a frozen monster of the check's, a getter, are left alone then).
+    put: (o, k, v) => {
+      const d = Object.getOwnPropertyDescriptor(o, k)
+      if (d && ('value' in d ? Object.is(d.value, v) : !d.set)) return
+      o[k] = v
+    },
+    fill: (a, values) => {
+      if (a.length === values.length && values.every((v, i) => Object.is(a[i], v))) return
+      a.length = 0
+      a.push(...values)
+    },
     vis: (args) => self.vis(...args),
+    recording: () => recording(),
     show: (v) => format(v, 0, new Set()),
     thrown: (cls, message, line) => { thrown = { cls, message, line } },
+    apply: (f, args) => {
+      try {
+        return f(...args)
+      } catch (err) {
+        jsError = err
+        return undefined
+      }
+    },
+    threw: () => jsError !== NONE,
+    takeError: () => {
+      const err = jsError
+      jsError = NONE
+      return err === NONE ? undefined : { err }
+    },
     take: () => {
       const t = thrown
       thrown = null
@@ -894,19 +923,31 @@ function start() {
       } catch (err) {
         throw trap(err)
       }
+      const own = bridge.api.takeError()
+      if (own) throw own.err
       const thrown = bridge.api.take()
       if (thrown) throw javaError(thrown)
       return result
     }
 
     const objs = []
-    const bridge = javaBridge(java.meta, objs, call)
+    // Whether vis() still takes frames: not after the run, and past the cap it only counts (as vis() itself does).
+    const recording = () => {
+      if (finished) return false
+      if (frames.length < MAX_FRAMES) return true
+      dropped++
+      return false
+    }
+    const bridge = javaBridge(java.meta, objs, call, recording)
     if (msg.world) {
+      // Each item gets the fields its class has in Java; the class has dropped any other since the last run.
       const Item = bridge.classes.get(java.meta.itemClass)
+      const fields = new Map(java.meta.classes.map((c) => [c.name, new Set(c.fields)]))
       objs.push(...msg.world.items.map((item) => new (bridge.classes.get(item.cls) ?? Item)()))
       const decode = decoder(objs)
       msg.world.items.forEach((item, i) => {
-        for (const p of item.props) objs[i][p.key] = decode(p)
+        const kept = fields.get(item.cls) ?? fields.get(java.meta.itemClass)
+        for (const p of item.props) if (!kept || kept.has(p.key)) objs[i][p.key] = decode(p)
       })
       const roots = (msg.world.roots ?? []).map((p) => [p.key, decode(p)])
       world = {

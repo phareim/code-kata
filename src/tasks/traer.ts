@@ -72,6 +72,28 @@ console.log(height(root))
 console.log(height(root))
 `,
     exports: ['height'],
+    java: {
+      code: { 'function height(node)': 'int height(Monster node)', 'if (!node) return 0': 'if (node == null) return 0' },
+      scaffold: `int height(Monster node) {
+    if (node == null) return 0;
+    // Hvor høye er de to trærne under node?
+    return 1;
+}
+
+void main() {
+    IO.println(height(root));
+}
+`,
+      solution: `int height(Monster node) {
+    if (node == null) return 0;
+    return 1 + Math.max(height(node.left), height(node.right));
+}
+
+void main() {
+    IO.println(height(root));
+}
+`,
+    },
     check: (t) => {
       const height = t.fn('height')
       const cases: [unknown, number][] = [
@@ -119,6 +141,35 @@ mirror(root)
 
 mirror(root)
 `,
+    java: {
+      hints: [
+        'Lag en metode `void mirror(Monster node)` som gjør jobben for ett tre, og kall den på `root` i `main`.',
+        'For ett monster: bytt `node.left` og `node.right` (husk den ene i en variabel først, `Monster old = node.left`), og speil så begge barna.',
+        'Stopp når `node` er `null`.',
+      ],
+      scaffold: `void mirror(Monster node) {
+    if (node == null) return;
+    // Bytt left og right, og speil barna
+}
+
+void main() {
+    mirror(root);
+}
+`,
+      solution: `void mirror(Monster node) {
+    if (node == null) return;
+    Monster old = node.left;
+    node.left = node.right;
+    node.right = old;
+    mirror(node.left);
+    mirror(node.right);
+}
+
+void main() {
+    mirror(root);
+}
+`,
+    },
     check: (t) => {
       if (t.root !== t.live(t.start.root)) return '`root` skal fortsatt peke på det samme monsteret.'
       const stack = [t.start.root]
@@ -181,6 +232,50 @@ function total(node) {
 console.log(size(root), total(root))
 `,
     exports: ['size', 'total'],
+    java: {
+      text: `Monstrene står i et tre som starter i \`root\`. Hvert monster har \`left\` og \`right\`, som peker på et nytt monster eller er \`null\`.
+
+Skriv to metoder. \`int size(Monster node)\` gir tilbake hvor mange monstre det er i treet under \`node\`, og \`node\` selv teller med. \`int total(Monster node)\` gir summen av alle \`value\` i det samme treet.
+
+Begge skal klare et tomt tre: \`null\` gir 0.`,
+      hints: [
+        'Et tre er ett monster og to mindre trær. La metoden spørre de to trærne om svaret deres.',
+        'Stopp først: `if (node == null) return 0`. Ellers er svaret 1 pluss `size(node.left)` pluss `size(node.right)`.',
+        '`total` er bygd likt, men i stedet for 1 legger du til `node.value`.',
+      ],
+      scaffold: `int size(Monster node) {
+    if (node == null) return 0;
+    // Hvor mange er det i treet til venstre og i treet til høyre?
+    return 1;
+}
+
+int total(Monster node) {
+    if (node == null) return 0;
+    // Hva er summen av verdiene i de to trærne?
+    return node.value;
+}
+
+void main() {
+    IO.println(size(root) + " " + total(root));
+}
+`,
+      solution: `int size(Monster node) {
+    if (node == null) return 0;
+    vis(node);
+    return 1 + size(node.left) + size(node.right);
+}
+
+int total(Monster node) {
+    if (node == null) return 0;
+    vis(node);
+    return node.value + total(node.left) + total(node.right);
+}
+
+void main() {
+    IO.println(size(root) + " " + total(root));
+}
+`,
+    },
     check: (t) => {
       const size = t.fn('size')
       const total = t.fn('total')
@@ -238,6 +333,37 @@ paint(root)
 
 paint(root)
 `,
+    java: {
+      code: { "color = 'gold'": 'color = "gold"' },
+      hints: [
+        'Lag en metode som kaller seg selv på `node.left` og `node.right`, og start den på `root` i `main`.',
+        'Stopp når `node` er `null`. Ellers: mangler både `node.left` og `node.right`, er `node` et blad.',
+        'Mal bladet med `node.color = "gold"`, og besøk begge sider etterpå. For et blad er de `null`, så det stopper av seg selv.',
+      ],
+      scaffold: `void paint(Monster node) {
+    if (node == null) return;
+    // Er node et blad? Mal det gull. Besøk så begge sider.
+}
+
+void main() {
+    paint(root);
+}
+`,
+      solution: `void paint(Monster node) {
+    if (node == null) return;
+    if (node.left == null && node.right == null) {
+        node.color = "gold";
+        vis(node);
+    }
+    paint(node.left);
+    paint(node.right);
+}
+
+void main() {
+    paint(root);
+}
+`,
+    },
     check: (t) => {
       if (t.root !== t.live(t.start.root)) return '`root` skal fortsatt peke på det samme monsteret.'
       for (let i = 0; i < t.slots.length; i++) {
@@ -289,6 +415,41 @@ console.log(inOrder(root))
 console.log(inOrder(root))
 `,
     exports: ['inOrder'],
+    java: {
+      text: `Monstrene står i et tre fra \`root\`. Skriv \`List<Integer> inOrder(Monster node)\` som gir tilbake alle \`value\` i treet under \`node\` som en liste, i denne rekkefølgen: først alt i venstre tre, så \`node\` selv, så alt i høyre tre.
+
+Et tomt tre (\`null\`) gir en tom liste.
+
+Treet på scenen er et søketre: alt til venstre for et monster er mindre enn det, og alt til høyre er større. Se hvilken rekkefølge du får: på et søketre kommer verdiene i stigende rekkefølge!`,
+      hints: [
+        'Tenk på tre trinn for hvert monster: venstre tre, så monsteret selv, så høyre tre. Hva gir en tom plass?',
+        'Et tomt tre gir en ny, tom liste: `new ArrayList<>()`. Ellers kaller du `inOrder(node.left)`, tar med `node.value` og kaller `inOrder(node.right)`.',
+        'Bygg videre på lista fra venstre tre: `List<Integer> values = inOrder(node.left)`, så `values.add(node.value)` og til slutt `values.addAll(inOrder(node.right))`.',
+      ],
+      scaffold: `List<Integer> inOrder(Monster node) {
+    if (node == null) return new ArrayList<>();
+    // Venstre tre, så node.value, så høyre tre
+    return List.of(node.value);
+}
+
+void main() {
+    IO.println(inOrder(root));
+}
+`,
+      solution: `List<Integer> inOrder(Monster node) {
+    if (node == null) return new ArrayList<>();
+    List<Integer> values = inOrder(node.left);
+    vis(node);
+    values.add(node.value);
+    values.addAll(inOrder(node.right));
+    return values;
+}
+
+void main() {
+    IO.println(inOrder(root));
+}
+`,
+    },
     check: (t) => {
       const inOrder = t.fn('inOrder')
       const want = (n: any): any[] => (n ? [...want(n.left), n.value, ...want(n.right)] : [])
@@ -362,6 +523,51 @@ console.log(walks(root))
 console.log(walks(root))
 `,
     exports: ['walks'],
+    java: {
+      prelude: 'record Walks(List<Integer> pre, List<Integer> post) {}',
+      text: `Et tre kan gås gjennom på flere måter. Skriv \`Walks walks(Monster node)\` som gir tilbake to lister, \`pre\` og \`post\`, med \`value\` fra alle monstrene i treet under \`node\`. De to listene samles i \`record Walks(List<Integer> pre, List<Integer> post)\`, som finnes allerede: \`new Walks(pre, post)\`.
+
+I \`pre\` kommer hvert monster før barna sine: monsteret selv, så venstre tre, så høyre tre. I \`post\` kommer det etter barna: venstre tre, høyre tre, så monsteret selv.
+
+Et tomt tre (\`null\`) gir to tomme lister.`,
+      hints: [
+        'Du kan fylle begge listene i samme gjennomgang. Lag `pre` og `post` i `walks`, og send dem med til en hjelpemetode `visit(node, pre, post)` som besøker treet.',
+        'I hjelpemetoden: `pre.add(node.value)` før de to kallene på `node.left` og `node.right`, og `post.add(node.value)` etter dem.',
+        'Hjelpemetoden stopper på `null`. Til slutt gir `walks` tilbake `new Walks(pre, post)`.',
+      ],
+      scaffold: `Walks walks(Monster node) {
+    List<Integer> pre = new ArrayList<>();
+    List<Integer> post = new ArrayList<>();
+    // Gå gjennom treet. Legg verdien i pre før barna, og i post etter dem.
+    return new Walks(pre, post);
+}
+
+void main() {
+    IO.println(walks(root));
+}
+`,
+      solution: `Walks walks(Monster node) {
+    List<Integer> pre = new ArrayList<>();
+    List<Integer> post = new ArrayList<>();
+    visit(node, pre, post);
+    return new Walks(pre, post);
+}
+
+void visit(Monster node, List<Integer> pre, List<Integer> post) {
+    if (node == null) return;
+    pre.add(node.value);
+    vis("før", node);
+    visit(node.left, pre, post);
+    visit(node.right, pre, post);
+    post.add(node.value);
+    vis("etter", node);
+}
+
+void main() {
+    IO.println(walks(root));
+}
+`,
+    },
     check: (t) => {
       const walks = t.fn('walks')
       const pre = (n: any): any[] => (n ? [n.value, ...pre(n.left), ...pre(n.right)] : [])
@@ -443,6 +649,55 @@ console.log(levels(root))
 console.log(levels(root))
 `,
     exports: ['levels'],
+    java: {
+      text: `Monstrene i treet står på nivåer: \`root\` øverst, barna under den, barnebarna under dem, og så videre. Skriv \`List<List<Integer>> levels(Monster root)\` som gir tilbake en liste med én liste per nivå, det øverste først. Hver av dem har \`value\` fra monstrene på nivået, fra venstre mot høyre.
+
+Et tomt tre (\`null\`) gir en tom liste.
+
+Bruk en kø, \`Queue<Monster> queue = new ArrayDeque<>()\`: ta et monster ut foran med \`queue.poll()\`, og still barna bakerst med \`queue.add(…)\`.`,
+      hints: [
+        'Start med en kø som har `root` i seg (eller er tom). Så lenge køen ikke er tom (`!queue.isEmpty()`), tar du ut et monster og stiller barna bakerst.',
+        'For å vite hvor et nivå slutter: før hver runde står bare monstre fra ett nivå i køen. Ta ut akkurat `queue.size()` monstre (tell før du begynner), og legg verdiene i en egen liste.',
+        'Legg den ferdige lista i svaret etter hver runde. `left` og `right` kan være `null`: still bare ekte monstre i køen. En `ArrayDeque` tar ikke imot `null`.',
+      ],
+      scaffold: `List<List<Integer>> levels(Monster root) {
+    List<List<Integer>> result = new ArrayList<>();
+    Queue<Monster> queue = new ArrayDeque<>();
+    if (root != null) queue.add(root);
+    while (!queue.isEmpty()) {
+        // Ta ut hele nivået som står i køen, og still barna bakerst
+        break;
+    }
+    return result;
+}
+
+void main() {
+    IO.println(levels(root));
+}
+`,
+      solution: `List<List<Integer>> levels(Monster root) {
+    List<List<Integer>> result = new ArrayList<>();
+    Queue<Monster> queue = new ArrayDeque<>();
+    if (root != null) queue.add(root);
+    while (!queue.isEmpty()) {
+        List<Integer> row = new ArrayList<>();
+        for (int n = queue.size(); n > 0; n--) {
+            Monster node = queue.poll();
+            row.add(node.value);
+            vis(node);
+            if (node.left != null) queue.add(node.left);
+            if (node.right != null) queue.add(node.right);
+        }
+        result.add(row);
+    }
+    return result;
+}
+
+void main() {
+    IO.println(levels(root));
+}
+`,
+    },
     check: (t) => {
       const levels = t.fn('levels')
       const want = (tree: any): any[][] => {
@@ -514,6 +769,35 @@ console.log(find(root, G.value) === G)
 console.log(find(root, G.value) === G)
 `,
     exports: ['find'],
+    java: {
+      code: { 'if (!node) return null': 'if (node == null) return null' },
+      text: `Monstrene står i et søketre fra \`root\`: alt til venstre for et monster har mindre \`value\`, alt til høyre har større. Det gjør det raskt å lete.
+
+Skriv \`Monster find(Monster node, int value)\` som gir tilbake monsteret i treet under \`node\` som har akkurat denne \`value\`, eller \`null\` hvis ingen har den. I hvert monster går du bare ett sted videre: til venstre om du leter etter noe mindre, til høyre om det er større.
+
+Et tomt tre (\`null\`) gir \`null\`.`,
+      scaffold: `Monster find(Monster node, int value) {
+    if (node == null) return null;
+    // Er node monsteret du leter etter? Ellers: gå til venstre eller høyre.
+    return null;
+}
+
+void main() {
+    IO.println(find(root, G.value) == G);
+}
+`,
+      solution: `Monster find(Monster node, int value) {
+    if (node == null) return null;
+    vis(node);
+    if (value == node.value) return node;
+    return value < node.value ? find(node.left, value) : find(node.right, value);
+}
+
+void main() {
+    IO.println(find(root, G.value) == G);
+}
+`,
+    },
     check: (t) => {
       const find = t.fn('find')
       const tall = (lo: number, hi: number): unknown => {
@@ -527,9 +811,12 @@ console.log(find(root, G.value) === G)
       collect(tree)
       const byValue = new Map(nodes.map((n) => [n.value, n]))
       let reads = 0
-      for (const n of nodes) {
-        const v = n.value
-        Object.defineProperty(n, 'value', { get() { reads++; return v }, configurable: true, enumerable: true })
+      // In Java the items are mirrors, converted in and out whole: only JavaScript's reads can be counted.
+      if (t.lang === 'js') {
+        for (const n of nodes) {
+          const v = n.value
+          Object.defineProperty(n, 'value', { get() { reads++; return v }, configurable: true, enumerable: true })
+        }
       }
       const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
       const lookups = [...byValue.keys(), 5, 155, 315, 0, -20]
@@ -603,6 +890,46 @@ const [smallest, biggest] = extremes(root)
 console.log(smallest.value, biggest.value)
 `,
     exports: ['extremes'],
+    java: {
+      code: {
+        'function extremes(root)': 'List<Monster> extremes(Monster root)',
+        '[smallest, biggest]': 'List.of(smallest, biggest)',
+        'if (!root) return null': 'if (root == null) return null',
+      },
+      scaffold: `List<Monster> extremes(Monster root) {
+    if (root == null) return null;
+    Monster smallest = root;
+    Monster biggest = root;
+    // Gå til venstre så langt det går, og til høyre så langt det går
+    return List.of(smallest, biggest);
+}
+
+void main() {
+    List<Monster> ends = extremes(root);
+    IO.println(ends.get(0).value + " " + ends.get(1).value);
+}
+`,
+      solution: `List<Monster> extremes(Monster root) {
+    if (root == null) return null;
+    Monster smallest = root;
+    while (smallest.left != null) {
+        smallest = smallest.left;
+        vis(smallest);
+    }
+    Monster biggest = root;
+    while (biggest.right != null) {
+        biggest = biggest.right;
+        vis(biggest);
+    }
+    return List.of(smallest, biggest);
+}
+
+void main() {
+    List<Monster> ends = extremes(root);
+    IO.println(ends.get(0).value + " " + ends.get(1).value);
+}
+`,
+    },
     check: (t) => {
       const extremes = t.fn('extremes')
       const tall = (lo: number, hi: number): unknown => {
@@ -636,7 +963,10 @@ console.log(smallest.value, biggest.value)
         while (lo.left) lo = lo.left
         let hi = model
         while (hi.right) hi = hi.right
-        if (tree === model) watch(tree)
+        // In Java the items are mirrors, converted in and out whole: only JavaScript's reads can be counted.
+        if (t.lang === 'js') {
+          if (tree === model) watch(tree)
+        }
         reads = 0
         const got = extremes(tree)
         if (!Array.isArray(got) || got.length !== 2) return `extremes skal gi en array [smallest, biggest], men gav ${t.show(got)}.`
@@ -697,6 +1027,39 @@ while (true) {
 }
 vis(guest)
 `,
+    java: {
+      code: { 'let node = root': 'Monster node = root' },
+      scaffold: `void main() {
+    Monster node = root;
+    while (true) {
+        // Skal guest til venstre eller høyre for node?
+        // Er plassen ledig, heng guest der. Ellers: gå videre.
+        break;
+    }
+}
+`,
+      solution: `void main() {
+    Monster node = root;
+    while (true) {
+        vis(node, guest);
+        if (guest.value < node.value) {
+            if (node.left == null) {
+                node.left = guest;
+                break;
+            }
+            node = node.left;
+        } else {
+            if (node.right == null) {
+                node.right = guest;
+                break;
+            }
+            node = node.right;
+        }
+    }
+    vis(guest);
+}
+`,
+    },
     check: (t) => {
       const guest = t.live(t.start.guest)!
       const value = guest.value
@@ -784,6 +1147,41 @@ console.log(isSearchTree(root))
 console.log(isSearchTree(root))
 `,
     exports: ['isSearchTree'],
+    java: {
+      code: { 'function isSearchTree(node)': 'boolean isSearchTree(Monster node)' },
+      hints: [
+        'Det holder ikke å sjekke at `node.left.value < node.value` og `node.right.value > node.value`. Et monster langt nede kan bryte regelen mot en forelder høyere opp.',
+        'Gi metoden to grenser i en utgave med tre parametere, `boolean isSearchTree(Monster node, long min, long max)`: `node.value` må ligge mellom `min` og `max`. Den første kaller den med `Long.MIN_VALUE` og `Long.MAX_VALUE`.',
+        'Går du til venstre, blir `max` til `node.value`. Går du til høyre, blir `min` til `node.value`. Ligger verdien utenfor grensene, er svaret `false`.',
+      ],
+      scaffold: `boolean isSearchTree(Monster node) {
+    // Er alt til venstre mindre, og alt til høyre større?
+    return true;
+}
+
+void main() {
+    IO.println(isSearchTree(root));
+}
+`,
+      solution: `boolean isSearchTree(Monster node) {
+    return isSearchTree(node, Long.MIN_VALUE, Long.MAX_VALUE);
+}
+
+boolean isSearchTree(Monster node, long min, long max) {
+    if (node == null) return true;
+    if (node.value <= min || node.value >= max) {
+        vis("feil her", node);
+        return false;
+    }
+    vis(node);
+    return isSearchTree(node.left, min, node.value) && isSearchTree(node.right, node.value, max);
+}
+
+void main() {
+    IO.println(isSearchTree(root));
+}
+`,
+    },
     check: (t) => {
       const isSearchTree = t.fn('isSearchTree')
       const inOrder = (n: any): any[] => (n ? [...inOrder(n.left), n.value, ...inOrder(n.right)] : [])
@@ -885,6 +1283,40 @@ const top = lca(root, a, b)
 console.log(top.value)
 `,
     exports: ['lca'],
+    java: {
+      code: { 'function lca(root, a, b)': 'Monster lca(Monster root, Monster a, Monster b)' },
+      hints: [
+        'Spør de to trærne under `root`: ligger `a` eller `b` til venstre? Til høyre?',
+        'La metoden gi tilbake `root` hvis `root` er `a` eller `b` (`root == a || root == b`), og `null` hvis `root` er `null`. Kall den så på `root.left` og `root.right`.',
+        'Gir begge sider et svar (ikke `null`), ligger `a` og `b` på hver sin side, og `root` er den felles forfaren. Ellers er svaret det ene sidesvaret.',
+      ],
+      scaffold: `Monster lca(Monster root, Monster a, Monster b) {
+    if (root == null) return null;
+    // Er root a eller b? Ellers: spør treet til venstre og treet til høyre.
+    return root;
+}
+
+void main() {
+    Monster top = lca(root, a, b);
+    IO.println(top.value);
+}
+`,
+      solution: `Monster lca(Monster root, Monster a, Monster b) {
+    if (root == null) return null;
+    vis(root);
+    if (root == a || root == b) return root;
+    Monster left = lca(root.left, a, b);
+    Monster right = lca(root.right, a, b);
+    if (left != null && right != null) return root;
+    return left != null ? left : right;
+}
+
+void main() {
+    Monster top = lca(root, a, b);
+    IO.println(top.value);
+}
+`,
+    },
     check: (t) => {
       const lca = t.fn('lca')
       const name = (n: any) => (n && typeof n === 'object' && t.slots.indexOf(n) < 0 ? `monsteret med ${n.value}` : t.show(n))
@@ -971,6 +1403,47 @@ console.log(diameter(root))
 console.log(diameter(root))
 `,
     exports: ['diameter'],
+    java: {
+      code: { 'function diameter(root)': 'int diameter(Monster root)' },
+      hints: [
+        'Den lengste veien har et høyeste punkt, monsteret den snur i. Der er veien like lang som de to dypeste sidene under monsteret, lagt sammen.',
+        'Skriv en hjelpemetode som gir høyden på treet under et monster, talt i monstre. Under hvert monster er `left + right` (de to høydene) den lengste veien som snur der.',
+        'Hold et felt `int best` utenfor metodene, sett det til 0 i `diameter`, og oppdater det i hvert monster med `Math.max(best, left + right)`. Svaret er `best`, ikke høyden til roten.',
+      ],
+      scaffold: `int diameter(Monster root) {
+    // Hvor høye er de to sidene under hvert monster? Husk den lengste veien som snur der.
+    return 0;
+}
+
+void main() {
+    IO.println(diameter(root));
+}
+`,
+      solution: `int best;
+
+int diameter(Monster root) {
+    best = 0;
+    depth(root);
+    return best;
+}
+
+// Høyden i antall monstre. Underveis husker vi den lengste veien som snur i hvert monster.
+int depth(Monster node) {
+    if (node == null) return 0;
+    int left = depth(node.left);
+    int right = depth(node.right);
+    if (left + right > best) {
+        best = left + right;
+        vis("lengst så langt: " + best, node);
+    }
+    return 1 + Math.max(left, right);
+}
+
+void main() {
+    IO.println(diameter(root));
+}
+`,
+    },
     check: (t) => {
       const diameter = t.fn('diameter')
       // The right answer the slow way: the farthest pair, by walking out from every item.
@@ -1096,6 +1569,47 @@ gone.left = null
 gone.right = null
 vis('ferdig')
 `,
+    java: {
+      scaffold: `Monster remove(Monster node, Monster target) {
+    if (node == null) return null;
+    // Er node monsteret som skal ut? Ellers: fjern det fra venstre eller høyre tre.
+    return node;
+}
+
+void main() {
+    root = remove(root, gone);
+}
+`,
+      solution: `Monster remove(Monster node, Monster target) {
+    if (node == null) return null;
+    vis(node, target);
+    if (target.value < node.value) {
+        node.left = remove(node.left, target);
+        return node;
+    }
+    if (target.value > node.value) {
+        node.right = remove(node.right, target);
+        return node;
+    }
+    // Her er node = target
+    if (node.left == null) return node.right;
+    if (node.right == null) return node.left;
+    // To barn: det neste større står lengst til venstre i høyre tre
+    Monster next = node.right;
+    while (next.left != null) next = next.left;
+    next.right = remove(node.right, next);
+    next.left = node.left;
+    return next;
+}
+
+void main() {
+    root = remove(root, gone);
+    gone.left = null;
+    gone.right = null;
+    vis("ferdig");
+}
+`,
+    },
     check: (t) => {
       const gone = t.live(t.start.gone)!
       const order: any[] = []
@@ -1168,6 +1682,38 @@ root = build(0, items.length)
 
 root = build(0, items.length)
 `,
+    java: {
+      code: { 'Math.ceil(Math.log2(n + 1))': 'Math.ceil(Math.log(n + 1) / Math.log(2))' },
+      hints: [
+        'Skriv en metode `Monster build(int from, int to)` som bygger et tre av monstrene fra plass `from` og opp til (men ikke med) plass `to`, og gir tilbake toppen.',
+        'Midten er `(from + to) / 2` (deling med heltall runder ned). Den blir toppen. Venstre tre bygges av plassene før den, høyre tre av plassene etter.',
+        'Er `from >= to`, er det ingen monstre igjen: gi `null`. Til slutt: `root = build(0, items.size())`.',
+      ],
+      scaffold: `Monster build(int from, int to) {
+    if (from >= to) return null;
+    // Ta monsteret midt mellom from og to til topp, og bygg venstre og høyre tre av resten
+    return null;
+}
+
+void main() {
+    root = build(0, items.size());
+}
+`,
+      solution: `Monster build(int from, int to) {
+    if (from >= to) return null;
+    int middle = (from + to) / 2;
+    Monster node = items.get(middle);
+    vis(node);
+    node.left = build(from, middle);
+    node.right = build(middle + 1, to);
+    return node;
+}
+
+void main() {
+    root = build(0, items.size());
+}
+`,
+    },
     check: (t) => {
       const want = t.before('items')
       const order: any[] = []
@@ -1263,6 +1809,39 @@ root = build(0, 0, pre.length)
 
 root = build(0, 0, pre.length)
 `,
+    java: {
+      hints: [
+        'Det første i `pre` er roten. Finn den i `ino` med `ino.indexOf(node)`: alt til venstre for den der er venstre deltre, alt til høyre er høyre deltre.',
+        'Venstre deltre har like mange monstre som det står til venstre for roten i `ino`. De kommer rett etter roten i `pre`, og høyre deltre kommer etter dem.',
+        'Skriv en metode `Monster build(int preStart, int inStart, int size)` som gir tilbake roten for et deltre, og kaller seg selv for venstre og høyre del. Et deltre med størrelse 0 er `null`.',
+      ],
+      scaffold: `Monster build(int preStart, int inStart, int size) {
+    if (size == 0) return null;
+    Monster node = pre.get(preStart);
+    // Hvor står node i ino? Hvor mange monstre er til venstre for det?
+    return node;
+}
+
+void main() {
+    root = build(0, 0, pre.size());
+}
+`,
+      solution: `Monster build(int preStart, int inStart, int size) {
+    if (size == 0) return null;
+    Monster node = pre.get(preStart);
+    int at = ino.indexOf(node);
+    int leftSize = at - inStart;
+    node.left = build(preStart + 1, inStart, leftSize);
+    node.right = build(preStart + 1 + leftSize, at + 1, size - 1 - leftSize);
+    vis(node);
+    return node;
+}
+
+void main() {
+    root = build(0, 0, pre.size());
+}
+`,
+    },
     check: (t) => {
       const pre = t.before('pre')
       const ino = t.before('ino')
@@ -1350,6 +1929,62 @@ console.log(burnTime(root, E))
 console.log(burnTime(root, E))
 `,
     exports: ['burnTime'],
+    java: {
+      code: { 'function burnTime(root, start)': 'int burnTime(Monster root, Monster start)' },
+      hints: [
+        'Gå gjennom treet én gang og husk forelderen til hvert monster i en `Map<Monster, Monster>`.',
+        'Nå er treet en graf der hvert monster har opptil tre naboer: `left`, `right` og forelderen.',
+        'Spre brannen bredden først fra `start`, lag for lag. Antall lag etter det første er svaret. Merk hvem som brenner i et `Set<Monster>`, så ingen tar fyr to ganger.',
+      ],
+      scaffold: `int burnTime(Monster root, Monster start) {
+    // Finn foreldrene, og spre brannen lag for lag
+    return 0;
+}
+
+void main() {
+    IO.println(burnTime(root, E));
+}
+`,
+      solution: `int burnTime(Monster root, Monster start) {
+    Map<Monster, Monster> parent = new HashMap<>();
+    Deque<Monster> stack = new ArrayDeque<>();
+    stack.push(root);
+    while (!stack.isEmpty()) {
+        Monster node = stack.pop();
+        for (Monster child : Arrays.asList(node.left, node.right)) {
+            if (child != null) {
+                parent.put(child, node);
+                stack.push(child);
+            }
+        }
+    }
+    Set<Monster> burning = new HashSet<>();
+    burning.add(start);
+    List<Monster> front = List.of(start);
+    int minutes = 0;
+    while (true) {
+        List<Monster> next = new ArrayList<>();
+        for (Monster node : front) {
+            for (Monster n : Arrays.asList(node.left, node.right, parent.get(node))) {
+                if (n != null && !burning.contains(n)) {
+                    burning.add(n);
+                    next.add(n);
+                }
+            }
+        }
+        if (next.isEmpty()) return minutes;
+        for (Monster n : next) n.color = "red";
+        vis(next.toArray());
+        minutes++;
+        front = next;
+    }
+}
+
+void main() {
+    IO.println(burnTime(root, E));
+}
+`,
+    },
     check: (t) => {
       const burnTime = t.fn('burnTime')
       const reference = (root: any, start: any) => {

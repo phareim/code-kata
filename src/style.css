@@ -285,6 +285,27 @@ body.is-resizing { user-select: none; -webkit-user-select: none; }
   color: var(--hi);
   text-shadow: 2px 2px 0 #000;
 }
+
+/* The language the code is in, by «Kode»: two notched halves, the one in use in cyan (you). */
+.lang-switch { display: inline-flex; gap: 4px; }
+.lang-btn {
+  font-size: 16px;
+  line-height: 1;
+  min-height: 28px;
+  padding: 6px 8px;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 -2px 0 var(--dusk), 0 2px 0 var(--dusk), -2px 0 0 var(--dusk), 2px 0 0 var(--dusk);
+  cursor: pointer;
+}
+.lang-btn:hover:not(:disabled), .lang-btn:focus-visible { outline: none; color: var(--hi); }
+.lang-btn[aria-pressed='true'] { color: var(--bg); background: var(--cyan); box-shadow: none; }
+.lang-btn:disabled { color: var(--dim); cursor: not-allowed; }
+@media (pointer: coarse) {
+  .lang-btn { min-height: 36px; padding: 8px 12px; }
+}
 .spacer { flex: 1; }
 .hint {
   font-size: 16px;

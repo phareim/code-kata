@@ -34,6 +34,32 @@ for (const thing of items) {
 const rest = items.filter((t) => t.color !== 'pink')
 items = [...pink, ...rest]
 `,
+    java: {
+      hints: [
+        'Lag to nye lister: én med de rosa og én med resten, i den rekkefølgen de står.',
+        'Gå gjennom `items` og legg hvert monster i riktig liste: `thing.color.equals("pink")` sier om det er rosa.',
+        'Sett dem sammen igjen: `items = new ArrayList<>(pink)`, og så `items.addAll(rest)`.',
+      ],
+      scaffold: `void main() {
+    List<Monster> pink = new ArrayList<>();
+    List<Monster> rest = new ArrayList<>();
+    for (Monster thing : items) {
+        // Legg thing i pink eller rest
+    }
+}
+`,
+      solution: `void main() {
+    List<Monster> pink = new ArrayList<>();
+    List<Monster> rest = new ArrayList<>();
+    for (Monster thing : items) {
+        if (thing.color.equals("pink")) pink.add(thing);
+        else rest.add(thing);
+    }
+    items = new ArrayList<>(pink);
+    items.addAll(rest);
+}
+`,
+    },
     check: (t) => {
       const before = t.before('items')
       const want = [...before.filter((n) => n.color === 'pink'), ...before.filter((n) => n.color !== 'pink')]
@@ -81,6 +107,31 @@ for (let i = 0; i < items.length; i++) {
   }
 }
 `,
+    java: {
+      hints: [
+        'Hold styr på hvor neste lille monster skal stå: `int place = 0`. Alt til venstre for `place` er allerede små.',
+        'Gå gjennom `items` med `i`. Er `items.get(i).value` under 50, bytter du det med monsteret på plass `place`: `Collections.swap(items, i, place)`.',
+        'Etter byttet øker du `place` med én, så området med små vokser mot høyre.',
+      ],
+      scaffold: `void main() {
+    int place = 0;
+    for (int i = 0; i < items.size(); i++) {
+        // Er items.get(i) lite (under 50)? Bytt det med monsteret på plass place, og øk place.
+    }
+}
+`,
+      solution: `void main() {
+    int place = 0;
+    for (int i = 0; i < items.size(); i++) {
+        if (items.get(i).value < 50) {
+            Collections.swap(items, i, place);
+            vis(items.get(i), items.get(place));
+            place++;
+        }
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.before('items')
       const items = t.items
@@ -136,6 +187,41 @@ for (const thing of items) {
 items = [...others, ...ghosts]
 vis(ghosts)
 `,
+    java: {
+      // The items' shape is a field, or it wouldn't come back from Java; the others have none (null), as in JavaScript.
+      monster: `// Legg til eller ta bort et felt og trykk «Bruk».
+class Monster {
+    String color = "pink";
+    String shape;
+}`,
+      code: { "shape === 'ghost'": 'shape = "ghost"' },
+      hints: [
+        'Del monstrene i to grupper: spøkelsene og de andre. `"ghost".equals(thing.shape)` sier hvem som er hva; de andre har `shape = null`, så `thing.shape.equals(…)` går ikke for dem.',
+        'Gå gjennom `items` fra start til slutt og legg hvert monster i riktig liste. Da holder rekkefølgen seg.',
+        'Sett dem sammen til slutt, de andre først: `items = new ArrayList<>(others)`, og så `items.addAll(ghosts)`.',
+      ],
+      scaffold: `void main() {
+    List<Monster> others = new ArrayList<>();
+    List<Monster> ghosts = new ArrayList<>();
+    for (Monster thing : items) {
+        // Er thing et spøkelse? Legg det i ghosts, ellers i others.
+    }
+}
+`,
+      solution: `void main() {
+    List<Monster> others = new ArrayList<>();
+    List<Monster> ghosts = new ArrayList<>();
+    for (Monster thing : items) {
+        if ("ghost".equals(thing.shape)) ghosts.add(thing);
+        else others.add(thing);
+        vis(thing);
+    }
+    items = new ArrayList<>(others);
+    items.addAll(ghosts);
+    vis(ghosts);
+}
+`,
+    },
     check: (t) => {
       const before = t.before('items')
       const want = [...before.filter((n) => n.shape !== 'ghost'), ...before.filter((n) => n.shape === 'ghost')]
@@ -186,6 +272,31 @@ for (let read = 0; read < items.length; read++) {
   }
 }
 `,
+    java: {
+      hints: [
+        'Bruk to indekser: `read` går gjennom hele lista, og `write` er plassen neste monster skal stå på.',
+        'Er `items.get(read)` ikke `null`, skal det til plass `write`. Øk så `write` med én.',
+        'Bytt plass på dem: `Collections.swap(items, write, read)`. Da blir hullene liggende igjen bakerst av seg selv.',
+      ],
+      scaffold: `void main() {
+    int write = 0;
+    for (int read = 0; read < items.size(); read++) {
+        // Er items.get(read) et monster (ikke null)? Flytt det til plass write, og øk write.
+    }
+}
+`,
+      solution: `void main() {
+    int write = 0;
+    for (int read = 0; read < items.size(); read++) {
+        if (items.get(read) != null) {
+            Collections.swap(items, write, read);
+            vis(items.get(write));
+            write++;
+        }
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.before('items')
       const want = [...before.filter((n) => n !== null), ...before.filter((n) => n === null)]
@@ -230,6 +341,35 @@ reverseInPlace(items)
 reverseInPlace(items)
 `,
     exports: ['reverseInPlace'],
+    java: {
+      text: `Skriv \`void reverseInPlace(List<Monster> items)\` som snur en liste på stedet: det første monsteret havner bakerst, det siste først, og så videre. Du skal endre lista du får inn, ikke lage en ny.
+
+Her er poenget å bytte plass på monstrene selv, så la \`Collections.reverse\` ligge. En tom liste og en med ett monster skal også gå bra. Koden nederst snur monstrene på scenen.`,
+      hints: [
+        'Bytt det første og det siste, så det nest første og nest siste, og slik innover mot midten.',
+        'Bruk to indekser: `i` fra start og `j` fra slutt. Bytt dem med `Collections.swap(items, i, j)`, øk `i` og minsk `j`.',
+        'Løkka går så lenge `i < j`. Da stopper den i midten, og et monster alene i midten trenger ikke flyttes.',
+      ],
+      scaffold: `void reverseInPlace(List<Monster> items) {
+    // Bytt første og siste, så nest første og nest siste, helt til du møter midten
+}
+
+void main() {
+    reverseInPlace(items);
+}
+`,
+      solution: `void reverseInPlace(List<Monster> items) {
+    for (int i = 0, j = items.size() - 1; i < j; i++, j--) {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    }
+}
+
+void main() {
+    reverseInPlace(items);
+}
+`,
+    },
     check: (t) => {
       const reverseInPlace = t.fn('reverseInPlace')
       for (const n of [0, 1, 2, 5, 8]) {
@@ -301,6 +441,36 @@ for (const thing of items) {
 }
 items = first
 `,
+    java: {
+      hints: [
+        'Du må huske hvilke farger du allerede har sett. Et `Set<String>` passer: `seen.contains(farge)` og `seen.add(farge)`.',
+        'Gå gjennom `items` fra venstre. Er `thing.color` ikke i `seen` ennå, er monsteret det første av sin farge.',
+        'Legg de første i en ny liste, `first`, og sett `items = first` etter løkka.',
+      ],
+      scaffold: `void main() {
+    Set<String> seen = new HashSet<>();
+    List<Monster> first = new ArrayList<>();
+    for (Monster thing : items) {
+        // Har du sett thing.color før? Hvis ikke: husk fargen i seen, og legg thing i first.
+    }
+}
+`,
+      solution: `void main() {
+    Set<String> seen = new HashSet<>();
+    List<Monster> first = new ArrayList<>();
+    for (Monster thing : items) {
+        if (seen.contains(thing.color)) {
+            vis("har sett fargen", thing);
+        } else {
+            seen.add(thing.color);
+            first.add(thing);
+            vis("ny farge", thing);
+        }
+    }
+    items = first;
+}
+`,
+    },
     check: (t) => {
       const seen = new Set()
       const want = []
@@ -361,6 +531,47 @@ function rotate(items, k) {
 rotate(items, 3)
 `,
     exports: ['rotate'],
+    java: {
+      text: `Skriv \`void rotate(List<Monster> items, int k)\` som flytter de siste \`k\` monstrene fram foran de andre, på stedet. Med \`[A, B, C, D, E]\` og \`k = 2\` blir det \`[D, E, A, B, C]\`. Rekkefølgen skal ellers holde seg.
+
+\`k\` kan være større enn antall monstre (da går du rundt igjen) og den kan være 0. Sjekken prøver også en tom liste. Endre lista du får inn, ikke lag en ny. Java har \`Collections.rotate\`, men her skal du gjøre det selv. Koden nederst roterer monstrene på scenen med 3.`,
+      hints: [
+        'Å rotere med `k` er det samme som å rotere med `k % items.size()`, så store tall går bare rundt. Pass på den tomme lista: der finnes ikke noe å dele på.',
+        'Det går an uten ekstra liste: snu hele raden, snu så de første `k`, og snu til slutt resten. Skriv en hjelpemetode `void reverse(List<Monster> a, int i, int j)` som snur plassene `i` til `j`.',
+        'Etter at hele raden er snudd, ligger de siste `k` først, men baklengs. Snu plassene `0` til `k - 1` og så `k` til `n - 1`, så står hver del rett vei igjen.',
+      ],
+      scaffold: `void rotate(List<Monster> items, int k) {
+    int n = items.size();
+    // k kan være større enn n, og n kan være 0
+}
+
+void main() {
+    rotate(items, 3);
+}
+`,
+      solution: `void reverse(List<Monster> a, int i, int j) {
+    while (i < j) {
+        Collections.swap(a, i, j);
+        vis(a.get(i), a.get(j));
+        i++;
+        j--;
+    }
+}
+
+void rotate(List<Monster> items, int k) {
+    int n = items.size();
+    if (n == 0) return;
+    k %= n;
+    reverse(items, 0, n - 1);
+    reverse(items, 0, k - 1);
+    reverse(items, k, n - 1);
+}
+
+void main() {
+    rotate(items, 3);
+}
+`,
+    },
     check: (t) => {
       const rotate = t.fn('rotate')
       const cases = [[0, 3], [1, 5], [2, 1], [5, 0], [5, 2], [5, 5], [5, 7], [8, 3], [8, 19], [8, 8]]
@@ -450,6 +661,52 @@ flag(items, (i, j) => {
 `,
     exports: ['flag'],
     source: 'https://en.wikipedia.org/wiki/Dutch_national_flag_problem',
+    java: {
+      text: `Monstrene i \`items\` er røde (\`"red"\`), gule (\`"gold"\`) eller cyan (\`"cyan"\`). De vil stå i tre blokker: de røde først, så de gule, og til slutt de cyan.
+
+Skriv \`void flag(List<Monster> items, BiConsumer<Integer, Integer> swap)\` som ordner dem i én gjennomgang, med tre pekere. Du bytter plass med \`swap.accept(i, j)\`; ikke skriv direkte i \`items\`. Sjekken teller byttene, og du skal klare deg med høyst like mange bytter som det er monstre. Koden nederst kjører metoden på monstrene på scenen.`,
+      code: { 'items[mid]': 'items.get(mid)' },
+      scaffold: `void flag(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    int low = 0;
+    int mid = 0;
+    int high = items.size() - 1;
+    // Se på items.get(mid): rød skal til low, gul blir liggende, cyan skal til high
+}
+
+void main() {
+    flag(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+      solution: `void flag(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    int low = 0;
+    int mid = 0;
+    int high = items.size() - 1;
+    while (mid <= high) {
+        String color = items.get(mid).color;
+        if (color.equals("red")) {
+            swap.accept(low, mid);
+            low++;
+            mid++;
+        } else if (color.equals("gold")) {
+            mid++;
+        } else {
+            swap.accept(mid, high);
+            high--;
+        }
+    }
+}
+
+void main() {
+    flag(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+    },
     check: (t) => {
       const flag = t.fn('flag')
       const rank: Record<string, number> = { red: 0, gold: 1, cyan: 2 }
@@ -537,6 +794,36 @@ Du trenger ikke sortere. Bare bytt plass til hvert monster passer med naboene si
   }
 }
 `,
+    java: {
+      code: {
+        'items[0]': 'items.get(0)',
+        'items[1]': 'items.get(1)',
+        'items[2]': 'items.get(2)',
+        'items[3]': 'items.get(3)',
+        'items[i]': 'items.get(i)',
+        'items[i - 1]': 'items.get(i - 1)',
+        'items[i].value > items[i - 1].value': 'items.get(i).value > items.get(i - 1).value',
+      },
+      scaffold: `void main() {
+    for (int i = 1; i < items.size(); i++) {
+        // Oddetall-plasser skal ikke være større enn plassen foran,
+        // partall-plasser skal ikke være mindre. Står de feil vei? Bytt.
+    }
+}
+`,
+      solution: `void main() {
+    for (int i = 1; i < items.size(); i++) {
+        boolean wrong = i % 2 == 1
+                ? items.get(i).value > items.get(i - 1).value
+                : items.get(i).value < items.get(i - 1).value;
+        if (wrong) {
+            Collections.swap(items, i - 1, i);
+            vis(items.get(i - 1), items.get(i));
+        }
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.before('items')
       const items = t.items
@@ -599,6 +886,36 @@ while (i + 1 < items.length) {
   }
 }
 `,
+    java: {
+      code: {
+        'items[i]': 'items.get(i)',
+        'items[i + 1]': 'items.get(i + 1)',
+        'items[i].value += items[i + 1].value': 'items.get(i).value += items.get(i + 1).value',
+        'items.splice(i + 1, 1)': 'items.remove(i + 1)',
+      },
+      scaffold: `void main() {
+    int i = 0;
+    while (i + 1 < items.size()) {
+        // Har items.get(i) og items.get(i + 1) samme farge? Slå dem sammen.
+        // Pass på: etter en sammenslåing kan den nye naboen ha samme farge også.
+        i++;
+    }
+}
+`,
+      solution: `void main() {
+    int i = 0;
+    while (i + 1 < items.size()) {
+        if (items.get(i).color.equals(items.get(i + 1).color)) {
+            items.get(i).value += items.get(i + 1).value;
+            items.remove(i + 1);
+            vis(items.get(i));
+        } else {
+            i++;
+        }
+    }
+}
+`,
+    },
     check: (t) => {
       // The groups of one colour in a row, from the start: the first item of each stands for the group.
       const groups: { first: any; value: number; color: string }[] = []
@@ -667,6 +984,41 @@ nextPermutation(items)
 `,
     exports: ['nextPermutation'],
     source: 'https://en.wikipedia.org/wiki/Permutation#Generation_in_lexicographic_order',
+    java: {
+      text: `Monstrene i \`items\` kan stå i mange rekkefølger. Sorter alle rekkefølgene som i en ordbok, med \`value\` som bokstavene: først \`[1, 2, 3]\`, så \`[1, 3, 2]\`, så \`[2, 1, 3]\`, og slik videre til \`[3, 2, 1]\`.
+
+Skriv \`void nextPermutation(List<Monster> items)\` som endrer rekkefølgen i \`items\` på stedet, så monstrene står i rekkefølgen rett etter den de har nå. Står de i den siste (størst først), skal de gå rundt til den første (minst først). Samme verdi kan forekomme flere ganger, og en tom liste eller ett monster skal bli som den er. Koden nederst kjører metoden på monstrene på scenen.`,
+      code: { 'items[i]': 'items.get(i)' },
+      scaffold: `void nextPermutation(List<Monster> items) {
+    // 1. Fra slutten: finn siste plass i der items.get(i) er mindre enn items.get(i + 1)
+    // 2. Fra slutten: finn første j der items.get(j) er større enn items.get(i), og bytt dem
+    // 3. Snu alt som står etter plass i
+}
+
+void main() {
+    nextPermutation(items);
+}
+`,
+      solution: `void nextPermutation(List<Monster> items) {
+    int i = items.size() - 2;
+    while (i >= 0 && items.get(i).value >= items.get(i + 1).value) i--;
+    if (i >= 0) {
+        int j = items.size() - 1;
+        while (items.get(j).value <= items.get(i).value) j--;
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    }
+    for (int a = i + 1, b = items.size() - 1; a < b; a++, b--) {
+        Collections.swap(items, a, b);
+        vis(items.get(a), items.get(b));
+    }
+}
+
+void main() {
+    nextPermutation(items);
+}
+`,
+    },
     check: (t) => {
       const nextPermutation = t.fn('nextPermutation')
       const run = (values: number[]) => {
@@ -792,6 +1144,56 @@ groupCyan(items, (i, j) => {
 })
 `,
     exports: ['groupCyan'],
+    java: {
+      text: `Noen av monstrene i \`items\` er cyan. De vil stå side om side, uten andre monstre mellom seg. Hvor de ender, bestemmer du selv, men hvert bytte av to monstre koster.
+
+Skriv \`void groupCyan(List<Monster> items, BiConsumer<Integer, Integer> swap)\` som samler alle cyan med færrest mulig bytter. Du bytter med \`swap.accept(i, j)\`; ikke skriv direkte i \`items\`. Sjekken teller byttene og godtar bare det minste antallet som går an. Er det ingen cyan, eller bare ett, eller de allerede står side om side, skal du ikke bytte noe. Koden nederst kjører metoden på monstrene på scenen.`,
+      scaffold: `void groupCyan(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    // Hvor mange cyan er det? Hvilke plasser skal de stå på?
+}
+
+void main() {
+    groupCyan(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+      solution: `void groupCyan(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    int k = 0;
+    for (Monster m : items) if (m.color.equals("cyan")) k++;
+    if (k < 2) return;
+    // Vinduet med k plasser som allerede har flest cyan
+    int inside = 0;
+    for (int i = 0; i < k; i++) if (items.get(i).color.equals("cyan")) inside++;
+    int best = inside;
+    int start = 0;
+    for (int i = k; i < items.size(); i++) {
+        if (items.get(i).color.equals("cyan")) inside++;
+        if (items.get(i - k).color.equals("cyan")) inside--;
+        if (inside > best) {
+            best = inside;
+            start = i - k + 1;
+        }
+    }
+    // Hvert monster i vinduet som ikke er cyan, byttes mot et cyan utenfor
+    int end = start + k;
+    int from = 0;
+    for (int to = start; to < end; to++) {
+        if (items.get(to).color.equals("cyan")) continue;
+        while ((from >= start && from < end) || !items.get(from).color.equals("cyan")) from++;
+        swap.accept(to, from);
+    }
+}
+
+void main() {
+    groupCyan(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+    },
     check: (t) => {
       const groupCyan = t.fn('groupCyan')
       const cases = ['', 'c', 'x', 'xcx', 'ccxx', 'cxcx', 'ccc', 'xxcccxxx', 'cxxxxxxc', 'xcxxcxxc', 'cxcxcxcx', 'ccxcxcc', 'xxxxccxxxcxxc', 'cxxcxxcxxcxxcxxc']

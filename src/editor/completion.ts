@@ -24,6 +24,7 @@ import {
   scopeCompletionSource,
   snippets as jsSnippets,
 } from '@codemirror/lang-javascript'
+import { java } from '@codemirror/lang-java'
 
 const Identifier = /^[\w$\xa1-￿]*$/
 
@@ -183,5 +184,78 @@ export function kataJavascript(itemNames: () => string[] = () => []): LanguageSu
     javascriptLanguage.data.of({ autocomplete: scopeCompletionSource(scope) }),
     javascriptLanguage.data.of({ autocomplete: memberSource(scope) }),
     javascriptLanguage.data.of({ autocomplete: worldSource(itemNames) }),
+  ])
+}
+
+/*
+ * Java: keywords, a few snippets, what the bridge gives the code (IO.println, vis, the roots, the letters) and the
+ * names the code uses, with the members kata code reaches for after a dot. Lezer's Java tree has no scopes to read
+ * names from, so the names are the words in the document.
+ */
+const JAVA_KEYWORDS: Completion[] = (
+  'abstract boolean break byte case catch char class continue default do double else enum extends false final ' +
+  'finally float for if implements import instanceof int interface long new null private protected public record ' +
+  'return short static super switch this throw true try var void while'
+).split(' ').map(keyword)
+
+const JAVA_SNIPPETS: Completion[] = [
+  snip('IO.println(${})', { label: 'println', detail: 'IO.println', type: 'text' }),
+  snip('for (int ${i} = 0; ${i} < ${n}; ${i}++) {\n\t${}\n}', { label: 'for', detail: 'løkke', type: 'keyword' }),
+  snip('for (${Monster} ${m} : ${items}) {\n\t${}\n}', { label: 'for', detail: 'for hvert', type: 'keyword' }),
+  snip('while (${node} != null) {\n\t${}\n}', { label: 'while', detail: 'løkke', type: 'keyword' }),
+  snip('if (${}) {\n\t${}\n}', { label: 'if', detail: 'hvis', type: 'keyword' }),
+  snip('void main() {\n\t${}\n}', { label: 'main', detail: 'void main()', type: 'keyword' }),
+  snip('List<${Monster}> ${list} = new ArrayList<>();', { label: 'List', detail: 'ny liste', type: 'class' }),
+]
+
+const JAVA_TYPES: Completion[] = [
+  'String', 'Integer', 'Math', 'List', 'ArrayList', 'LinkedList', 'Map', 'HashMap', 'TreeMap', 'Set', 'HashSet',
+  'TreeSet', 'Deque', 'ArrayDeque', 'Queue', 'Arrays', 'Collections', 'StringBuilder', 'Character', 'Objects',
+  'Comparator', 'Optional', 'System', 'IO',
+].map((label) => ({ label, type: 'class' }))
+
+const JAVA_MEMBERS: Completion[] = merge([
+  ...['value', 'color', 'next', 'prev', 'left', 'right', 'neighbors'].map((label): Completion => ({ label, type: 'property', detail: 'monster', boost: 1 })),
+  ...['size', 'get', 'set', 'add', 'remove', 'isEmpty', 'contains', 'indexOf', 'clear', 'addAll', 'sort', 'reversed', 'getFirst', 'getLast', 'removeFirst', 'removeLast', 'subList'].map(method('liste')),
+  ...['push', 'pop', 'peek', 'poll', 'offer', 'addFirst', 'addLast', 'pollFirst', 'pollLast', 'peekFirst', 'peekLast'].map(method('kø · stabel')),
+  ...['put', 'getOrDefault', 'containsKey', 'containsValue', 'keySet', 'values', 'entrySet', 'merge'].map(method('map')),
+  ...['length', 'charAt', 'equals', 'substring', 'toUpperCase', 'toLowerCase', 'split', 'trim', 'startsWith', 'endsWith', 'compareTo', 'chars', 'repeat', 'toCharArray'].map(method('string')),
+  ...['println', 'print'].map(method('IO')),
+  ...['max', 'min', 'abs', 'floor', 'random', 'sqrt', 'pow'].map(method('Math')),
+  ...['stream', 'forEach', 'toString', 'hashCode'].map(method('objekt')),
+])
+
+const javaWords: CompletionSource = (context) => {
+  const word = context.matchBefore(/[\w$]+/)
+  const before = context.state.sliceDoc(Math.max(0, (word?.from ?? context.pos) - 1), word?.from ?? context.pos)
+  if (before === '.') return { from: word?.from ?? context.pos, options: JAVA_MEMBERS, validFor: Identifier }
+  if (!word && !context.explicit) return null
+  const own = new Set(context.state.doc.toString().match(/[A-Za-z_$][\w$]*/g) ?? [])
+  if (word) own.delete(context.state.sliceDoc(word.from, word.to))
+  const names = [...own].filter((n) => n.length > 1).map((label): Completion => ({ label, type: 'variable', detail: 'i koden', boost: 1 }))
+  return { from: word?.from ?? context.pos, options: merge([...names, ...JAVA_SNIPPETS, ...JAVA_KEYWORDS, ...JAVA_TYPES]), validFor: Identifier }
+}
+
+const javaWorld = (names: () => string[]): CompletionSource => (context) => {
+  const word = context.matchBefore(/[\w$]*/)
+  if (!word || context.state.sliceDoc(word.from - 1, word.from) === '.') return null
+  if (word.from === word.to && !context.explicit) return null
+  return {
+    from: word.from,
+    options: names().map((label) => ({
+      ...(WORLD_DETAILS[label] ?? { label, type: 'variable', detail: /^[A-Z]\d*$/.test(label) ? 'monster' : 'global' }),
+      boost: 2,
+    })),
+    validFor: Identifier,
+  }
+}
+
+/** Java with kata completions. */
+export function kataJava(itemNames: () => string[] = () => []): LanguageSupport {
+  const lang = java().language
+  const skip = ['String', 'LineComment', 'BlockComment', 'TextBlock', 'CharacterLiteral']
+  return new LanguageSupport(lang, [
+    lang.data.of({ autocomplete: ifNotIn(skip, javaWords) }),
+    lang.data.of({ autocomplete: ifNotIn(skip, javaWorld(itemNames)) }),
   ])
 }

@@ -2,7 +2,7 @@ import { acceptCompletion, autocompletion, closeBrackets, closeBracketsKeymap } 
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { bracketMatching, ensureSyntaxTree, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
-import { EditorState, type Extension, Prec, StateEffect, StateField } from '@codemirror/state'
+import { Compartment, EditorState, type Extension, Prec, StateEffect, StateField } from '@codemirror/state'
 import {
   crosshairCursor,
   Decoration,
@@ -17,12 +17,14 @@ import {
   lineNumbers,
   rectangularSelection,
 } from '@codemirror/view'
-import { kataJavascript } from './completion'
+import type { Lang } from '../tasks/lang'
+import { kataJava, kataJavascript } from './completion'
 import { editorMenu, refactorKeymap } from './menu'
 import { neonHighlight, neonTheme } from './theme'
 
 export interface EditorOptions {
   doc: string
+  lang?: Lang
   /** Mod-Enter. */
   onRun(): void
   onChange(doc: string): void
@@ -48,8 +50,19 @@ const errorLine = StateField.define<DecorationSet>({
 })
 
 const extensionsOf = new WeakMap<EditorView, Extension[]>()
+const langOf = new WeakMap<EditorView, Lang>()
+const language = new Compartment()
+const itemNamesOf = new WeakMap<EditorView, () => string[]>()
+
+/** The language, its completions and its indent: two spaces in JavaScript, four in Java, as each is usually written. */
+function languageFor(lang: Lang, itemNames: () => string[]): Extension {
+  return lang === 'java'
+    ? [kataJava(itemNames), indentUnit.of('    '), EditorState.tabSize.of(4)]
+    : [kataJavascript(itemNames), indentUnit.of('  '), EditorState.tabSize.of(2)]
+}
 
 export function createEditor(parent: HTMLElement, options: EditorOptions): EditorView {
+  const lang = options.lang ?? 'js'
   const extensions: Extension[] = [
     lineNumbers(),
     highlightActiveLineGutter(),
@@ -59,8 +72,6 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
     dropCursor(),
     EditorState.allowMultipleSelections.of(true),
     indentOnInput(),
-    indentUnit.of('  '),
-    EditorState.tabSize.of(2),
     syntaxHighlighting(neonHighlight),
     bracketMatching(),
     closeBrackets(),
@@ -70,7 +81,6 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
     highlightActiveLine(),
     highlightSelectionMatches(),
     EditorView.lineWrapping,
-    kataJavascript(options.itemNames),
     errorLine,
     neonTheme,
     // Mod-Enter is insertBlankLine in the default keymap; Tab takes an open completion before it indents.
@@ -90,15 +100,26 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
       spellcheck: 'false',
     }),
   ]
-  const view = new EditorView({ parent, state: EditorState.create({ doc: options.doc, extensions }) })
+  const view = new EditorView({
+    parent,
+    state: EditorState.create({ doc: options.doc, extensions: [...extensions, language.of(languageFor(lang, options.itemNames))] }),
+  })
   extensionsOf.set(view, extensions)
+  langOf.set(view, lang)
+  itemNamesOf.set(view, options.itemNames)
   return view
 }
 
 /** Another document with a history of its own (another task's code); onChange doesn't fire for it. */
-export function replaceDoc(view: EditorView, doc: string): void {
-  view.setState(EditorState.create({ doc, extensions: extensionsOf.get(view) }))
+export function replaceDoc(view: EditorView, doc: string, lang: Lang = langOf.get(view) ?? 'js'): void {
+  langOf.set(view, lang)
+  const names = itemNamesOf.get(view) ?? (() => [])
+  view.setState(EditorState.create({ doc, extensions: [...extensionsOf.get(view)!, language.of(languageFor(lang, names))] }))
+  view.contentDOM.setAttribute('aria-label', lang === 'java' ? 'Java-kode' : 'JavaScript-kode')
 }
+
+/** The language an editor is in. */
+export const editorLang = (view: EditorView): Lang => langOf.get(view) ?? 'js'
 
 /** Marks the line an error came from (null clears it) and scrolls it into view. */
 export function markErrorLine(view: EditorView, line: number | null): void {

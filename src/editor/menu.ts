@@ -4,10 +4,15 @@
  * The menu, the rename box and a notice are fixed to the page, outside the editor, so a pane's overflow can't clip them.
  */
 import { copyLineDown, deleteLine, moveLineDown, moveLineUp, selectAll, toggleComment } from '@codemirror/commands'
+import { syntaxTree } from '@codemirror/language'
 import { selectNextOccurrence, selectSelectionMatches } from '@codemirror/search'
 import { EditorSelection } from '@codemirror/state'
 import { type Command, EditorView, type KeyBinding } from '@codemirror/view'
 import { checkName, definitionOf, extractConstant, formatChanges, planRename, renameChanges, targetAt } from './refactor'
+
+// The refactorings read JavaScript's tree; in Java (Lezer's tree starts at Program) only the line commands apply.
+const inJavaScript = (view: EditorView) => syntaxTree(view.state).topNode.name !== 'Program'
+const JS_ONLY = 'Det finnes bare for JavaScript ennå.'
 
 const MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
 
@@ -80,6 +85,10 @@ function notice(view: EditorView, message: string): void {
 }
 
 export const renameSymbol: Command = (view) => {
+  if (!inJavaScript(view)) {
+    notice(view, JS_ONLY)
+    return true
+  }
   const pos = view.state.selection.main.head
   const plan = planRename(view.state, pos)
   if (!plan.ok) {
@@ -139,6 +148,10 @@ export const renameSymbol: Command = (view) => {
 const editorName = (view: EditorView) => (view.dom.closest('#class-editor') ? 'klassen' : 'koden')
 
 export const goToDefinition: Command = (view) => {
+  if (!inJavaScript(view)) {
+    notice(view, JS_ONLY)
+    return true
+  }
   const found = definitionOf(view.state, view.state.selection.main.head)
   if (!found) {
     notice(view, 'Fant ikke hvor navnet er deklarert.')
@@ -149,6 +162,10 @@ export const goToDefinition: Command = (view) => {
 }
 
 export const extractToConstant: Command = (view) => {
+  if (!inJavaScript(view)) {
+    notice(view, JS_ONLY)
+    return true
+  }
   const { from, to } = view.state.selection.main
   const result = extractConstant(view.state, from, to)
   if (!result.ok) {
@@ -216,13 +233,14 @@ export const refactorKeymap: KeyBinding[] = [
 
 type Item = { label: string; key?: string; run: Command; enabled?: (view: EditorView) => boolean } | 'line'
 
-const hasName = (view: EditorView) => targetAt(view.state, view.state.selection.main.head) !== null
+const hasName = (view: EditorView) => inJavaScript(view) && targetAt(view.state, view.state.selection.main.head) !== null
 const hasSelection = (view: EditorView) => view.state.selection.ranges.some((r) => !r.empty)
+const canExtract = (view: EditorView) => inJavaScript(view) && hasSelection(view)
 
 const ITEMS: Item[] = [
   { label: 'Gi nytt navn', key: 'F2', run: renameSymbol, enabled: hasName },
   { label: 'Gå til definisjon', key: 'F12', run: goToDefinition, enabled: hasName },
-  { label: 'Trekk ut til konstant', run: extractToConstant, enabled: hasSelection },
+  { label: 'Trekk ut til konstant', run: extractToConstant, enabled: canExtract },
   'line',
   { label: 'Formater', key: 'Shift-Alt-f', run: formatDocument },
   { label: 'Kommenter ut/inn', key: 'Mod-/', run: toggleComment },

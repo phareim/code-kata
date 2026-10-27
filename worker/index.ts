@@ -10,6 +10,8 @@
  *                        streamed as lines of JSON: { text } … then { done } or { error }. Without an account:
  *                        { task, question, code, ting }, one of the fixed questions, answered and not kept
  *   DELETE /api/talk?task  starts that conversation over
+ *   POST /api/translate  { task, from, to, code, ting } the code in the other language (worker/translate.ts):
+ *                        { code, ting }; no account needed, capped per address and day
  *
  * The account is auth.phareim.no's (Reader): the `session_token` cookie on .phareim.no, looked up READ-ONLY in
  * Reader's `reader-service` D1. Reader owns the tables and the cookie; this Worker never writes to either. Every
@@ -22,9 +24,10 @@
 import { cleanTask, isTaskId, mergeTask, sameTask } from '../src/app/merge'
 import type { TaskState } from '../src/app/progress'
 import {
-  ask, askQuick, costOf, MAX_MESSAGES, OPENER, QUICK_PER_DAY, QUICK_USD_PER_DAY, quickCostOf, quickMessage,
+  ask, askQuick, costOf, MAX_MESSAGES, nextJava, OPENER, QUICK_PER_DAY, QUICK_USD_PER_DAY, quickCostOf, quickMessage,
   quickRequest, talkRequest, taskFor, textOf, today, TURNS_PER_DAY, USD_PER_DAY, userMessage, type Conversation,
 } from './talk'
+import { translate, translateCostOf, translateRequest, TRANSLATE_USD_PER_DAY, TRANSLATIONS_PER_DAY } from './translate'
 
 // The few Cloudflare types this uses, so the repo needs no type package.
 interface D1 {
@@ -97,7 +100,8 @@ const json = (body: unknown, status = 200) => Response.json(body, { status, head
 
 export async function handleApi(request: Request, env: Env, ctx?: Context): Promise<Response> {
   const url = new URL(request.url)
-  const methods = url.pathname === '/api/progress' ? ['GET', 'POST'] : url.pathname === '/api/talk' ? ['GET', 'POST', 'DELETE'] : null
+  const methods = url.pathname === '/api/progress' ? ['GET', 'POST'] : url.pathname === '/api/talk' ? ['GET', 'POST', 'DELETE']
+    : url.pathname === '/api/translate' ? ['POST'] : null
   if (!methods) return json({ error: 'Not found' }, 404)
   if (!methods.includes(request.method)) {
     return Response.json({ error: 'Method not allowed' }, { status: 405, headers: { ...NO_STORE, Allow: methods.join(', ') } })
@@ -108,6 +112,8 @@ export async function handleApi(request: Request, env: Env, ctx?: Context): Prom
     const body = request.method === 'POST'
     if (body && !(request.headers.get('Content-Type') ?? '').startsWith('application/json')) return json({ error: 'JSON only' }, 415)
   }
+  // A translation needs no account: it keeps nothing, and what it may cost a day is capped per address.
+  if (url.pathname === '/api/translate') return handleTranslate(request, env)
   let user: User | null
   try {
     user = await readerUser(env, sessionToken(request.headers.get('Cookie')))
@@ -162,19 +168,20 @@ async function handleTalk(request: Request, env: Env, ctx: Context | undefined, 
     req = null
   }
   if (!req) return json({ error: 'Bad request' }, 400)
-  const { task, code, ting } = req
+  const { task, code, ting, lang } = req
 
   const budget = env.BUDGET.get(env.BUDGET.idFromName('global'))
   const spent = await (await call(budget, '/')).json() as { usd: number }
   if (spent.usd >= USD_PER_DAY) return json({ error: 'budget' }, 429)
   const begin = await call(store, '/talk/begin', { task: task.id })
-  const started = await begin.json() as { error?: string; conversation?: Conversation | null }
+  const started = await begin.json() as { error?: string; conversation?: Conversation | null; javaSolved?: boolean }
   if (!begin.ok) return json(started, begin.status)
   const before = started.conversation ?? null
   const words = req.text || (before ? '' : OPENER)
   if (!words) return json({ error: 'Empty' }, 400)
 
-  const content = userMessage(task, words, code, ting, before)
+  const java = lang === 'java' ? nextJava(before, !!started.javaSolved) ?? before?.java : before?.java
+  const content = userMessage(task, words, code, ting, before, lang, !!started.javaSolved)
   const messages = [...(before?.api ?? []), { role: 'user' as const, content }]
   return streamed(ctx, async (send) => {
     const out = await ask(env.KATA_ANTHROPIC_KEY!, task, messages, (piece) => send({ text: piece }))
@@ -187,6 +194,8 @@ async function handleTalk(request: Request, env: Env, ctx: Context | undefined, 
       view: [{ role: 'user', text: words }, { role: 'assistant', text: answer }],
       code,
       ting,
+      lang,
+      java,
     })
     await send({ done: true })
   })
@@ -211,7 +220,7 @@ async function handleQuickTalk(request: Request, env: Env, ctx: Context | undefi
   const req = quickRequest(raw)
   if (req === 'long') return json({ error: 'long' }, 413)
   if (!req) return json({ error: 'Bad request' }, 400)
-  const { task, question, code, ting } = req
+  const { task, question, code, ting, lang } = req
 
   const budget = env.BUDGET.get(env.BUDGET.idFromName('global'))
   const ip = request.headers.get('CF-Connecting-IP') ?? ''
@@ -220,11 +229,38 @@ async function handleQuickTalk(request: Request, env: Env, ctx: Context | undefi
   if (!begin.ok) return json(started, begin.status)
   return streamed(ctx, async (send) => {
     await send({ left: started.left })
-    const out = await askQuick(env.KATA_ANTHROPIC_KEY!, task, quickMessage(task, question, code, ting), (piece) => send({ text: piece }))
+    const out = await askQuick(env.KATA_ANTHROPIC_KEY!, task, quickMessage(task, question, code, ting, lang), (piece) => send({ text: piece }), undefined, lang)
     await call(budget, '/quick/spent', { usd: quickCostOf(out.usage) })
     if (out.refused || !textOf(out.content)) return send({ error: 'refused' })
     await send({ done: true })
   })
+}
+
+/** The code in another language (worker/translate.ts): one answer as JSON, `{ code, ting }`. */
+async function handleTranslate(request: Request, env: Env): Promise<Response> {
+  if (!env.KATA_ANTHROPIC_KEY) return json({ error: 'off' }, 503)
+  const text = await request.text()
+  if (text.length > MAX_BODY) return json({ error: 'long' }, 413)
+  let raw: unknown = null
+  try {
+    raw = JSON.parse(text)
+  } catch {
+    // Not JSON: a bad request below.
+  }
+  const req = translateRequest(raw)
+  if (req === 'long') return json({ error: 'long' }, 413)
+  if (!req) return json({ error: 'Bad request' }, 400)
+  const budget = env.BUDGET.get(env.BUDGET.idFromName('global'))
+  const begin = await call(budget, '/translate', { who: await digest(request.headers.get('CF-Connecting-IP') ?? '') })
+  if (!begin.ok) return json(await begin.json(), begin.status)
+  try {
+    const out = await translate(env.KATA_ANTHROPIC_KEY, req)
+    await call(budget, '/translate/spent', { usd: translateCostOf(out.usage) })
+    if (out.refused) return json({ error: 'refused' }, 502)
+    return json({ code: out.code, ting: out.ting })
+  } catch {
+    return json({ error: 'failed' }, 502)
+  }
 }
 
 /** An IP address as the budget keeps it: hashed, so the store holds no addresses. */
@@ -324,16 +360,18 @@ export class ProgressStore {
       const conversation = await storage.get<Conversation>(`c:${task}`)
       if (conversation && conversation.api.length >= MAX_MESSAGES) return Response.json({ error: 'full' }, { status: 409 })
       await storage.put('talk-day', { day, turns: turns + 1 })
-      return Response.json({ conversation: conversation ?? null })
+      return Response.json({ conversation: conversation ?? null, javaSolved: !!state.java?.solved })
     }
     if (path === '/talk/append') {
-      const turn = await request.json() as Pick<Conversation, 'api' | 'view' | 'code' | 'ting'> & { task: string }
+      const turn = await request.json() as Pick<Conversation, 'api' | 'view' | 'code' | 'ting' | 'lang' | 'java'> & { task: string }
       const old = await storage.get<Conversation>(`c:${turn.task}`)
       await storage.put<Conversation>(`c:${turn.task}`, {
         api: [...(old?.api ?? []), ...turn.api],
         view: [...(old?.view ?? []), ...turn.view],
         code: turn.code,
         ting: turn.ting,
+        ...(turn.lang === 'java' ? { lang: turn.lang } : {}),
+        ...(turn.java ? { java: turn.java } : {}),
       })
       return Response.json({ ok: true })
     }
@@ -368,7 +406,8 @@ export class TalkBudget {
 
   async fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname
-    if (path.startsWith('/quick')) return this.quick(request, path)
+    if (path.startsWith('/quick')) return this.quick(request, path, 'quick', QUICK_PER_DAY, QUICK_USD_PER_DAY, 'quick-turns')
+    if (path.startsWith('/translate')) return this.quick(request, path.replace('/translate', '/quick'), 'translate', TRANSLATIONS_PER_DAY, TRANSLATE_USD_PER_DAY, 'translations')
     const key = `usd:${today()}`
     const usd = (await this.ctx.storage.get<number>(key)) ?? 0
     if (request.method !== 'POST') return Response.json({ usd })
@@ -377,24 +416,25 @@ export class TalkBudget {
     return Response.json({ usd: usd + add })
   }
 
-  private async quick(request: Request, path: string): Promise<Response> {
+  /** A day's count per address and spend, for the fixed questions (`quick`) and for translations (`translate`). */
+  private async quick(request: Request, path: string, key: string, perDay: number, usdPerDay: number, over: string): Promise<Response> {
     const day = today()
-    const stored = await this.ctx.storage.get<QuickDay>('quick')
+    const stored = await this.ctx.storage.get<QuickDay>(key)
     const state: QuickDay = stored?.day === day ? stored : { day, usd: 0, asked: {} }
     const body = await request.json() as { who?: string; usd?: number }
     if (path === '/quick/spent') {
       const add = Number(body.usd)
       state.usd += Number.isFinite(add) && add > 0 ? add : 0
-      await this.ctx.storage.put('quick', state)
+      await this.ctx.storage.put(key, state)
       return Response.json({ usd: state.usd })
     }
-    if (state.usd >= QUICK_USD_PER_DAY) return Response.json({ error: 'budget' }, { status: 429 })
+    if (state.usd >= usdPerDay) return Response.json({ error: 'budget' }, { status: 429 })
     const who = String(body.who ?? '')
     const asked = state.asked[who] ?? 0
-    if (asked >= QUICK_PER_DAY) return Response.json({ error: 'quick-turns' }, { status: 429 })
+    if (asked >= perDay) return Response.json({ error: over }, { status: 429 })
     state.asked[who] = asked + 1
-    await this.ctx.storage.put('quick', state)
-    return Response.json({ left: QUICK_PER_DAY - asked - 1 })
+    await this.ctx.storage.put(key, state)
+    return Response.json({ left: perDay - asked - 1 })
   }
 }
 

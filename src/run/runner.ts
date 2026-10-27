@@ -1,7 +1,4 @@
-import { compose, type Root } from '../java/compose'
-import { compileJava } from '../java/compiler'
-import { explain } from '../java/diagnostics'
-import { javaRuntime } from '../java/runtime'
+import type { Root } from '../java/compose'
 import type { World } from '../world/world'
 import workerSource from './worker.js?raw'
 
@@ -128,7 +125,6 @@ export class Runner {
 
     if (!java) return go({})
 
-    const composed = compose({ classSource, code, roots: java.roots, items: world.items.length, prelude: java.prelude, exports: task?.exports })
     const compileError = (problems: Problem[]) => finish({
       kind: 'error',
       name: 'Kompileringsfeil',
@@ -137,12 +133,15 @@ export class Runner {
       ms: performance.now() - started,
       more: problems.slice(1),
     })
-    if (composed.problem) return compileError([{ message: composed.problem, line: null, where: 'klasse' }])
-    compileJava(composed.source, { loading: () => handlers.stage?.('loading'), compiling: () => handlers.stage?.('compiling') })
-      .then((compiled) => {
+    // The compiler and the bridge load the first time a visitor runs Java (src/java/run.ts).
+    import('../java/run')
+      .then(({ prepareJava }) => prepareJava(
+        { classSource, code, world, exports: task?.exports, roots: java.roots, prelude: java.prelude, expected: java.expected },
+        { loading: () => handlers.stage?.('loading'), compiling: () => handlers.stage?.('compiling') },
+      ))
+      .then(({ payload, errors, missing }) => {
         if (this.finish !== finish) return
-        if (!compiled.ok || !compiled.wasm) {
-          const { errors, missing } = explain(composed, compiled.diagnostics, code, classSource, task?.exports)
+        if (!payload) {
           if (missing && task) {
             const decl = java.expected?.[missing] ?? `${missing}(…)`
             const message = /^[A-Z]/.test(missing)
@@ -150,18 +149,9 @@ export class Runner {
               : `Fant ikke metoden ${missing}. Skriv \`${decl} { … }\` i koden.`
             handlers.verdict?.({ ok: false, broken: false, message, line: null, where: null })
           }
-          return compileError(errors)
+          return compileError(errors ?? [{ message: 'Koden kompilerer ikke.', line: null, where: null }])
         }
-        go({
-          java: {
-            wasm: compiled.wasm,
-            deobfuscator: compiled.deobfuscator,
-            runtime: javaRuntime,
-            meta: composed.meta,
-            lines: composed.lines,
-            expected: java.expected ?? {},
-          },
-        })
+        go({ java: payload })
       })
       .catch((err: unknown) => finish({
         kind: 'error',

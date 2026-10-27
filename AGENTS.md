@@ -77,4 +77,24 @@ how code runs and where things live.
   with no way for the client to slip in its own): the page sends a question's id and the code, never words or a
   history, and nothing proves the task is solved, so that prompt must never carry the reference solution. Either
   way, task text and solution come from the bank in the Worker, never from the request.
+- **Languages** (README → Languages): a task is one task in JavaScript and Java; `java` on a task is its Java binding
+  (`JavaTask`). The check, the items and the prose are shared: never fork a check by language except where it watches
+  how the code works (`t.lang === 'js'` around a counting getter, a `Proxy`, a banned `Array.prototype` method), and
+  keep the JavaScript path unchanged. Java code is written like a compact source file: methods at column 0 without
+  `static`, the closing `}` at column 0, `void main()` for the statements, four-space indent, `IO.println`. The
+  scaffold must compile. `npm test` runs every task in Java too (`test/java-<topic>.test.ts`).
+- The Java bridge is two halves that must agree: `src/java/Kata.java` (fixed) and what `src/java/compose.ts`
+  generates (`KataWorld` with the roots and letters, `Main.KataGen` nested in `Main` so it reaches the code's own
+  classes). The source is class editor, prelude, `final class Main extends KataWorld { code + KataGen }`, then the
+  rest; the line numbers in `lines` map errors back, so keep the order, and keep generated code on its own lines
+  after the code. The worker side is `javaBridge` in `worker.js` (`__kata`); a new call goes in both.
+- The Java compiler runs in a worker of its own from a data: URL, like the runner; the page fetches its files and
+  hands them over. Keep it on an opaque origin. `@live-codes/java-wasm` is pinned to an exact version; updating it
+  means updating `public/licenses/` too (GPLv2 + Classpath Exception for javac: the notices must be served).
+- `/api/translate` (`worker/translate.ts`) is open to anyone: the page sends a task id, two languages, the code and
+  the class, never words; the prompt never has a solution. The talk in Java keeps the system prompt as it is and puts
+  the Java context in the user message (`nextJava` in `worker/talk.ts`), so a conversation's prefix never changes.
+- A Java root's or field's type comes from the start world (`typeOf` in `src/tasks/java.ts`); when it can't (an empty
+  array, null, a plain object), give `java.roots` and, for an object, a class in `java.prelude`. A field the item class
+  doesn't declare is not mirrored back: a task whose items carry a `shape` needs `String shape` in its Java class.
 - A push to `main` deploys.

@@ -46,6 +46,31 @@ while (stack.length) {
   vis()
 }
 `,
+    java: {
+      text: `Monstrene står i kø i \`queue\`: det første i lista er først i køen. Ved siden av står en tom stabel, \`stack\`, der det som legges på sist, tas av først.
+
+Snu køen ved hjelp av stabelen: ta ett og ett fra fronten av køen (\`queue.removeFirst()\`) og legg dem på stabelen (\`stack.add(…)\`). Ta dem så av stabelen igjen (\`stack.removeLast()\`) og still dem bakerst i køen (\`queue.add(…)\`).`,
+      code: { 'while (queue.length) stack.push(queue.shift())': 'while (!queue.isEmpty()) stack.add(queue.removeFirst());' },
+      scaffold: `void main() {
+    while (!queue.isEmpty()) {
+        stack.add(queue.removeFirst());
+        vis();
+    }
+    // Og tilbake i køen
+}
+`,
+      solution: `void main() {
+    while (!queue.isEmpty()) {
+        stack.add(queue.removeFirst());
+        vis();
+    }
+    while (!stack.isEmpty()) {
+        queue.add(stack.removeLast());
+        vis();
+    }
+}
+`,
+    },
     check: (t) => {
       const want = t.before('queue').reverse()
       if (!Array.isArray(t.queue) || !Array.isArray(t.stack)) return '`queue` og `stack` skal fortsatt være arrayer.'
@@ -98,20 +123,53 @@ hanoi(pegs[0].length, pegs[0], pegs[2], pegs[1], (from, to) => {
 })
 `,
     exports: ['hanoi'],
+    java: {
+      text: `Tårnet på \`pegs.get(0)\` skal flyttes til \`pegs.get(2)\`. Du kan flytte ett monster av gangen, fra toppen av en pinne (\`removeLast()\`) til toppen av en annen (\`add(…)\`), og et monster kan aldri stå oppå et som er mindre. \`value\` er størrelsen.
+
+Skriv \`void hanoi(int n, List<Monster> from, List<Monster> to, List<Monster> via, BiConsumer<List<Monster>, List<Monster>> move)\` som flytter de \`n\` øverste fra \`from\` til \`to\`, og kaller \`move.accept(from, to)\` for hvert flytt. Koden nederst kjører den på tårnet. Der er \`move\` en lambda som flytter det øverste monsteret fra \`from\` til \`to\`.`,
+      code: { 'move(from, to)': 'move.accept(from, to)', 'n === 0': 'n == 0' },
+      scaffold: `void hanoi(int n, List<Monster> from, List<Monster> to, List<Monster> via, BiConsumer<List<Monster>, List<Monster>> move) {
+    if (n == 0) return;
+    // Flytt n - 1 til via, det største til to, og n - 1 fra via til to
+}
+
+void main() {
+    hanoi(pegs.get(0).size(), pegs.get(0), pegs.get(2), pegs.get(1), (from, to) -> {
+        to.add(from.removeLast());
+        vis();
+    });
+}
+`,
+      solution: `void hanoi(int n, List<Monster> from, List<Monster> to, List<Monster> via, BiConsumer<List<Monster>, List<Monster>> move) {
+    if (n == 0) return;
+    hanoi(n - 1, from, via, to, move);
+    move.accept(from, to);
+    hanoi(n - 1, via, to, from, move);
+}
+
+void main() {
+    hanoi(pegs.get(0).size(), pegs.get(0), pegs.get(2), pegs.get(1), (from, to) -> {
+        to.add(from.removeLast());
+        vis();
+    });
+}
+`,
+    },
     check: (t) => {
       const hanoi = t.fn('hanoi')
       for (const n of [1, 3, 6]) {
         const pegs = [Array.from({ length: n }, (_, i) => n - i), [], []]
         let moves = 0
         let bad = ''
-        hanoi(n, pegs[0], pegs[2], pegs[1], (from: number[], to: number[]) => {
+        const move = (from: number[], to: number[]) => {
           moves++
           if (bad) return
           if (!from.length) { bad = 'et flytt fra en tom pinne'; return }
           const disc = from[from.length - 1]
           if (to.length && to[to.length - 1] < disc) { bad = `${disc} ble lagt oppå ${to[to.length - 1]}`; return }
           to.push(from.pop()!)
-        })
+        }
+        hanoi(n, pegs[0], pegs[2], pegs[1], move)
         if (bad) return `Med ${n} monstre: ${bad}.`
         if (pegs[2].length !== n) return `Med ${n} monstre står bare ${pegs[2].length} på målpinnen til slutt.`
         if (moves !== 2 ** n - 1) return `Med ${n} monstre brukte du ${moves} flytt; det går på ${2 ** n - 1}.`
@@ -148,6 +206,32 @@ console.log(items.length, stack.length)
 items.push(stack.pop())
 vis()
 `,
+    java: {
+      code: {
+        push: 'add',
+        pop: 'removeLast',
+        'stack.push(x)': 'stack.add(x)',
+        'items.shift()': 'items.removeFirst()',
+        'stack.push(items.shift())': 'stack.add(items.removeFirst())',
+        'stack.pop()': 'stack.removeLast()',
+        'items.push(…)': 'items.add(…)',
+      },
+      scaffold: `void main() {
+    // 1. Flytt A, B og C fra items til stack, i den rekkefølgen
+    // 2. Ta det øverste av stack og legg det tilbake i items
+    IO.println(items.size() + " " + stack.size());
+}
+`,
+      solution: `void main() {
+    while (!items.isEmpty()) {
+        stack.add(items.removeFirst());
+        vis();
+    }
+    items.add(stack.removeLast());
+    vis();
+}
+`,
+    },
     check: (t) => {
       const [a, b, c] = t.before('items')
       if (!Array.isArray(t.items) || !Array.isArray(t.stack)) return '`items` og `stack` skal fortsatt være arrayer.'
@@ -189,8 +273,40 @@ console.log(peek(stack))
 console.log(peek(stack))
 `,
     exports: ['peek'],
+    java: {
+      text: `Monstrene i \`stack\` er en stabel: det øverste er det siste i lista, det som ble lagt på sist. Noen ganger vil du bare se hvem som ligger øverst, uten å ta det av.
+
+Skriv \`Monster peek(List<Monster> stack)\` som gir tilbake det øverste monsteret uten å fjerne det. Er stabelen tom, gir den tilbake \`null\`. Stabelen skal ha de samme monstrene etterpå som før.`,
+      hints: [
+        'Det øverste er det siste i lista, på plass `stack.size() - 1`.',
+        '`stack.get(stack.size() - 1)` er monsteret. `removeLast()` ville tatt det av, så den skal du ikke bruke her.',
+        'En tom liste har ingen siste plass, og `stack.get(-1)` kaster en feil. Sjekk derfor `stack.isEmpty()` først, og gi `null`. `stack.getLast()` gjør det samme som `stack.get(stack.size() - 1)`.',
+      ],
+      scaffold: `Monster peek(List<Monster> stack) {
+    // Hvem ligger øverst? Ikke ta det av.
+    return null;
+}
+
+void main() {
+    IO.println(peek(stack));
+}
+`,
+      solution: `Monster peek(List<Monster> stack) {
+    if (stack.isEmpty()) return null;
+    Monster top = stack.get(stack.size() - 1);
+    vis(top);
+    return top;
+}
+
+void main() {
+    IO.println(peek(stack));
+}
+`,
+    },
     check: (t) => {
       const peek = t.fn('peek')
+      // Java has no undefined: there an empty stack gives null.
+      const none = t.lang === 'java' ? null : undefined
       const cases: number[][] = [[], [4], [3, 8, 1], [5, 5]]
       for (const values of cases) {
         const stack = values.map((value) => t.monster({ value }))
@@ -198,9 +314,9 @@ console.log(peek(stack))
         const got = peek(stack)
         const shown = `[${values.join(', ')}]`
         if (!values.length) {
-          if (got !== undefined) return `peek gav ${t.show(got?.value)} for en tom stabel, men skal gi undefined.`
+          if (got !== none) return `peek gav ${t.show(got?.value)} for en tom stabel, men skal gi ${String(none)}.`
         } else if (got !== copy[copy.length - 1]) {
-          return `peek(${shown}) gav ${got === undefined ? 'undefined' : t.show(got.value)}, men det øverste har ${values[values.length - 1]}.`
+          return `peek(${shown}) gav ${got === none ? String(none) : t.show(got.value)}, men det øverste har ${values[values.length - 1]}.`
         }
         if (stack.length !== copy.length || stack.some((x, i) => x !== copy[i])) return `peek(${shown}) endret stabelen. Den skal bare se, ikke ta bort noe.`
       }
@@ -231,6 +347,32 @@ console.log(queue[0].shape)
     solution: `queue.push(queue.shift())
 vis()
 `,
+    java: {
+      // A field can't be added to an item on the fly in Java, so the class has shape from the start.
+      monster: `// Legg til eller ta bort et felt og trykk «Bruk».
+class Monster {
+    String color = "pink";
+    String shape;
+}`,
+      text: `Monstrene står i kø i \`queue\`: det første i lista er først i køen, og nye stiller seg bakerst. Spøkelset (\`shape\` er \`"ghost"\`) står først, men vil heller stå bakerst.
+
+Flytt spøkelset bakerst i køen. Bruk \`removeFirst()\` til å ta ut det første, og \`add(…)\` til å stille det bakerst. De andre skal stå i samme rekkefølge som før.`,
+      code: {
+        'queue.shift()': 'queue.removeFirst()',
+        'queue.push(x)': 'queue.add(x)',
+        'queue.push(queue.shift())': 'queue.add(queue.removeFirst())',
+      },
+      scaffold: `void main() {
+    // Spøkelset står først i køen. Send det bakerst.
+    IO.println(queue.get(0).shape);
+}
+`,
+      solution: `void main() {
+    queue.add(queue.removeFirst());
+    vis();
+}
+`,
+    },
     check: (t) => {
       const before = t.before('queue')
       const want = [...before.slice(1), before[0]]
@@ -277,6 +419,37 @@ Til slutt er \`queue\` tom, og \`removed\` har alle monstrene i den rekkefølgen
   vis(thing)
 }
 `,
+    java: {
+      text: `Monstrene står i kø i \`queue\`, og hvert har en \`value\` fra 1 til 4 som sier hvor mange runder det har igjen. Ved siden av står en tom liste, \`removed\`, til de som blir ferdige.
+
+Gjør runder til køen er tom. I hver runde tar du det første ut av køen og trekker 1 fra \`value\`. Er \`value\` fortsatt over 0, stiller monsteret seg bakerst i køen igjen. Er den 0, er monsteret ferdig, og det legges bakerst i \`removed\`.
+
+Til slutt er \`queue\` tom, og \`removed\` har alle monstrene i den rekkefølgen de ble ferdige. Alle har da \`value\` 0.`,
+      code: {
+        'while (queue.length)': 'while (!queue.isEmpty())',
+        'const thing = queue.shift()': 'Monster thing = queue.removeFirst()',
+        'queue.push(thing)': 'queue.add(thing)',
+        'removed.push(thing)': 'removed.add(thing)',
+      },
+      scaffold: `void main() {
+    while (!queue.isEmpty()) {
+        Monster thing = queue.removeFirst();
+        // Trekk 1 fra value. Bakerst i køen igjen, eller ferdig?
+        removed.add(thing);
+    }
+}
+`,
+      solution: `void main() {
+    while (!queue.isEmpty()) {
+        Monster thing = queue.removeFirst();
+        thing.value--;
+        if (thing.value > 0) queue.add(thing);
+        else removed.add(thing);
+        vis(thing);
+    }
+}
+`,
+    },
     check: (t) => {
       const live = t.before('queue')
       const left = t.start.queue.map((copy: any) => copy.value as number)
@@ -346,6 +519,44 @@ console.log(balanced(items))
 console.log(balanced(items))
 `,
     exports: ['balanced'],
+    java: {
+      text: `Monstrene i \`items\` er tegn i en rekke: violet er \`(\`, teal er \`)\`, pink er \`[\` og cyan er \`]\`. Rekka går opp hvis hver åpning blir lukket av riktig slags lukking, og de lukkes i motsatt rekkefølge av hvordan de ble åpnet: \`([])\` går opp, men \`([)]\` gjør det ikke.
+
+Skriv \`boolean balanced(List<Monster> items)\` som gir tilbake \`true\` hvis rekka går opp, ellers \`false\`. En tom rekke går opp. Du ser bare på \`color\`, og metoden skal ikke endre rekka. Koden nederst prøver den på \`items\`.`,
+      hints: [
+        'Den som åpnet sist, må lukkes først. Det er akkurat slik en stabel oppfører seg.',
+        'Gå gjennom rekka. Kommer en åpning (violet eller pink), legger du på stabelen hvilken lukking du venter på (teal eller cyan). Kommer en lukking, må den være den samme som øverst på stabelen: ta den av med `removeLast()` og sammenlign med `equals`.',
+        'Er stabelen tom når en lukking kommer, går ikke rekka opp. Er stabelen ikke tom etter det siste monsteret, mangler det lukkinger. Ellers går den opp.',
+      ],
+      scaffold: `boolean balanced(List<Monster> items) {
+    List<String> waiting = new ArrayList<>(); // lukkingene vi venter på
+    for (Monster thing : items) {
+        // Åpning (violet eller pink): legg lukkingen på waiting.
+        // Lukking (teal eller cyan): den må være den øverste på waiting.
+    }
+    return true;
+}
+
+void main() {
+    IO.println(balanced(items));
+}
+`,
+      solution: `boolean balanced(List<Monster> items) {
+    Map<String, String> closer = Map.of("violet", "teal", "pink", "cyan");
+    List<String> waiting = new ArrayList<>();
+    for (Monster thing : items) {
+        vis(thing);
+        if (closer.containsKey(thing.color)) waiting.add(closer.get(thing.color));
+        else if (waiting.isEmpty() || !waiting.removeLast().equals(thing.color)) return false;
+    }
+    return waiting.isEmpty();
+}
+
+void main() {
+    IO.println(balanced(items));
+}
+`,
+    },
     check: (t) => {
       const balanced = t.fn('balanced')
       const colorOf: Record<string, string> = { '(': 'violet', ')': 'teal', '[': 'pink', ']': 'cyan' }
@@ -421,6 +632,36 @@ while (spare.length) {
   vis()
 }
 `,
+    java: {
+      text: `Monstrene i \`stack\` ligger i tilfeldig rekkefølge. Ved siden av står en tom stabel, \`spare\`. Sorter \`stack\` så det minste (\`value\`) ligger øverst, altså sist i lista, og det største nederst.
+
+Bruk bare \`add\` og \`removeLast\` til å flytte monstrene mellom de to stablene. Å titte på toppen, \`stack.getLast()\`, er greit. Ikke bruk \`sort\`, og ikke ta ut eller sett inn noe andre steder enn på toppen. Til slutt skal \`stack\` være sortert, og \`spare\` tom.`,
+      code: { push: 'add', pop: 'removeLast', 'const thing = stack.pop()': 'Monster thing = stack.removeLast()' },
+      scaffold: `void main() {
+    while (!stack.isEmpty()) {
+        Monster thing = stack.removeLast();
+        // Legg thing på riktig plass i spare. Flytt noen tilbake til stack om det trengs.
+        spare.add(thing);
+    }
+    // Og så alt tilbake til stack
+}
+`,
+      solution: `void main() {
+    while (!stack.isEmpty()) {
+        Monster thing = stack.removeLast();
+        while (!spare.isEmpty() && spare.getLast().value > thing.value) {
+            stack.add(spare.removeLast());
+        }
+        spare.add(thing);
+        vis(thing);
+    }
+    while (!spare.isEmpty()) {
+        stack.add(spare.removeLast());
+        vis();
+    }
+}
+`,
+    },
     check: (t) => {
       const want = t.before('stack').sort((a, b) => b.value - a.value)
       if (!Array.isArray(t.stack) || !Array.isArray(t.spare)) return '`stack` og `spare` skal fortsatt være arrayer.'
@@ -510,15 +751,88 @@ for (const thing of items) {
 console.log(minStack.min(), minStack.size)
 `,
     exports: ['MinStack'],
+    java: {
+      text: `Monstrene i \`items\` trenger en stabel som alltid vet hvilken verdi som er minst. Skriv \`class MinStack\` med disse:
+
+- \`void push(int x)\` legger \`x\` øverst
+- \`Integer pop()\` tar den øverste av og gir den tilbake, eller \`null\` hvis stabelen er tom
+- \`Integer min()\` gir den minste verdien som ligger i stabelen akkurat nå, eller \`null\` hvis den er tom
+- \`int size()\` gir hvor mange det er i stabelen
+
+\`pop()\` og \`min()\` gir \`Integer\` og ikke \`int\`, så de kan gi \`null\`. Det vanskelige er \`min()\`: den skal svare med én gang og ikke lete gjennom alle verdiene hver gang. Sjekken prøver tilfeldige rekker med \`push\` og \`pop\`, også med like verdier. Koden nederst legger verdiene til monstrene i \`items\` på en \`MinStack\`.`,
+      code: { 'Math.min(x, mins.at(-1))': 'Math.min(x, mins.getLast())' },
+      scaffold: `class MinStack {
+    private final List<Integer> items = new ArrayList<>();
+
+    void push(int x) {
+        items.add(x);
+    }
+
+    Integer pop() {
+        return items.isEmpty() ? null : items.removeLast();
+    }
+
+    Integer min() {
+        // Svar uten å lete gjennom alle
+        return items.isEmpty() ? null : items.get(0);
+    }
+
+    int size() {
+        return items.size();
+    }
+}
+
+void main() {
+    MinStack minStack = new MinStack();
+    for (Monster thing : items) minStack.push(thing.value);
+    IO.println(minStack.min() + " " + minStack.size());
+}
+`,
+      solution: `class MinStack {
+    private final List<Integer> items = new ArrayList<>();
+    private final List<Integer> mins = new ArrayList<>(); // mins.get(i) er den minste av de i + 1 nederste
+
+    void push(int x) {
+        items.add(x);
+        mins.add(mins.isEmpty() ? x : Math.min(x, mins.getLast()));
+    }
+
+    Integer pop() {
+        if (items.isEmpty()) return null;
+        mins.removeLast();
+        return items.removeLast();
+    }
+
+    Integer min() {
+        return mins.isEmpty() ? null : mins.getLast();
+    }
+
+    int size() {
+        return items.size();
+    }
+}
+
+void main() {
+    MinStack minStack = new MinStack();
+    for (Monster thing : items) {
+        minStack.push(thing.value);
+        vis(thing);
+    }
+    IO.println(minStack.min() + " " + minStack.size());
+}
+`,
+    },
     check: (t) => {
       const MinStack: any = t.fn('MinStack')
       let seed = 3
       const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296
       const sizeOf = (s: any) => (typeof s.size === 'function' ? s.size() : s.size)
+      // Java has no undefined: there an empty stack gives null.
+      const none = t.lang === 'java' ? null : undefined
       const empty = new MinStack()
       if (sizeOf(empty) !== 0) return `En ny MinStack skal ha size 0, men har ${t.show(sizeOf(empty))}.`
-      if (empty.min() !== undefined) return `min() på en tom stabel gav ${t.show(empty.min())}, men skal gi undefined.`
-      if (empty.pop() !== undefined) return 'pop() på en tom stabel skal gi undefined.'
+      if (empty.min() !== none) return `min() på en tom stabel gav ${t.show(empty.min())}, men skal gi ${String(none)}.`
+      if (empty.pop() !== none) return `pop() på en tom stabel skal gi ${String(none)}.`
       for (const round of [0, 1]) {
         const stack = new MinStack()
         const ref: number[] = []
@@ -531,32 +845,35 @@ console.log(minStack.min(), minStack.size)
             log.push(`push(${x})`)
           } else {
             const got = stack.pop()
-            const want = ref.pop()
+            const want = ref.length ? ref.pop() : none
             log.push('pop()')
             if (got !== want) return `Etter ${log.slice(-4).join(', ')} gav pop() ${t.show(got)}, men skal gi ${t.show(want)}.`
           }
-          const wantMin = ref.length ? Math.min(...ref) : undefined
+          const wantMin = ref.length ? Math.min(...ref) : none
           const gotMin = stack.min()
           if (gotMin !== wantMin) return `Etter ${log.slice(-4).join(', ')} gav min() ${t.show(gotMin)}, men den minste er ${t.show(wantMin)}.`
           if (sizeOf(stack) !== ref.length) return `Etter ${log.slice(-4).join(', ')} har size ${t.show(sizeOf(stack))}, men skal ha ${ref.length}.`
         }
       }
-      // min() must not look through the stack: count how often the values are read during min().
-      let looks = 0
-      const probe = (v: number) => ({ valueOf: () => { looks++; return v } })
-      try {
-        const big = new MinStack()
-        for (let i = 0; i < 1000; i++) big.push(probe(Math.floor(rnd() * 100)))
-        let worst = 0
-        for (let i = 0; i < 20; i++) {
-          big.pop()
-          const before = looks
-          big.min()
-          worst = Math.max(worst, looks - before)
+      // min() must not look through the stack: count how often the values are read during min(). Only in JavaScript:
+      // Java gets numbers, and can't be watched reading them.
+      if (t.lang === 'js') {
+        let looks = 0
+        const probe = (v: number) => ({ valueOf: () => { looks++; return v } })
+        try {
+          const big = new MinStack()
+          for (let i = 0; i < 1000; i++) big.push(probe(Math.floor(rnd() * 100)))
+          let worst = 0
+          for (let i = 0; i < 20; i++) {
+            big.pop()
+            const before = looks
+            big.min()
+            worst = Math.max(worst, looks - before)
+          }
+          if (worst > 10) return `min() leter gjennom stabelen: den så på ${worst} verdier for ett svar. Husk den minste mens du legger på, så svarer min() med én gang.`
+        } catch {
+          // A class that can't take objects instead of numbers has already passed with numbers.
         }
-        if (worst > 10) return `min() leter gjennom stabelen: den så på ${worst} verdier for ett svar. Husk den minste mens du legger på, så svarer min() med én gang.`
-      } catch {
-        // A class that can't take objects instead of numbers has already passed with numbers.
       }
       return true
     },
@@ -633,6 +950,71 @@ for (const thing of items) {
 console.log(line.dequeue())
 `,
     exports: ['TwoStackQueue'],
+    java: {
+      text: `En kø er først inn, først ut. Men si at du bare har stabler, lister der du bare bruker \`add\` og \`removeLast\`. Hvordan lager du en kø av dem?
+
+Skriv \`class TwoStackQueue\` med disse:
+
+- \`void enqueue(Monster x)\` stiller \`x\` bakerst i køen
+- \`Monster dequeue()\` tar den fremste ut og gir den tilbake, eller \`null\` hvis køen er tom
+- \`int size()\` gir hvor mange som står i køen
+
+Bruk to lister som stabler, og bare \`add\` og \`removeLast\` på dem: \`removeFirst\`, \`addFirst\`, \`remove(0)\` og \`reversed\` er forbudt. Sjekken prøver tilfeldige rekker med \`enqueue\` og \`dequeue\`. Ikke flytt alt fram og tilbake for hvert monster. Koden nederst stiller monstrene i \`items\` i køen.`,
+      code: { push: 'add', pop: 'removeLast', size: 'size()' },
+      scaffold: `class TwoStackQueue {
+    private final List<Monster> inbox = new ArrayList<>(); // nye monstre havner her
+    private final List<Monster> outbox = new ArrayList<>(); // herfra tar du ut
+
+    void enqueue(Monster x) {
+        inbox.add(x);
+    }
+
+    Monster dequeue() {
+        // Er outbox tom? Flytt alt fra inbox over først.
+        return outbox.isEmpty() ? null : outbox.removeLast();
+    }
+
+    int size() {
+        return inbox.size() + outbox.size();
+    }
+}
+
+void main() {
+    TwoStackQueue line = new TwoStackQueue();
+    for (Monster thing : items) line.enqueue(thing);
+    IO.println(line.dequeue());
+}
+`,
+      solution: `class TwoStackQueue {
+    private final List<Monster> inbox = new ArrayList<>(); // nye monstre havner her
+    private final List<Monster> outbox = new ArrayList<>(); // herfra tar du ut
+
+    void enqueue(Monster x) {
+        inbox.add(x);
+    }
+
+    Monster dequeue() {
+        if (outbox.isEmpty()) {
+            while (!inbox.isEmpty()) outbox.add(inbox.removeLast());
+        }
+        return outbox.isEmpty() ? null : outbox.removeLast();
+    }
+
+    int size() {
+        return inbox.size() + outbox.size();
+    }
+}
+
+void main() {
+    TwoStackQueue line = new TwoStackQueue();
+    for (Monster thing : items) {
+        line.enqueue(thing);
+        vis(thing);
+    }
+    IO.println(line.dequeue());
+}
+`,
+    },
     check: (t) => {
       const TwoStackQueue: any = t.fn('TwoStackQueue')
       let seed = 9
@@ -640,6 +1022,11 @@ console.log(line.dequeue())
       // An operation is a number to enqueue, or -1 to dequeue.
       const randomOps = (n: number, chance: number): number[] => Array.from({ length: n }, () => (rnd() < chance ? Math.floor(rnd() * 100) : -1))
       const proto: any = Array.prototype
+      // In Java the queue holds monsters, as in the code under the class: a number goes in as a monster of its own from
+      // a pool and comes out as its number again, and an empty queue gives null. Nor can the check watch Java's lists.
+      const java = t.lang === 'java'
+      const none = java ? null : undefined
+      const pool = java ? Array.from({ length: 100 }, () => t.monster({})) : []
       const run = (ops: number[]) => {
         const queue = new TwoStackQueue()
         const got: unknown[] = new Array(ops.length)
@@ -651,22 +1038,27 @@ console.log(line.dequeue())
           banned = true
           throw new Error('stopp')
         }
-        proto.push = function (this: unknown, ...args: unknown[]) {
-          calls++
-          return real.push.apply(this, args)
+        if (!java) {
+          proto.push = function (this: unknown, ...args: unknown[]) {
+            calls++
+            return real.push.apply(this, args)
+          }
+          proto.pop = function (this: unknown) {
+            calls++
+            return real.pop.apply(this)
+          }
+          proto.shift = ban
+          proto.unshift = ban
+          proto.splice = ban
+          proto.reverse = ban
         }
-        proto.pop = function (this: unknown) {
-          calls++
-          return real.pop.apply(this)
-        }
-        proto.shift = ban
-        proto.unshift = ban
-        proto.splice = ban
-        proto.reverse = ban
         try {
           for (let k = 0; k < ops.length; k++) {
-            if (ops[k] >= 0) queue.enqueue(ops[k])
-            else got[k] = queue.dequeue()
+            if (ops[k] >= 0) queue.enqueue(java ? pool[ops[k]] : ops[k])
+            else if (java) {
+              const out = queue.dequeue()
+              got[k] = pool.includes(out) ? pool.indexOf(out) : out
+            } else got[k] = queue.dequeue()
             const size = queue.size
             sizes[k] = typeof size === 'function' ? queue.size() : size
           }
@@ -689,9 +1081,9 @@ console.log(line.dequeue())
         const line: number[] = []
         let head = 0
         for (let k = 0; k < ops.length; k++) {
-          let want: number | undefined
+          let want: number | null | undefined
           if (ops[k] >= 0) line.push(ops[k])
-          else want = head < line.length ? line[head++] : undefined
+          else want = head < line.length ? line[head++] : none
           const history = ops
             .slice(Math.max(0, k - 3), k + 1)
             .map((op) => (op >= 0 ? `enqueue(${op})` : 'dequeue()'))
@@ -700,12 +1092,15 @@ console.log(line.dequeue())
           if (res.sizes[k] !== line.length - head) return `Etter ${history} har size ${t.show(res.sizes[k])}, men skal ha ${line.length - head}.`
         }
       }
-      // Moving everything back and forth for each call costs far more push and pop calls than a good queue.
-      const long = [...Array.from({ length: 600 }, () => Math.floor(rnd() * 100)), ...Array.from({ length: 600 }, () => -1)]
-      const res = run(long)
-      if (res.banned) return 'Du bruker `shift`, `unshift`, `splice` eller `reverse`. Her er bare `push` og `pop` lov, på to arrayer.'
-      if (res.calls > 6 * long.length + 20) {
-        return `Med 600 monstre inn og 600 ut brukte køen ${res.calls} kall til push og pop. Flytt bare mellom stablene når outbox er tom, så blir hvert monster flyttet høyst én gang.`
+      // Moving everything back and forth for each call costs far more push and pop calls than a good queue. Only in
+      // JavaScript, where the calls can be counted.
+      if (!java) {
+        const long = [...Array.from({ length: 600 }, () => Math.floor(rnd() * 100)), ...Array.from({ length: 600 }, () => -1)]
+        const res = run(long)
+        if (res.banned) return 'Du bruker `shift`, `unshift`, `splice` eller `reverse`. Her er bare `push` og `pop` lov, på to arrayer.'
+        if (res.calls > 6 * long.length + 20) {
+          return `Med 600 monstre inn og 600 ut brukte køen ${res.calls} kall til push og pop. Flytt bare mellom stablene når outbox er tom, så blir hvert monster flyttet høyst én gang.`
+        }
       }
       return true
     },
@@ -753,6 +1148,48 @@ console.log(nextGreater(items))
 console.log(nextGreater(items))
 `,
     exports: ['nextGreater'],
+    java: {
+      text: `Hvert monster i \`items\` vil vite hvem som er det første større monsteret til høyre for det. Skriv \`int[] nextGreater(List<Monster> items)\` som gir tilbake en ny array med like mange tall: for hver plass \`value\` til det første monsteret lenger til høyre som har større \`value\`, eller \`-1\` hvis ingen er større. Like verdier regnes ikke som større.
+
+For verdiene 2, 7, 3, 5, 4, 6 er svaret 7, -1, 5, 6, 6, -1. Metoden skal ikke endre \`items\`. Det går an med én gjennomgang og en stabel, uten å lete til høyre for hvert eneste monster.`,
+      hints: [
+        'Gå fra venstre mot høyre, og la en stabel, `List<Integer> waiting`, holde plassene som fortsatt venter på et større monster.',
+        'Kommer et nytt monster, er det svaret for alle på stabelen som er mindre enn det: ta dem av med `waiting.removeLast()` og skriv `result[plass] = items.get(i).value`.',
+        'Legg så plassen til det nye monsteret på stabelen. De som er igjen når løkka er ferdig, får `-1`: fyll `result` med `-1` på forhånd, med `Arrays.fill(result, -1)`.',
+      ],
+      scaffold: `int[] nextGreater(List<Monster> items) {
+    int[] result = new int[items.size()];
+    Arrays.fill(result, -1);
+    List<Integer> waiting = new ArrayList<>(); // plassene som venter på en større
+    for (int i = 0; i < items.size(); i++) {
+        // Er items.get(i) større enn de som venter? Da har de fått svaret sitt.
+    }
+    return result;
+}
+
+void main() {
+    IO.println(Arrays.toString(nextGreater(items)));
+}
+`,
+      solution: `int[] nextGreater(List<Monster> items) {
+    int[] result = new int[items.size()];
+    Arrays.fill(result, -1);
+    List<Integer> waiting = new ArrayList<>();
+    for (int i = 0; i < items.size(); i++) {
+        while (!waiting.isEmpty() && items.get(waiting.getLast()).value < items.get(i).value) {
+            result[waiting.removeLast()] = items.get(i).value;
+        }
+        waiting.add(i);
+        vis(items.get(i));
+    }
+    return result;
+}
+
+void main() {
+    IO.println(Arrays.toString(nextGreater(items)));
+}
+`,
+    },
     check: (t) => {
       const nextGreater = t.fn('nextGreater')
       const expected = (v: number[]) =>
@@ -770,7 +1207,8 @@ console.log(nextGreater(items))
         }
         if (row.some((x, i) => x.value !== values[i])) return 'nextGreater skal ikke endre raden.'
       }
-      // A long falling row is the worst case for looking right from every item: count the reads of value.
+      // A long falling row is the worst case for looking right from every item: count the reads of value. Only in
+      // JavaScript: Java reads a copy of the row, once.
       const n = 3000
       let reads = 0
       const falling = Array.from({ length: n }, (_, i) => {
@@ -779,7 +1217,7 @@ console.log(nextGreater(items))
         return o
       })
       const got = nextGreater(falling)
-      if (reads > 12 * n) {
+      if (t.lang === 'js' && reads > 12 * n) {
         return `nextGreater så på verdiene ${reads} ganger blant ${n} monstre. Med en stabel og én gjennomgang holder det med noen få per monster.`
       }
       if (!Array.isArray(got) || got.length !== n || got.some((g: unknown) => g !== -1)) return 'I en rad som bare synker, er ingen monstre etterfulgt av et større. Svaret skal være -1 for alle.'
@@ -827,6 +1265,43 @@ solve((from, to) => {
 })
 `,
     exports: ['solve'],
+    java: {
+      code: {
+        'function solve(move)': 'void solve(BiConsumer<Integer, Integer> move)',
+        'move(from, to)': 'move.accept(from, to)',
+        'move(0, 2)': 'move.accept(0, 2)',
+        'move(0, 1)': 'move.accept(0, 1)',
+        'move(2, 1)': 'move.accept(2, 1)',
+      },
+      scaffold: `void solve(BiConsumer<Integer, Integer> move) {
+    // Skriv flyttene her, ett per linje: move.accept(0, 2) flytter øverste skive fra pinne 0 til pinne 2
+}
+
+void main() {
+    solve((from, to) -> {
+        pegs.get(to).add(pegs.get(from).removeLast());
+        vis();
+    });
+}
+`,
+      solution: `void solve(BiConsumer<Integer, Integer> move) {
+    move.accept(0, 2);
+    move.accept(0, 1);
+    move.accept(2, 1);
+    move.accept(0, 2);
+    move.accept(1, 0);
+    move.accept(1, 2);
+    move.accept(0, 2);
+}
+
+void main() {
+    solve((from, to) -> {
+        pegs.get(to).add(pegs.get(from).removeLast());
+        vis();
+    });
+}
+`,
+    },
     check: (t) => {
       const solve = t.fn('solve')
       const pegs: number[][] = [[3, 2, 1], [], []]
@@ -898,6 +1373,33 @@ console.log(hanoiMoves(pegs[0].length))
 console.log(hanoiMoves(pegs[0].length))
 `,
     exports: ['hanoiMoves'],
+    java: {
+      code: { 'function hanoiMoves(n)': 'int hanoiMoves(int n)' },
+      hints: [
+        'Tenk på den største skiven. Den må flyttes minst én gang, og da må alle de andre ligge samlet på den tredje pinnen.',
+        'For å flytte tårnet må du flytte `n - 1` skiver bort, den største én gang, og så `n - 1` skiver oppå den. Altså `hanoiMoves(n) = 2 * hanoiMoves(n - 1) + 1`.',
+        'Skriv det som en rekursiv metode som stopper på `n == 0`. Eller regn ut at svaret alltid er 2 opphøyd i `n`, minus 1: `(1 << n) - 1`.',
+      ],
+      scaffold: `int hanoiMoves(int n) {
+    if (n == 0) return 0;
+    // Hvor mange flytt går det på å flytte n - 1 skiver, én skive og så n - 1 skiver igjen?
+    return 0;
+}
+
+void main() {
+    IO.println(hanoiMoves(pegs.get(0).size()));
+}
+`,
+      solution: `int hanoiMoves(int n) {
+    if (n == 0) return 0;
+    return 2 * hanoiMoves(n - 1) + 1;
+}
+
+void main() {
+    IO.println(hanoiMoves(pegs.get(0).size()));
+}
+`,
+    },
     check: (t) => {
       const hanoiMoves = t.fn('hanoiMoves')
       for (let n = 0; n <= 20; n++) {
@@ -954,13 +1456,52 @@ neighborHanoi(pegs[0].length, (from, to) => {
 })
 `,
     exports: ['neighborHanoi'],
+    java: {
+      code: {
+        'function neighborHanoi(n, move)': 'void neighborHanoi(int n, BiConsumer<Integer, Integer> move)',
+        'move(from, to)': 'move.accept(from, to)',
+        'go(n, from, to)': 'void go(int n, int from, int to, BiConsumer<Integer, Integer> move)',
+      },
+      scaffold: `void neighborHanoi(int n, BiConsumer<Integer, Integer> move) {
+    // Flytt n skiver fra 0 til 2, bare mellom naboer
+}
+
+void main() {
+    neighborHanoi(pegs.get(0).size(), (from, to) -> {
+        pegs.get(to).add(pegs.get(from).removeLast());
+        vis();
+    });
+}
+`,
+      solution: `void neighborHanoi(int n, BiConsumer<Integer, Integer> move) {
+    go(n, 0, 2, move);
+}
+
+// A tower between the two outer pegs, always by way of the middle one.
+void go(int k, int from, int to, BiConsumer<Integer, Integer> move) {
+    if (k == 0) return;
+    go(k - 1, from, to, move);
+    move.accept(from, 1);
+    go(k - 1, to, from, move);
+    move.accept(1, to);
+    go(k - 1, from, to, move);
+}
+
+void main() {
+    neighborHanoi(pegs.get(0).size(), (from, to) -> {
+        pegs.get(to).add(pegs.get(from).removeLast());
+        vis();
+    });
+}
+`,
+    },
     check: (t) => {
       const neighborHanoi = t.fn('neighborHanoi')
       for (const n of [1, 2, 3, 5]) {
         const pegs: number[][] = [Array.from({ length: n }, (_, i) => n - i), [], []]
         let moves = 0
         let bad = ''
-        neighborHanoi(n, (from: number, to: number) => {
+        const move = (from: number, to: number) => {
           moves++
           if (bad) return
           if (Math.abs(from - to) !== 1) { bad = `et flytt fra pinne ${from} til ${to}, som ikke er naboer`; return }
@@ -969,7 +1510,8 @@ neighborHanoi(pegs[0].length, (from, to) => {
           const top = pegs[to].at(-1)
           if (top !== undefined && top < disc) { bad = `${disc} ble lagt oppå ${top}`; return }
           pegs[to].push(pegs[from].pop()!)
-        })
+        }
+        neighborHanoi(n, move)
         if (bad) return `Med ${n} skiver: ${bad}.`
         if (pegs[2].length !== n) return `Med ${n} skiver står bare ${pegs[2].length} på pinne 2 til slutt.`
         if (moves !== 3 ** n - 1) return `Med ${n} skiver brukte du ${moves} flytt; det går på ${3 ** n - 1}.`

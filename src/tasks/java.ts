@@ -46,7 +46,8 @@ export function javaRoots(task: Task): Root[] {
   return found
 }
 
-const DECLARATION = /^(?:(?:public|protected|private|static|final|abstract|sealed)\s+)*(?:(?:class|record|interface|enum)\s+([\w$]+)|(?:<[^>]*>\s*)?[\w$.<>[\], ?]+?\s+([\w$]+)\s*\()/
+// At column 0 only: an indented line is inside a declaration (a call in main), not one.
+const DECLARATION = /^(?=\S)(?:(?:public|protected|private|static|final|abstract|sealed)\s+)*(?:(?:class|record|interface|enum)\s+([\w$]+)|(?:<[^>]*>\s*)?[\w$.<>[\], ?]+?\s+([\w$]+)\s*\()/
 
 /**
  * The scaffold without the skeletons of the exports, a declaration running from column 0 to its closing brace at

@@ -110,6 +110,39 @@ console.log(readWord(head))
 console.log(readWord(head))
 `,
     exports: ['readWord'],
+    java: {
+      code: {
+        'function readWord(head)': 'String readWord(Monster head)',
+        "'elg'": '"elg"',
+        "''": '""',
+        "let word = ''": 'String word = ""',
+        'let node = head': 'Monster node = head',
+      },
+      scaffold: `String readWord(Monster head) {
+    // Gå gjennom lista og sett bokstavene sammen til et ord
+    return "";
+}
+
+void main() {
+    IO.println(readWord(head));
+}
+`,
+      solution: `String readWord(Monster head) {
+    String word = "";
+    Monster node = head;
+    while (node != null) {
+        word += node.value;
+        vis(word, node);
+        node = node.next;
+    }
+    return word;
+}
+
+void main() {
+    IO.println(readWord(head));
+}
+`,
+    },
     check: (t) => {
       const readWord = t.fn('readWord')
       const spelled = t.values(t.start.head)
@@ -162,6 +195,41 @@ console.log(isPalindrome(items))
 console.log(isPalindrome(items))
 `,
     exports: ['isPalindrome'],
+    java: {
+      code: {
+        'function isPalindrome(items)': 'boolean isPalindrome(List<Monster> items)',
+        'for (let i = 0; i < items.length / 2; i++)': 'for (int i = 0; i < items.size() / 2; i++)',
+        'items.length - 1 - i': 'items.size() - 1 - i',
+      },
+      hints: [
+        'Sammenlign bokstavene fra hver sin ende: den første med den siste, den andre med den nest siste, og så videre.',
+        'Du trenger bare gå halve veien: `for (int i = 0; i < items.size() / 2; i++)`. Det motsatte monsteret står på plass `items.size() - 1 - i`.',
+        'To tekster sammenligner du ikke med `==` i Java. Bruk `equalsIgnoreCase`, som også ser bort fra store og små bokstaver: er `items.get(i).value` ulik bokstaven på motsatt side, er svaret `false` med en gang. Kommer du gjennom hele løkka, er svaret `true`.',
+      ],
+      scaffold: `boolean isPalindrome(List<Monster> items) {
+    // Sammenlign første med siste, andre med nest siste …
+    return true;
+}
+
+void main() {
+    IO.println(isPalindrome(items));
+}
+`,
+      solution: `boolean isPalindrome(List<Monster> items) {
+    for (int i = 0; i < items.size() / 2; i++) {
+        Monster left = items.get(i);
+        Monster right = items.get(items.size() - 1 - i);
+        vis(left, right);
+        if (!left.value.equalsIgnoreCase(right.value)) return false;
+    }
+    return true;
+}
+
+void main() {
+    IO.println(isPalindrome(items));
+}
+`,
+    },
     check: (t) => {
       const isPalindrome = t.fn('isPalindrome')
       const shown = (t.start.items ?? []).map((m: { value: string }) => m.value).join('')
@@ -213,6 +281,34 @@ console.log(vowels(text))
 console.log(vowels(text))
 `,
     exports: ['vowels'],
+    java: {
+      code: {
+        'function vowels(text)': 'int vowels(String text)',
+        'for (const letter of ...)': 'for (char letter : text.toLowerCase().toCharArray())',
+        "'aeiouyæøå'.includes(letter)": '"aeiouyæøå".indexOf(letter) >= 0',
+      },
+      scaffold: `int vowels(String text) {
+    // Tell vokalene: a e i o u y æ ø å
+    return 0;
+}
+
+void main() {
+    IO.println(vowels(text));
+}
+`,
+      solution: `int vowels(String text) {
+    int count = 0;
+    for (char letter : text.toLowerCase().toCharArray()) {
+        if ("aeiouyæøå".indexOf(letter) >= 0) count++;
+    }
+    return count;
+}
+
+void main() {
+    IO.println(vowels(text));
+}
+`,
+    },
     check: (t) => {
       const vowels = t.fn('vowels')
       const count = (s: string) => [...s.toLowerCase()].filter((c) => 'aeiouyæøå'.includes(c)).length
@@ -261,6 +357,36 @@ console.log(rover(text))
 console.log(rover(text))
 `,
     exports: ['rover'],
+    java: {
+      code: { 'function rover(text)': 'String rover(String text)' },
+      hints: [
+        'Bygg opp svaret bokstav for bokstav: `String out = ""`, og `for (char letter : text.toCharArray())`.',
+        'Konsonantene er `bcdfghjklmnpqrstvwxz`. Gjør bokstaven liten og se om den står der: `"bcdfghjklmnpqrstvwxz".indexOf(Character.toLowerCase(letter)) >= 0`.',
+        'Er den en konsonant, legg til `letter + "o" + letter`; ellers legger du til bokstaven som den er. Skriv `"o"` med doble anførselstegn: `\'o\'` er en `char`, og to `char` lagt sammen blir et tall i Java. Bruk den originale bokstaven begge steder, så blir en stor bokstav stor begge ganger.',
+      ],
+      scaffold: `String rover(String text) {
+    // Hver konsonant c blir c + "o" + c
+    return text;
+}
+
+void main() {
+    IO.println(rover(text));
+}
+`,
+      solution: `String rover(String text) {
+    String out = "";
+    for (char letter : text.toCharArray()) {
+        if ("bcdfghjklmnpqrstvwxz".indexOf(Character.toLowerCase(letter)) >= 0) out += letter + "o" + letter;
+        else out += letter;
+    }
+    return out;
+}
+
+void main() {
+    IO.println(rover(text));
+}
+`,
+    },
     check: (t) => {
       const rover = t.fn('rover')
       const make = (s: string) => [...s].map((c) => ('bcdfghjklmnpqrstvwxz'.includes(c.toLowerCase()) ? c + 'o' + c : c)).join('')
@@ -306,6 +432,35 @@ console.log(acronym(phrase))
 console.log(acronym(phrase))
 `,
     exports: ['acronym'],
+    java: {
+      code: { 'function acronym(phrase)': 'String acronym(String phrase)', "'DNT'": '"DNT"', "'TR'": '"TR"' },
+      hints: [
+        'Del frasen i ord med `phrase.split(...)`. Det regulære uttrykket `"[ -]+"` skiller på mellomrom og bindestreker, og flere på rad teller som ett skille.',
+        'Begynner frasen med et mellomrom, får du et tomt ord først. Hopp over tomme ord i løkka: `if (!word.isEmpty())`.',
+        'For hvert ord som er igjen: `Character.toUpperCase(word.charAt(0))`. Legg bokstavene etter hverandre i en tekst med `+=`, og gi den tilbake til slutt.',
+      ],
+      scaffold: `String acronym(String phrase) {
+    // Del frasen i ord og ta den første bokstaven i hvert
+    return "";
+}
+
+void main() {
+    IO.println(acronym(phrase));
+}
+`,
+      solution: `String acronym(String phrase) {
+    String result = "";
+    for (String word : phrase.split("[ -]+")) {
+        if (!word.isEmpty()) result += Character.toUpperCase(word.charAt(0));
+    }
+    return result;
+}
+
+void main() {
+    IO.println(acronym(phrase));
+}
+`,
+    },
     check: (t) => {
       const acronym = t.fn('acronym')
       const make = (s: string) => s.split(/[ -]+/).filter((w) => w !== '').map((w) => w[0].toUpperCase()).join('')
@@ -351,6 +506,33 @@ console.log(inflect(noun))
 console.log(inflect(noun))
 `,
     exports: ['inflect'],
+    java: {
+      text: `Norske navneord bøyes etter regler. Skriv \`List<String> inflect(String noun)\` for vanlige hankjønnsord («en bil», «en bakke»). Den gir tilbake en liste med fire former: ubestemt entall («bil»), bestemt entall («bilen»), ubestemt flertall («biler») og bestemt flertall («bilene»).
+
+- \`"bil"\` gir \`List.of("bil", "bilen", "biler", "bilene")\`
+- ender ordet på \`e\`, har det allerede den \`e\`-en endelsene begynner med: \`"bakke"\` gir \`List.of("bakke", "bakken", "bakker", "bakkene")\`
+
+Regelen passer ikke for alle ord. «Et monster» blir «monsteret», «monstre» og «monstrene», der en \`e\` faller bort. Slike ord må man lære utenat, og \`inflect\` trenger ikke klare dem.`,
+      code: { "noun.endsWith('e')": 'noun.endsWith("e")', "[noun, noun + 'n', …]": 'List.of(noun, noun + "n", …)' },
+      scaffold: `List<String> inflect(String noun) {
+    // Ender ordet på e eller ikke?
+    return List.of(noun, noun, noun, noun);
+}
+
+void main() {
+    IO.println(inflect(noun));
+}
+`,
+      solution: `List<String> inflect(String noun) {
+    if (noun.endsWith("e")) return List.of(noun, noun + "n", noun + "r", noun + "ne");
+    return List.of(noun, noun + "en", noun + "er", noun + "ene");
+}
+
+void main() {
+    IO.println(inflect(noun));
+}
+`,
+    },
     check: (t) => {
       const inflect = t.fn('inflect')
       const make = (n: string) => (n.endsWith('e') ? [n, n + 'n', n + 'r', n + 'ne'] : [n, n + 'en', n + 'er', n + 'ene'])
@@ -358,7 +540,7 @@ console.log(inflect(noun))
       for (const n of nouns) {
         const got = inflect(n)
         const want = make(n)
-        if (!Array.isArray(got)) return `inflect(${t.show(n)}) skal gi en array med fire former, men gav ${t.show(got)}.`
+        if (!Array.isArray(got)) return `inflect(${t.show(n)}) skal gi ${t.lang === 'java' ? 'en liste' : 'en array'} med fire former, men gav ${t.show(got)}.`
         if (!t.same(got, want)) return `inflect(${t.show(n)}) gav ${t.show(got)}, men skal gi ${t.show(want)}.`
       }
       return true
@@ -408,6 +590,41 @@ items.sort((x, y) => compare(x.value, y.value))
 items.sort((x, y) => compare(x.value, y.value))
 `,
     exports: ['compare'],
+    java: {
+      text: `Monstrene i \`items\` har hvert sitt ord. Det norske alfabetet går fra \`a\` til \`z\` og slutter med \`æ\`, \`ø\` og \`å\`, i den rekkefølgen. Skriv \`int compare(String a, String b)\` som sammenligner to ord i norsk alfabetisk rekkefølge: et negativt tall hvis \`a\` skal stå foran \`b\`, 0 hvis ordene er like, og et positivt tall ellers.
+
+Ordene sammenlignes bokstav for bokstav, og et ord som er begynnelsen på et lengre ord, kommer først: «ape» foran «apekatt». Koden under bruker \`compare\` til å sortere monstrene.
+
+\`compareTo\`, som \`String\` har fra før, ser på tegnenes kode, og der kommer \`å\` før \`æ\` og \`ø\`. Det blir feil rekkefølge på norsk.`,
+      hints: [
+        'Alfabetet kan du ha som en tekst: `"abcdefghijklmnopqrstuvwxyzæøå"`. Plassen til en bokstav i den er `alphabet.indexOf(letter)`, og bokstav nummer `i` i et ord er `a.charAt(i)`.',
+        'Gå gjennom bokstavene i begge ord så langt det korteste ordet rekker. Første plass der de er ulike avgjør: forskjellen mellom bokstavenes plasser i alfabetet er svaret. Er alle like, avgjør lengden: det korteste ordet kommer først.',
+        'Vil du se hvorfor det trengs: bytt ut `compare(x.value, y.value)` med `x.value.compareTo(y.value)` når din egen virker, og kjør. Da havner `å` foran `æ` og `ø`.',
+      ],
+      scaffold: `int compare(String a, String b) {
+    // Negativt hvis a skal stå foran b, 0 hvis like, positivt ellers
+    return 0;
+}
+
+void main() {
+    items.sort((x, y) -> compare(x.value, y.value));
+}
+`,
+      solution: `int compare(String a, String b) {
+    String alphabet = "abcdefghijklmnopqrstuvwxyzæøå";
+    int shortest = Math.min(a.length(), b.length());
+    for (int i = 0; i < shortest; i++) {
+        int diff = alphabet.indexOf(a.charAt(i)) - alphabet.indexOf(b.charAt(i));
+        if (diff != 0) return diff;
+    }
+    return a.length() - b.length();
+}
+
+void main() {
+    items.sort((x, y) -> compare(x.value, y.value));
+}
+`,
+    },
     check: (t) => {
       const compare = t.fn('compare')
       const alphabet = 'abcdefghijklmnopqrstuvwxyzæøå'
@@ -476,6 +693,37 @@ console.log(isAnagram(first, second))
 console.log(isAnagram(first, second))
 `,
     exports: ['isAnagram'],
+    java: {
+      code: { 'function isAnagram(a, b)': 'boolean isAnagram(String a, String b)' },
+      hints: [
+        'Først rydder du opp: gjør begge tekstene små og ta bort mellomrom, for eksempel `a.toLowerCase().replace(" ", "")`.',
+        'To tekster er anagrammer hvis bokstavene deres blir samme tekst når du sorterer dem: `char[] letters = x.toCharArray()`, så `Arrays.sort(letters)`, og `new String(letters)` gjør dem til en tekst igjen.',
+        'Sammenlign de to sorterte tekstene med `equals`, ikke `==`. Du kan også telle hver bokstav med en `Map<Character, Integer>`; da trenger du ikke sortere.',
+      ],
+      scaffold: `boolean isAnagram(String a, String b) {
+    // Gjør teksten ren, og se om bokstavene er de samme like mange ganger
+    return false;
+}
+
+void main() {
+    IO.println(isAnagram(first, second));
+}
+`,
+      solution: `String clean(String text) {
+    char[] letters = text.toLowerCase().replace(" ", "").toCharArray();
+    Arrays.sort(letters);
+    return new String(letters);
+}
+
+boolean isAnagram(String a, String b) {
+    return clean(a).equals(clean(b));
+}
+
+void main() {
+    IO.println(isAnagram(first, second));
+}
+`,
+    },
     check: (t) => {
       const isAnagram = t.fn('isAnagram')
       const key = (s: string) => [...s.toLowerCase().replaceAll(' ', '')].sort().join('')
@@ -559,6 +807,47 @@ for (const item of items) {
   vis(item)
 }
 `,
+    java: {
+      code: {
+        "'pink'": '"pink"',
+        "'cyan'": '"cyan"',
+        "'gold'": '"gold"',
+        "'lime'": '"lime"',
+        "'violet'": '"violet"',
+        "'orange'": '"orange"',
+        "'red'": '"red"',
+        "'teal'": '"teal"',
+        Map: 'Map<String, String>',
+      },
+      scaffold: `String vowels = "aeiouyæøå";
+
+void main() {
+    for (Monster item : items) {
+        // Finn rimdelen: fra den siste vokalen og ut ordet
+        // Gi monsteret en farge som hører til rimdelen: item.color = …
+    }
+}
+`,
+      solution: `String vowels = "aeiouyæøå";
+
+String ending(String word) {
+    int i = word.length() - 1;
+    while (i > 0 && vowels.indexOf(word.charAt(i)) < 0) i--;
+    return word.substring(i);
+}
+
+void main() {
+    List<String> colors = List.of("pink", "cyan", "gold", "lime");
+    Map<String, String> colorOf = new HashMap<>();
+    for (Monster item : items) {
+        String key = ending(item.value);
+        if (!colorOf.containsKey(key)) colorOf.put(key, colors.get(colorOf.size()));
+        item.color = colorOf.get(key);
+        vis(item);
+    }
+}
+`,
+    },
     check: (t) => {
       const vowels = 'aeiouyæøå'
       const ending = (word: string) => {
@@ -628,6 +917,43 @@ console.log(caesar(message, 3))
 console.log(caesar(message, 3))
 `,
     exports: ['caesar'],
+    java: {
+      code: { 'function caesar(text, shift)': 'String caesar(String text, int shift)' },
+      hints: [
+        'Finn plassen til en bokstav med `alphabet.indexOf(Character.toLowerCase(letter))`. Gir det `-1`, er det ikke en bokstav i alfabetet, og da skal tegnet bare stå som det er.',
+        'Ny plass er `(index + shift) % 29`. Et negativt tall kan gi en negativ rest i Java, så bruk `Math.floorMod(index + shift, 29)`, som alltid gir et tall fra 0 til 28.',
+        'Var bokstaven stor (`Character.isUpperCase(letter)`), gjør du den nye bokstaven stor igjen med `Character.toUpperCase`. Legg alt sammen i en tekst, bokstav for bokstav.',
+      ],
+      scaffold: `String caesar(String text, int shift) {
+    String alphabet = "abcdefghijklmnopqrstuvwxyzæøå";
+    // Flytt hver bokstav shift plasser, og begynn på a igjen etter å
+    return text;
+}
+
+void main() {
+    IO.println(caesar(message, 3));
+}
+`,
+      solution: `String caesar(String text, int shift) {
+    String alphabet = "abcdefghijklmnopqrstuvwxyzæøå";
+    String out = "";
+    for (char letter : text.toCharArray()) {
+        int index = alphabet.indexOf(Character.toLowerCase(letter));
+        if (index == -1) {
+            out += letter;
+            continue;
+        }
+        char moved = alphabet.charAt(Math.floorMod(index + shift, 29));
+        out += Character.isUpperCase(letter) ? Character.toUpperCase(moved) : moved;
+    }
+    return out;
+}
+
+void main() {
+    IO.println(caesar(message, 3));
+}
+`,
+    },
     check: (t) => {
       const caesar = t.fn('caesar')
       const alphabet = 'abcdefghijklmnopqrstuvwxyzæøå'
@@ -691,6 +1017,36 @@ while (node) {
   node = node.next
 }
 `,
+    java: {
+      code: {
+        'word[word.length - 1]': 'word.charAt(word.length() - 1)',
+        'node.next = items.find(...)': 'node.next = items.stream().filter(...).findFirst().orElse(null)',
+      },
+      scaffold: `void main() {
+    // Finn det første ordet: ingen andre ord slutter på bokstaven det begynner med
+    // Lenk så hvert ord til ordet som begynner med dets siste bokstav, og la head peke på det første
+}
+`,
+      solution: `char lastLetter(String word) {
+    return word.charAt(word.length() - 1);
+}
+
+void main() {
+    head = items.stream()
+        .filter(m -> items.stream().noneMatch(other -> lastLetter(other.value) == m.value.charAt(0)))
+        .findFirst()
+        .orElse(null);
+
+    Monster node = head;
+    while (node != null) {
+        char last = lastLetter(node.value);
+        node.next = items.stream().filter(m -> m.value.charAt(0) == last).findFirst().orElse(null);
+        if (node.next != null) vis(node, node.next);
+        node = node.next;
+    }
+}
+`,
+    },
     check: (t) => {
       const items = t.before('items')
       const last = (m: { value: string }) => m.value[m.value.length - 1]
@@ -756,6 +1112,41 @@ console.log(inWords(number))
 console.log(inWords(number))
 `,
     exports: ['inWords'],
+    java: {
+      code: { 'function inWords(n)': 'String inWords(int n)' },
+      hints: [
+        'Tallene under 20 har hvert sitt ord. Legg dem i en array (`String[] small = {"null", "en", "to", …}`) og slå opp med `small[n]`.',
+        'For 20 til 99 trenger du tierordet, `tens[n / 10]`, og, hvis `n % 10` ikke er 0, ordet for enerne rett bak uten mellomrom: `tjue` + `en`. To `int` delt på hverandre gir et helt tall i Java, så `n / 10` er tieren.',
+        'For 100 til 999: hundrene er `small[n / 100] + " hundre"`, bortsett fra 1, som bare er `hundre`. Er resten (`n % 100`) ikke 0, legger du til `" og "` og resten skrevet med bokstaver: la `inWords` kalle seg selv.',
+      ],
+      scaffold: `String inWords(int n) {
+    // Under 20: et eget ord. 20–99: tier + ener. 100–999: hundrer, og, resten
+    return "";
+}
+
+void main() {
+    IO.println(inWords(number));
+}
+`,
+      solution: `String inWords(int n) {
+    String[] small = {"null", "en", "to", "tre", "fire", "fem", "seks", "sju", "åtte", "ni", "ti", "elleve", "tolv", "tretten", "fjorten", "femten", "seksten", "sytten", "atten", "nitten"};
+    String[] tens = {"", "", "tjue", "tretti", "førti", "femti", "seksti", "sytti", "åtti", "nitti"};
+    if (n < 20) return small[n];
+    if (n < 100) {
+        int ones = n % 10;
+        return tens[n / 10] + (ones != 0 ? small[ones] : "");
+    }
+    int hundreds = n / 100;
+    int rest = n % 100;
+    String start = hundreds == 1 ? "hundre" : small[hundreds] + " hundre";
+    return rest != 0 ? start + " og " + inWords(rest) : start;
+}
+
+void main() {
+    IO.println(inWords(number));
+}
+`,
+    },
     check: (t) => {
       const inWords = t.fn('inWords')
       const ones = 'null en to tre fire fem seks sju åtte ni ti elleve tolv tretten fjorten femten seksten sytten atten nitten'.split(' ')
@@ -843,6 +1234,65 @@ function closest(word, words) {
 console.log(closest(word, words))
 `,
     exports: ['distance', 'closest'],
+    java: {
+      text: `Søkemotorer spør «mente du …?» når du skriver et ord feil. De måler hvor nær hverandre to ord er ved å telle rettelser: å sette inn en bokstav, ta bort en bokstav eller bytte en bokstav med en annen. «katt» til «hatt» er én rettelse, og «sol» til «sjø» er to. Det minste antallet rettelser som gjør ett ord om til et annet, kalles Levenshtein-avstanden.
+
+Skriv to metoder:
+
+- \`int distance(String a, String b)\` gir den minste avstanden mellom \`a\` og \`b\`.
+- \`String closest(String word, List<String> words)\` gir ordet i \`words\` som er nærmest \`word\`. Er flere like nær, gir du det første av dem.
+
+En vanlig måte å regne ut avstanden på er en tabell: rute \`[i][j]\` er avstanden mellom de \`i\` første bokstavene i \`a\` og de \`j\` første i \`b\`.`,
+      hints: [
+        'Tenk på de siste bokstavene i to ord. Er de like, koster de ingenting. Er de ulike, kan du slette, sette inn eller bytte. Velg den billigste veien.',
+        'Lag en tabell `int[][] d = new int[a.length() + 1][b.length() + 1]`. Første rad og første kolonne er enkle: å gå fra et tomt ord til `j` bokstaver koster `j` innsettinger, og motsatt. Resten fyller du ut rute for rute.',
+        'Rute `[i][j]` er det minste av `d[i-1][j] + 1`, `d[i][j-1] + 1` og `d[i-1][j-1]` (pluss 1 hvis bokstavene `a.charAt(i - 1)` og `b.charAt(j - 1)` er ulike); `Math.min` tar to tall om gangen. Svaret står i hjørnet. I `closest` bytter du bare ut det beste ordet når du finner et som er strengt nærmere.',
+      ],
+      scaffold: `int distance(String a, String b) {
+    // Fyll ut en tabell d[i][j] med avstanden mellom de i første bokstavene i a og de j første i b
+    return 0;
+}
+
+String closest(String word, List<String> words) {
+    // Gå gjennom ordene og husk det med minst avstand
+    return null;
+}
+
+void main() {
+    IO.println(closest(word, words));
+}
+`,
+      solution: `int distance(String a, String b) {
+    int[][] d = new int[a.length() + 1][b.length() + 1];
+    for (int i = 0; i <= a.length(); i++) d[i][0] = i;
+    for (int j = 0; j <= b.length(); j++) d[0][j] = j;
+    for (int i = 1; i <= a.length(); i++) {
+        for (int j = 1; j <= b.length(); j++) {
+            int change = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
+            d[i][j] = Math.min(Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1), d[i - 1][j - 1] + change);
+        }
+    }
+    return d[a.length()][b.length()];
+}
+
+String closest(String word, List<String> words) {
+    String best = null;
+    int bestDistance = Integer.MAX_VALUE;
+    for (String other : words) {
+        int far = distance(word, other);
+        if (far < bestDistance) {
+            best = other;
+            bestDistance = far;
+        }
+    }
+    return best;
+}
+
+void main() {
+    IO.println(closest(word, words));
+}
+`,
+    },
     check: (t) => {
       const distance = t.fn('distance')
       const closest = t.fn('closest')
