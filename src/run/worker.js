@@ -973,7 +973,8 @@ function start() {
       for (const level of ['log', 'error']) if (lines[level]) put(level, 10)
     }
     try {
-      const teavm = new Function(java.runtime)()
+      // Named, so its frames in the stacks TeaVM reads for every Java exception are short (see runner.ts).
+      const teavm = new Function(`${java.runtime}\n//# sourceURL=teavm.js`)()
       const deobfuscator = new Uint8Array(java.deobfuscator)
       program = await teavm.load(new Uint8Array(java.wasm), {
         noAutoImports: true,

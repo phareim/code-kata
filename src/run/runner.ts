@@ -2,8 +2,10 @@ import type { Root } from '../java/compose'
 import type { World } from '../world/world'
 import workerSource from './worker.js?raw'
 
-// A data: URL gives the worker an opaque origin (see worker.js). Built once; every run gets a fresh worker.
-const WORKER_URL = `data:text/javascript;charset=utf-8,${encodeURIComponent(workerSource)}`
+// A data: URL gives the worker an opaque origin (see worker.js). Built once; every run gets a fresh worker. The
+// sourceURL names it in Chrome's and Firefox's stacks, which would otherwise carry the whole data: URL on every frame:
+// TeaVM reads a stack for every Java exception, and a long line costs it seconds.
+const WORKER_URL = `data:text/javascript;charset=utf-8,${encodeURIComponent(`${workerSource}\n//# sourceURL=kata-runner.js`)}`
 
 /** A run that hasn't ended by then is stopped: most likely a loop that never ends. Compiling Java comes before. */
 export const TIME_LIMIT_MS = 10_000

@@ -9,6 +9,10 @@
  *   worker → page  { type: 'ready', ms } | { type: 'broken', message }
  *                  { type: 'compiled', id, ok, wasm, diagnostics, ms }   diagnostics: [{ severity, line, message }]
  */
+// TeaVM takes a JavaScript stack for every Java exception, and javac and TeaVM throw plenty as they work. Nothing here
+// needs their stack traces; taking none made starting the compiler ten times faster in Chrome, and compiling twice.
+Error.stackTraceLimit = 0
+
 let compiler = null
 let diagnostics = []
 

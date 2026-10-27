@@ -169,8 +169,14 @@ off. Adding a language means adding such a binding and a runner for it, not chan
   (`@live-codes/java-wasm`, pinned): about 8 MB, fetched the first time a visitor runs Java and kept in a worker of
   its own (`src/java/compile-worker.js`, started from a data: URL like the runner, so it has an opaque origin too; the
   page fetches the files and hands them over). A run compiles the class, the code and the bridge to a WebAssembly
-  (WasmGC) module in a second or two; the same source again is kept and not compiled anew. The class library is
-  TeaVM's, about Java 21's API (`java.util`, streams, records; not `java.text.Collator`).
+  (WasmGC) module in two or three seconds in Chrome (headless, four cores; the first compile takes about four, and
+  starting the compiler under one, not counting the download); the same source again is kept and not compiled anew.
+  The class library is TeaVM's, about Java 21's API (`java.util`, streams, records; not `java.text.Collator`).
+- **Stacks**: TeaVM takes a JavaScript stack for every Java exception and reads its frames. In a worker from a data:
+  URL each frame carries the whole URL, which made an exception cost a good part of a second in Chrome (200 caught
+  `NumberFormatException`s ran out the 10 seconds). So both workers name their sources (`//# sourceURL`, in
+  `runner.ts`, `worker.js` and `compiler.ts`), and the compiler, which needs no stack traces, takes none
+  (`Error.stackTraceLimit = 0`).
 - **The code** is the body of `final class Main`, as in a Java 25 compact source file: methods (no `static` needed),
   fields, member classes and records, and `void main()`, which holds the statements that run. `java.util.*`,
   `java.util.function.*` and `java.util.stream.*` are imported; `IO.println` prints (Java 25's `IO`, which the class
@@ -186,7 +192,10 @@ off. Adding a language means adding such a binding and a runner for it, not chan
   method's parameters ask (a row of monsters to a `List<Monster>`, a JavaScript function to the interface the
   parameter names: `BiConsumer`, `Comparator`, one of the code's own), and writes back what the call did to them; an
   item the check passed comes back as the same object. Private fields aren't mirrored, as `#private` ones aren't in
-  JavaScript.
+  JavaScript. A function of the check's syncs the call's arguments both ways each time the code calls it, which costs
+  in proportion to the row: quicksort and heapsort, whose checks swap some 20 000 times in a row of 2000, pass a
+  `KataSwap` in Java (their prelude, `sortering.ts`) that swaps and notes the calls, and replay them through the
+  check's own `swap`.
 - **Errors**: a compile error names its line in the class or the code (all of javac's errors are listed); a call to a
   method the task asks for and the code hasn't written yet gets «Fant ikke metoden …» as its verdict. An exception
   comes back with its class, message and line; a trap (`NullPointerException`, an index out of bounds, a stack
