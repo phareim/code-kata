@@ -89,8 +89,11 @@ how code runs and where things live.
   rest; the line numbers in `lines` map errors back, so keep the order, and keep generated code on its own lines
   after the code. The worker side is `javaBridge` in `worker.js` (`__kata`); a new call goes in both.
 - The Java compiler runs in a worker of its own from a data: URL, like the runner; the page fetches its files and
-  hands them over. Keep it on an opaque origin. `@live-codes/java-wasm` is pinned to an exact version; updating it
-  means updating `public/licenses/` too (GPLv2 + Classpath Exception for javac: the notices must be served).
+  hands them over. Keep it on an opaque origin. Both workers name their sources (`//# sourceURL`) and the compiler
+  takes no stacks (`Error.stackTraceLimit = 0`): TeaVM reads a stack for every Java exception, and one with the data:
+  URL on every frame costs it a good part of a second in Chrome. `@live-codes/java-wasm` is pinned to an exact
+  version; updating it means updating `public/licenses/` too (GPLv2 + Classpath Exception for javac: the notices must
+  be served).
 - `/api/translate` (`worker/translate.ts`) is open to anyone: the page sends a task id, two languages, the code and
   the class, never words; the prompt never has a solution. The talk in Java keeps the system prompt as it is and puts
   the Java context in the user message (`nextJava` in `worker/talk.ts`), so a conversation's prefix never changes.

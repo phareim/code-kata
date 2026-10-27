@@ -22,6 +22,18 @@ A task that is about a technique tests the technique, not only the result:
 - binary search counts the places it looks at
 - a shuffle is run thousands of times and the orders are counted
 
+## In Java (2026-10-27)
+
+Every task got a Java binding (`java` on the task, README «Languages»): its opening, skeleton and solution in Java,
+the class, and its text and hints with the code as Java says it. The checks are the same, run on mirrors of the Java
+objects. Where a check watches how the code works, it does so in JavaScript only and verifies the result in Java:
+the counting getters (merge sort, the search trees, the min-stack, the next greater element), the `Proxy` over a
+binary search, the banned `Array.prototype.sort`. The functions a check hands the code (`swap(i, j)`, `flip(k)`,
+`move(from, to)`, a stream's `next()`) cross into Java as the interface the parameter names (`BiConsumer`,
+`IntConsumer`, `Supplier` …), so those checks count the moves in both languages. Quicksort and heapsort are the
+exception: the bridge syncs the row on every such call, too slow for their 20 000 swaps in a row of 2000, so in Java
+they pass a `KataSwap` that swaps and notes the calls, and replay them through their own `swap`.
+
 ## Sources consulted
 
 Fetched 2026-10-22. They are for ideas only; no statement was copied.

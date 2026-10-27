@@ -21,7 +21,7 @@ export interface Compiled {
   ms: number
 }
 
-const WORKER_URL = `data:text/javascript;charset=utf-8,${encodeURIComponent(`const teavm = (function () {\n${javaRuntime}\n})();\n${workerBody}`)}`
+const WORKER_URL = `data:text/javascript;charset=utf-8,${encodeURIComponent(`const teavm = (function () {\n${javaRuntime}\n})();\n${workerBody}\n//# sourceURL=java-compiler.js`)}`
 const KEPT = 6
 
 let worker: Worker | null = null

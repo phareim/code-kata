@@ -53,6 +53,27 @@ function smallValues(r: Random, n = 8): Spec[] {
   return scrambled(r, specs, ascending)
 }
 
+/*
+ * Quicksort and heapsort in Java: their checks call swap some 20 000 times on a row of 2000, and the bridge hands a
+ * check's function to Java by syncing the row both ways on every call, which takes minutes there. So in Java the check
+ * passes an object of a class named KataSwap instead, which the bridge makes into this one: it swaps the code's row as
+ * the check's swap would and notes each call, and the check then makes the calls again on its own side, where its
+ * rules are. `limit` stops a runaway loop with the check's message, `stop`.
+ */
+const JAVA_SWAP = `final class KataSwap implements BiConsumer<Integer, Integer> {
+    List<Monster> items;
+    List<Integer> calls = new ArrayList<>();
+    int limit;
+    String stop;
+
+    public void accept(Integer i, Integer j) {
+        if (calls.size() >= 2 * limit) throw new IllegalStateException(stop);
+        calls.add(i);
+        calls.add(j);
+        if (i >= 0 && j >= 0 && i < items.size() && j < items.size()) Collections.swap(items, i, j);
+    }
+}`
+
 export const tasks: Task[] = [
   {
     id: 'bytt-de-ytterste',
@@ -78,6 +99,29 @@ const first = items[0]
 items[0] = items[last]
 items[last] = first
 `,
+    java: {
+      text: `Monstrene står i lista \`items\`, med plassnummeret under hver. Det første og det siste vil bytte plass.
+
+Bytt \`items.get(0)\` og det siste, og la de andre stå der de står.`,
+      code: {
+        'items.length - 1': 'items.size() - 1',
+        'const first = items[0]': 'Monster first = items.get(0)',
+        '[items[0], items[last]] = [items[last], items[0]]': 'Collections.swap(items, 0, last)',
+      },
+      scaffold: `void main() {
+    int last = items.size() - 1;
+    Monster first = items.get(0);
+    // Flytt det siste fram, og det første bakerst
+}
+`,
+      solution: `void main() {
+    int last = items.size() - 1;
+    Monster first = items.get(0);
+    items.set(0, items.get(last));
+    items.set(last, first);
+}
+`,
+    },
     check: (t) => {
       const before = t.before('items')
       const want = [before.at(-1), ...before.slice(1, -1), before[0]]
@@ -124,6 +168,39 @@ while (swapped) {
   }
 }
 `,
+    java: {
+      text: `Sorter monstrene i \`items\` etter \`value\`, minst først, med boblesortering: gå gjennom lista fra start til slutt, og bytt to naboer som står feil vei. Gjør det igjen og igjen, til en hel runde går uten ett eneste bytte.
+
+Kall \`vis(items.get(i), items.get(i + 1))\` etter hvert bytte, så ser du de store boble seg bakover.`,
+      code: {
+        'items[i].value > items[i + 1].value': 'items.get(i).value > items.get(i + 1).value',
+        '[items[i], items[i + 1]] = [items[i + 1], items[i]]': 'Collections.swap(items, i, i + 1)',
+      },
+      scaffold: `void main() {
+    boolean swapped = true;
+    while (swapped) {
+        swapped = false;
+        for (int i = 0; i + 1 < items.size(); i++) {
+            // Står items.get(i) og items.get(i + 1) feil vei? Bytt dem.
+        }
+    }
+}
+`,
+      solution: `void main() {
+    boolean swapped = true;
+    while (swapped) {
+        swapped = false;
+        for (int i = 0; i + 1 < items.size(); i++) {
+            if (items.get(i).value > items.get(i + 1).value) {
+                Collections.swap(items, i, i + 1);
+                swapped = true;
+                vis(items.get(i), items.get(i + 1));
+            }
+        }
+    }
+}
+`,
+    },
     check: (t) => {
       const want = t.before('items').sort((a, b) => a.value - b.value)
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
@@ -159,6 +236,24 @@ console.log(items.map((thing) => thing.value))
     solution: `items.sort((a, b) => a.value - b.value)
 vis('sortert')
 `,
+    java: {
+      code: {
+        sort: 'items.sort',
+        '(a, b) => a.value - b.value': '(a, b) -> a.value - b.value',
+        'items.sort((a, b) => a.value - b.value)': 'items.sort((a, b) -> a.value - b.value)',
+      },
+      scaffold: `void main() {
+    // Sorter items etter value, minst først.
+    // items.sort(…) tar en funksjon som sammenligner to monstre: (a, b) -> …
+    IO.println(items.stream().map(thing -> thing.value).toList());
+}
+`,
+      solution: `void main() {
+    items.sort((a, b) -> a.value - b.value);
+    vis("sortert");
+}
+`,
+    },
     check: (t) => {
       const want = t.before('items').sort((a, b) => a.value - b.value)
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
@@ -192,6 +287,19 @@ console.log(items.map((thing) => thing.value))
     solution: `items.sort((a, b) => b.value - a.value)
 vis('størst først')
 `,
+    java: {
+      code: { sort: 'items.sort', 'items.sort((a, b) => b.value - a.value)': 'items.sort((a, b) -> b.value - a.value)' },
+      scaffold: `void main() {
+    // Sorter items etter value, størst først.
+    IO.println(items.stream().map(thing -> thing.value).toList());
+}
+`,
+      solution: `void main() {
+    items.sort((a, b) -> b.value - a.value);
+    vis("størst først");
+}
+`,
+    },
     check: (t) => {
       const want = t.before('items').sort((a, b) => b.value - a.value)
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
@@ -244,6 +352,37 @@ console.log(isSorted(items))
 console.log(isSorted(items))
 `,
     exports: ['isSorted'],
+    java: {
+      text: `Før monstrene tar seg bryet med å sortere, vil de vite om raden allerede er i orden. Skriv \`boolean isSorted(List<Monster> items)\` som tar en liste av monstre og gir tilbake \`true\` hvis \`value\` aldri blir mindre fra et monster til det neste, ellers \`false\`.
+
+To like verdier ved siden av hverandre er greit. En tom rad og en rad med ett monster er sortert. Metoden skal bare se på raden, ikke endre den. Koden nederst prøver den på \`items\`.`,
+      code: {
+        'items[i]': 'items.get(i)',
+        'items[i + 1]': 'items.get(i + 1)',
+        'items[i].value > items[i + 1].value': 'items.get(i).value > items.get(i + 1).value',
+      },
+      scaffold: `boolean isSorted(List<Monster> items) {
+    // Se på parene av naboer. Står noen feil vei?
+    return true;
+}
+
+void main() {
+    IO.println(isSorted(items));
+}
+`,
+      solution: `boolean isSorted(List<Monster> items) {
+    for (int i = 0; i + 1 < items.size(); i++) {
+        vis(items.get(i), items.get(i + 1));
+        if (items.get(i).value > items.get(i + 1).value) return false;
+    }
+    return true;
+}
+
+void main() {
+    IO.println(isSorted(items));
+}
+`,
+    },
     check: (t) => {
       const isSorted = t.fn('isSorted')
       const cases: [number[], boolean][] = [
@@ -294,6 +433,30 @@ Gå gjennom \`items\` fra venstre mot høyre, én eneste gang. For hvert par nab
   }
 }
 `,
+    java: {
+      code: {
+        'items[i]': 'items.get(i)',
+        'items[i + 1]': 'items.get(i + 1)',
+        'i + 1 < items.length': 'i + 1 < items.size()',
+        'items[i].value > items[i + 1].value': 'items.get(i).value > items.get(i + 1).value',
+        '[items[i], items[i + 1]] = [items[i + 1], items[i]]': 'Collections.swap(items, i, i + 1)',
+      },
+      scaffold: `void main() {
+    for (int i = 0; i + 1 < items.size(); i++) {
+        // Står items.get(i) og items.get(i + 1) feil vei? Bytt dem.
+    }
+}
+`,
+      solution: `void main() {
+    for (int i = 0; i + 1 < items.size(); i++) {
+        if (items.get(i).value > items.get(i + 1).value) {
+            Collections.swap(items, i, i + 1);
+            vis(items.get(i), items.get(i + 1));
+        }
+    }
+}
+`,
+    },
     check: (t) => {
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
       const want = t.before('items')
@@ -360,6 +523,47 @@ selectionSort(items, (i, j) => {
 })
 `,
     exports: ['selectionSort'],
+    java: {
+      text: `Utvalgssortering finner det minste monsteret og setter det først, finner det nest minste og setter det på plass to, og så videre.
+
+Skriv \`void selectionSort(List<Monster> items, BiConsumer<Integer, Integer> swap)\`. Du får ikke flytte på monstrene selv: den eneste måten er å kalle \`swap.accept(i, j)\`, som bytter plassene \`i\` og \`j\` i \`items\`. (En \`BiConsumer\` er en funksjon som tar to argumenter, og \`accept\` kaller den.) For hver plass \`i\` fra venstre: finn plassen til det minste av de som er igjen (fra \`i\` og utover), og bytt det dit.
+
+Raden skal ende sortert etter \`value\`, minst først, med høyst \`n - 1\` bytter for \`n\` monstre. Koden nederst kjører metoden på \`items\`.`,
+      code: {
+        'if (items[j].value < items[min].value) min = j': 'if (items.get(j).value < items.get(min).value) min = j',
+        'swap(i, min)': 'swap.accept(i, min)',
+      },
+      scaffold: `void selectionSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    for (int i = 0; i < items.size() - 1; i++) {
+        // Finn plassen til det minste fra i og utover, og bytt det til plass i med swap.accept(i, min)
+    }
+}
+
+void main() {
+    selectionSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+      solution: `void selectionSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    for (int i = 0; i < items.size() - 1; i++) {
+        int min = i;
+        for (int j = i + 1; j < items.size(); j++) {
+            if (items.get(j).value < items.get(min).value) min = j;
+        }
+        if (min != i) swap.accept(i, min);
+    }
+}
+
+void main() {
+    selectionSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+    },
     check: (t) => {
       const selectionSort = t.fn('selectionSort')
       const cases: number[][] = [[], [4], [2, 1], [1, 2, 3, 4], [5, 4, 3, 2, 1], [3, 1, 2], [4, 1, 3, 1, 2], [8, 3, 9, 1, 7, 2, 6, 4, 5, 10]]
@@ -447,6 +651,43 @@ insertionSort(items, (i, j) => {
 })
 `,
     exports: ['insertionSort'],
+    java: {
+      code: {
+        'function insertionSort(items, swap)': 'void insertionSort(List<Monster> items, BiConsumer<Integer, Integer> swap)',
+        'swap(j - 1, j)': 'swap.accept(j - 1, j)',
+        'while (j > 0 && items[j - 1].value > items[j].value)': 'while (j > 0 && items.get(j - 1).value > items.get(j).value)',
+      },
+      scaffold: `void insertionSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    for (int i = 1; i < items.size(); i++) {
+        // La items.get(i) bytte seg bakover med swap.accept(j - 1, j) så lenge monsteret foran er større
+    }
+}
+
+void main() {
+    insertionSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+      solution: `void insertionSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    for (int i = 1; i < items.size(); i++) {
+        int j = i;
+        while (j > 0 && items.get(j - 1).value > items.get(j).value) {
+            swap.accept(j - 1, j);
+            j--;
+        }
+    }
+}
+
+void main() {
+    insertionSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+    },
     check: (t) => {
       const insertionSort = t.fn('insertionSort')
       const cases: number[][] = [[], [3], [1, 2, 3], [3, 2, 1], [2, 3, 1, 5, 4], [3, 1, 3, 1], [5, 5, 5], [4, 1, 3, 1, 2], [9, 4, 7, 1, 8, 2, 6, 3, 10, 5, 12, 11]]
@@ -538,6 +779,50 @@ gnomeSort(items, (i, j) => {
 })
 `,
     exports: ['gnomeSort'],
+    java: {
+      code: {
+        'function gnomeSort(items, swap)': 'void gnomeSort(List<Monster> items, BiConsumer<Integer, Integer> swap)',
+        'swap(pos - 1, pos)': 'swap.accept(pos - 1, pos)',
+        'let pos = 0': 'int pos = 0',
+        'while (pos < items.length)': 'while (pos < items.size())',
+        'items[pos - 1].value <= items[pos].value': 'items.get(pos - 1).value <= items.get(pos).value',
+      },
+      scaffold: `void gnomeSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    int pos = 0;
+    while (pos < items.size()) {
+        // Står monsteret på pos og det foran i riktig rekkefølge? Gå fram.
+        // Ellers: swap.accept(pos - 1, pos) og gå tilbake.
+        pos++;
+    }
+}
+
+void main() {
+    gnomeSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+      solution: `void gnomeSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    int pos = 0;
+    while (pos < items.size()) {
+        if (pos == 0 || items.get(pos - 1).value <= items.get(pos).value) {
+            pos++;
+        } else {
+            swap.accept(pos - 1, pos);
+            pos--;
+        }
+    }
+}
+
+void main() {
+    gnomeSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+    },
     check: (t) => {
       const gnomeSort = t.fn('gnomeSort')
       const cases: number[][] = [[], [3], [1, 2, 3], [3, 2, 1], [2, 3, 1, 5, 4], [3, 1, 3, 1], [5, 5, 5], [4, 1, 3, 1, 2], [9, 4, 7, 1, 8, 2, 6, 3, 10, 5, 12, 11]]
@@ -627,6 +912,50 @@ pancakeSort(items, (k) => {
 })
 `,
     exports: ['pancakeSort'],
+    java: {
+      code: {
+        'function pancakeSort(items, flip)': 'void pancakeSort(List<Monster> items, IntConsumer flip)',
+        'flip(k)': 'flip.accept(k)',
+        'items.length': 'items.size()',
+        'flip(big + 1)': 'flip.accept(big + 1)',
+        'flip(size)': 'flip.accept(size)',
+        'big === 0': 'big == 0',
+      },
+      scaffold: `void pancakeSort(List<Monster> items, IntConsumer flip) {
+    for (int size = items.size(); size > 1; size--) {
+        // Finn den største blant de size første, og få den ned på plass size - 1 med flip.accept
+    }
+}
+
+void main() {
+    pancakeSort(items, k -> {
+        List<Monster> top = items.subList(0, k);
+        Collections.reverse(top);
+        vis(top);
+    });
+}
+`,
+      solution: `void pancakeSort(List<Monster> items, IntConsumer flip) {
+    for (int size = items.size(); size > 1; size--) {
+        int big = 0;
+        for (int i = 1; i < size; i++) {
+            if (items.get(i).value > items.get(big).value) big = i;
+        }
+        if (big == size - 1) continue;
+        if (big > 0) flip.accept(big + 1);
+        flip.accept(size);
+    }
+}
+
+void main() {
+    pancakeSort(items, k -> {
+        List<Monster> top = items.subList(0, k);
+        Collections.reverse(top);
+        vis(top);
+    });
+}
+`,
+    },
     check: (t) => {
       const pancakeSort = t.fn('pancakeSort')
       const cases: number[][] = [[], [1], [2, 1], [1, 2], [3, 1, 2], [5, 4, 3, 2, 1], [1, 2, 3, 4, 5], [4, 1, 3, 2], [7, 3, 9, 1, 8, 2, 6, 4, 5]]
@@ -716,6 +1045,46 @@ items = mergeSort(items)
 items = mergeSort(items)
 `,
     exports: ['mergeSort'],
+    java: {
+      text: `Flettesortering deler raden i to, sorterer hver halvdel for seg, og fletter dem sammen igjen. Å flette to sorterte rader er lett: se på det første i hver, ta det minste, og gjenta til den ene raden er tom.
+
+Skriv \`List<Monster> mergeSort(List<Monster> items)\` som gir tilbake en ny liste med de samme monstrene, sortert etter \`value\`, minst først. Lista du får inn, skal stå urørt, og \`sort\` skal du ikke bruke: her sorterer du selv. En rad med null eller ett monster er allerede sortert.
+
+Sjekken prøver også en rad med flere tusen monstre, så en treg metode klarer seg ikke. Koden nederst setter \`items\` til den sorterte raden.`,
+      code: { slice: 'subList' },
+      scaffold: `List<Monster> mergeSort(List<Monster> items) {
+    if (items.size() <= 1) return new ArrayList<>(items);
+    // Del på midten, sorter hver halvdel med mergeSort, og flett dem
+    return new ArrayList<>(items);
+}
+
+void main() {
+    items = mergeSort(items);
+}
+`,
+      solution: `List<Monster> mergeSort(List<Monster> items) {
+    if (items.size() <= 1) return new ArrayList<>(items);
+    int mid = items.size() / 2;
+    List<Monster> left = mergeSort(items.subList(0, mid));
+    List<Monster> right = mergeSort(items.subList(mid, items.size()));
+    List<Monster> merged = new ArrayList<>();
+    int a = 0;
+    int b = 0;
+    while (a < left.size() && b < right.size()) {
+        if (left.get(a).value <= right.get(b).value) merged.add(left.get(a++));
+        else merged.add(right.get(b++));
+    }
+    merged.addAll(left.subList(a, left.size()));
+    merged.addAll(right.subList(b, right.size()));
+    vis(merged);
+    return merged;
+}
+
+void main() {
+    items = mergeSort(items);
+}
+`,
+    },
     check: (t) => {
       const mergeSort = t.fn('mergeSort')
       let seed = 7
@@ -724,7 +1093,9 @@ items = mergeSort(items)
       const trial = (values: number[], readLimit: number): string => {
         const n = values.length
         let reads = 0
+        // In JavaScript a getter counts the reads of value, and sort is banned; in Java the items are mirrors.
         const arr = values.map((value) => {
+          if (t.lang !== 'js') return t.monster({ value })
           const o = t.monster({ value: 0 })
           Object.defineProperty(o, 'value', { get() { reads++; return value } })
           return o
@@ -737,8 +1108,10 @@ items = mergeSort(items)
         }
         const real = { sort: proto.sort, toSorted: proto.toSorted }
         let got: any
-        proto.sort = ban
-        proto.toSorted = ban
+        if (t.lang === 'js') {
+          proto.sort = ban
+          proto.toSorted = ban
+        }
         try {
           got = mergeSort(arr)
         } catch (err) {
@@ -836,6 +1209,63 @@ quickSort(items, (i, j) => {
 })
 `,
     exports: ['quickSort'],
+    java: {
+      prelude: JAVA_SWAP,
+      text: `Quicksort velger et monster som skilletegn, pivoten, og flytter alle mindre monstre til venstre for den og alle større til høyre. Da står pivoten på sin endelige plass. Så gjør quicksort det samme med hver side.
+
+Skriv \`void quickSort(List<Monster> items, BiConsumer<Integer, Integer> swap)\` som sorterer \`items\` på stedet, etter \`value\`, minst først. Du får bare flytte monstrene med \`swap.accept(i, j)\`, og \`sort\` er forbudt. Det lønner seg med en hjelpemetode ved siden av som tar et område, for eksempel \`sortRange(items, swap, lo, hi)\`.
+
+Sjekken prøver også en rad med flere tusen monstre, så metoden må være rask.`,
+      code: { 'swap(store, j)': 'swap.accept(store, j)', 'swap(store, hi)': 'swap.accept(store, hi)' },
+      opening: `void main() {
+    quickSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}`,
+      scaffold: `void quickSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    sortRange(items, swap, 0, items.size() - 1);
+}
+
+void sortRange(List<Monster> items, BiConsumer<Integer, Integer> swap, int lo, int hi) {
+    if (lo >= hi) return;
+    // Velg pivot, flytt de mindre til venstre med swap.accept, og sorter begge sider
+}
+
+void main() {
+    quickSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+      solution: `void quickSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    sortRange(items, swap, 0, items.size() - 1);
+}
+
+void sortRange(List<Monster> items, BiConsumer<Integer, Integer> swap, int lo, int hi) {
+    if (lo >= hi) return;
+    int pivot = items.get(hi).value;
+    int store = lo;
+    for (int j = lo; j < hi; j++) {
+        if (items.get(j).value < pivot) {
+            swap.accept(store, j);
+            store++;
+        }
+    }
+    swap.accept(store, hi);
+    sortRange(items, swap, lo, store - 1);
+    sortRange(items, swap, store + 1, hi);
+}
+
+void main() {
+    quickSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+    },
     check: (t) => {
       const quickSort = t.fn('quickSort')
       let seed = 11
@@ -844,7 +1274,9 @@ quickSort(items, (i, j) => {
       const trial = (values: number[], readLimit: number): string => {
         const n = values.length
         let reads = 0
+        // In JavaScript a getter counts the reads of value, and sort is banned; in Java the items are mirrors.
         const arr = values.map((value) => {
+          if (t.lang !== 'js') return t.monster({ value })
           const o = t.monster({ value: 0 })
           Object.defineProperty(o, 'value', { get() { reads++; return value } })
           return o
@@ -872,10 +1304,23 @@ quickSort(items, (i, j) => {
           throw new Error('stopp')
         }
         const real = { sort: proto.sort, toSorted: proto.toSorted }
-        proto.sort = ban
-        proto.toSorted = ban
+        if (t.lang === 'js') {
+          proto.sort = ban
+          proto.toSorted = ban
+        }
         try {
-          quickSort(arr, swap)
+          if (t.lang === 'js') quickSort(arr, swap)
+          else {
+            // Java gets a KataSwap (JAVA_SWAP) for swap: it swaps a copy of the row and notes the calls, made again here.
+            const KataSwap = class {}
+            Object.defineProperty(KataSwap, 'name', { value: 'KataSwap' })
+            const row = [...arr]
+            const stop = 'swap ble kalt altfor mange ganger. Går en løkke i ring?'
+            const log = Object.assign(new KataSwap(), { items: row, calls: [] as number[], limit: cap, stop })
+            quickSort(row, log)
+            for (let k = 0; k + 1 < log.calls.length; k += 2) swap(log.calls[k], log.calls[k + 1])
+            arr.splice(0, n, ...row)
+          }
         } catch (err) {
           if (!bad && !banned) throw err
         } finally {
@@ -957,6 +1402,40 @@ items = countingSort(items)
 items = countingSort(items)
 `,
     exports: ['countingSort'],
+    java: {
+      text: `Alle monstrene har en \`value\` fra 1 til 9, og flere kan ha samme verdi. Da trenger ikke monstrene sammenligne seg med hverandre: du kan telle hvor mange det er av hver verdi, og regne ut hvor hvert av dem skal stå.
+
+Skriv \`List<Monster> countingSort(List<Monster> items)\` som gir tilbake en ny liste med de samme monstrene, sortert etter \`value\`, minst først. Lista du får inn, skal stå urørt, og \`sort\` er forbudt. Koden nederst setter \`items\` til den sorterte raden.`,
+      scaffold: `List<Monster> countingSort(List<Monster> items) {
+    int[] counts = new int[10];
+    // Tell hvor mange det er av hver verdi, og legg monstrene på riktig plass i result
+    List<Monster> result = new ArrayList<>(items);
+    return result;
+}
+
+void main() {
+    items = countingSort(items);
+}
+`,
+      solution: `List<Monster> countingSort(List<Monster> items) {
+    int[] counts = new int[10];
+    for (Monster thing : items) counts[thing.value]++;
+    // start[v] er plassen til det første monsteret med verdi v
+    int[] start = new int[10];
+    for (int v = 1; v < 10; v++) start[v] = start[v - 1] + counts[v - 1];
+    Monster[] result = new Monster[items.size()];
+    for (Monster thing : items) {
+        result[start[thing.value]++] = thing;
+        vis(thing);
+    }
+    return Arrays.asList(result);
+}
+
+void main() {
+    items = countingSort(items);
+}
+`,
+    },
     check: (t) => {
       const countingSort = t.fn('countingSort')
       let seed = 5
@@ -982,8 +1461,11 @@ items = countingSort(items)
         }
         const real = { sort: proto.sort, toSorted: proto.toSorted }
         let got: any
-        proto.sort = ban
-        proto.toSorted = ban
+        // The ban on sort means something in JavaScript only.
+        if (t.lang === 'js') {
+          proto.sort = ban
+          proto.toSorted = ban
+        }
         try {
           got = countingSort(arr)
         } catch (err) {
@@ -1066,6 +1548,70 @@ heapSort(items, (i, j) => {
 })
 `,
     exports: ['heapSort'],
+    java: {
+      prelude: JAVA_SWAP,
+      code: {
+        'function heapSort(items, swap)': 'void heapSort(List<Monster> items, BiConsumer<Integer, Integer> swap)',
+        'swap(i, j)': 'swap.accept(i, j)',
+        'siftDown(i, size)': 'siftDown(items, swap, i, size)',
+        'siftDown(i, n)': 'siftDown(items, swap, i, n)',
+        'Math.floor(n / 2) - 1': 'n / 2 - 1',
+        'swap(0, end)': 'swap.accept(0, end)',
+        'siftDown(0, end)': 'siftDown(items, swap, 0, end)',
+      },
+      opening: `void main() {
+    heapSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}`,
+      scaffold: `void heapSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    int n = items.size();
+    // 1. Bygg en maks-haug
+    // 2. Flytt toppen bakerst, og la den nye toppen synke
+}
+
+void siftDown(List<Monster> items, BiConsumer<Integer, Integer> swap, int i, int size) {
+    // La monsteret på plass i synke ned til det er minst like stort som barna
+}
+
+void main() {
+    heapSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+      solution: `void heapSort(List<Monster> items, BiConsumer<Integer, Integer> swap) {
+    int n = items.size();
+    for (int i = n / 2 - 1; i >= 0; i--) siftDown(items, swap, i, n);
+    for (int end = n - 1; end > 0; end--) {
+        swap.accept(0, end);
+        siftDown(items, swap, 0, end);
+    }
+}
+
+void siftDown(List<Monster> items, BiConsumer<Integer, Integer> swap, int i, int size) {
+    while (true) {
+        int big = i;
+        int left = 2 * i + 1;
+        int right = left + 1;
+        if (left < size && items.get(left).value > items.get(big).value) big = left;
+        if (right < size && items.get(right).value > items.get(big).value) big = right;
+        if (big == i) return;
+        swap.accept(i, big);
+        i = big;
+    }
+}
+
+void main() {
+    heapSort(items, (i, j) -> {
+        Collections.swap(items, i, j);
+        vis(items.get(i), items.get(j));
+    });
+}
+`,
+    },
     check: (t) => {
       const heapSort = t.fn('heapSort')
       let seed = 13
@@ -1074,7 +1620,9 @@ heapSort(items, (i, j) => {
       const trial = (values: number[], readLimit: number): string => {
         const n = values.length
         let reads = 0
+        // In JavaScript a getter counts the reads of value, and sort is banned; in Java the items are mirrors.
         const arr = values.map((value) => {
+          if (t.lang !== 'js') return t.monster({ value })
           const o = t.monster({ value: 0 })
           Object.defineProperty(o, 'value', { get() { reads++; return value } })
           return o
@@ -1102,10 +1650,23 @@ heapSort(items, (i, j) => {
           throw new Error('stopp')
         }
         const real = { sort: proto.sort, toSorted: proto.toSorted }
-        proto.sort = ban
-        proto.toSorted = ban
+        if (t.lang === 'js') {
+          proto.sort = ban
+          proto.toSorted = ban
+        }
         try {
-          heapSort(arr, swap)
+          if (t.lang === 'js') heapSort(arr, swap)
+          else {
+            // Java gets a KataSwap (JAVA_SWAP) for swap: it swaps a copy of the row and notes the calls, made again here.
+            const KataSwap = class {}
+            Object.defineProperty(KataSwap, 'name', { value: 'KataSwap' })
+            const row = [...arr]
+            const stop = 'swap ble kalt altfor mange ganger. Går en løkke i ring?'
+            const log = Object.assign(new KataSwap(), { items: row, calls: [] as number[], limit: cap, stop })
+            heapSort(row, log)
+            for (let k = 0; k + 1 < log.calls.length; k += 2) swap(log.calls[k], log.calls[k + 1])
+            arr.splice(0, n, ...row)
+          }
         } catch (err) {
           if (!bad && !banned) throw err
         } finally {
@@ -1191,6 +1752,48 @@ network((i, j) => {
 })
 `,
     exports: ['network'],
+    java: {
+      code: {
+        'function network(cmpSwap)': 'void network(BiConsumer<Integer, Integer> cmpSwap)',
+        'cmpSwap(i, j)': 'cmpSwap.accept(i, j)',
+        'cmpSwap(0, 1)': 'cmpSwap.accept(0, 1)',
+        'cmpSwap(2, 3)': 'cmpSwap.accept(2, 3)',
+        'cmpSwap(0, 2)': 'cmpSwap.accept(0, 2)',
+        'cmpSwap(1, 3)': 'cmpSwap.accept(1, 3)',
+        'cmpSwap(1, 2)': 'cmpSwap.accept(1, 2)',
+      },
+      scaffold: `void network(BiConsumer<Integer, Integer> cmpSwap) {
+    // Hvilke par vil du sammenligne? cmpSwap.accept(0, 1) bytter plass 0 og 1 hvis de står feil vei.
+}
+
+void main() {
+    network((i, j) -> {
+        if (items.get(i).value > items.get(j).value) {
+            Collections.swap(items, i, j);
+            vis(items.get(i), items.get(j));
+        }
+    });
+}
+`,
+      solution: `void network(BiConsumer<Integer, Integer> cmpSwap) {
+    cmpSwap.accept(0, 1);
+    cmpSwap.accept(2, 3);
+    cmpSwap.accept(0, 2);
+    cmpSwap.accept(1, 3);
+    cmpSwap.accept(1, 2);
+}
+
+void main() {
+    network((i, j) -> {
+        vis(items.get(i), items.get(j));
+        if (items.get(i).value > items.get(j).value) {
+            Collections.swap(items, i, j);
+            vis(items.get(i), items.get(j));
+        }
+    });
+}
+`,
+    },
     check: (t) => {
       const network = t.fn('network')
       const perms: number[][] = []
@@ -1256,6 +1859,26 @@ console.log(items.map((thing) => thing.color))
     solution: `items.sort((a, b) => a.color.localeCompare(b.color))
 vis('sortert etter farge')
 `,
+    java: {
+      text: `Monstrene vil stå sammen med dem som har samme farge, og fargene vil stå i alfabetisk rekkefølge: \`"cyan"\` før \`"gold"\`, \`"gold"\` før \`"lime"\`, og så videre. \`color\` er en \`String\`, og to tekster sammenligner du med \`compareTo\`.
+
+Sorter \`items\` etter \`color\`. De som har samme farge, skal beholde rekkefølgen de hadde før: sorteringen skal være stabil. Raden har flere monstre i hver farge, så du ser tydelig om de holder rekkefølgen.`,
+      hints: [
+        '`a.color.compareTo(b.color)` gir et negativt tall, null eller et positivt tall, akkurat slik `items.sort` vil ha det.',
+        'Lager du sammenligningen selv, må den gi 0 når fargene er like. Da vet `items.sort` at de skal beholde rekkefølgen.',
+        '`items.sort` er stabil i Java: like monstre holder rekkefølgen. Sorterer du selv, bytter du to naboer bare når det venstre er strengt større.',
+      ],
+      scaffold: `void main() {
+    // Sorter items etter color, a til å. Like farger beholder rekkefølgen.
+    IO.println(items.stream().map(thing -> thing.color).toList());
+}
+`,
+      solution: `void main() {
+    items.sort((a, b) -> a.color.compareTo(b.color));
+    vis("sortert etter farge");
+}
+`,
+    },
     check: (t) => {
       if (!Array.isArray(t.items)) return '`items` er ikke en array lenger.'
       const want = t
@@ -1316,6 +1939,45 @@ console.log(fewestMoves(items))
 console.log(fewestMoves(items))
 `,
     exports: ['fewestMoves'],
+    java: {
+      text: `Monstrene i \`items\` vil stå sortert etter \`value\`, men så få som mulig vil reise seg. Et monster som flytter seg, kan settes ned hvor som helst. De som blir sittende, må allerede stå i riktig rekkefølge seg imellom.
+
+Skriv \`int fewestMoves(List<Monster> items)\` som gir tilbake det minste antallet monstre som må flytte seg. Metoden skal bare regne, ikke flytte noe. Sjekken prøver også en rad med flere tusen monstre.`,
+      hints: [
+        'De som blir sittende, er en stigende rekke med hull i: verdiene øker fra venstre mot høyre, men står ikke nødvendigvis ved siden av hverandre. Jo lengre en slik rekke, jo færre må flytte.',
+        'Svaret er antall monstre minus lengden av den lengste stigende rekka. For hver plass kan du regne ut den lengste stigende rekka som slutter der, ved å se på alle plassene til venstre. Det er raskt nok for 8, men ikke for flere tusen.',
+        'Raskere: hold en liste `tails`, der `tails.get(k)` er den minste sluttverdien en stigende rekke med lengde `k + 1` kan ha. For hver verdi finner du med binærsøk den første i `tails` som er minst like stor, og bytter den ut med `set`, eller legger verdien til bakerst med `add`.',
+      ],
+      scaffold: `int fewestMoves(List<Monster> items) {
+    // Hvor lang er den lengste stigende rekka?
+    return items.size();
+}
+
+void main() {
+    IO.println(fewestMoves(items));
+}
+`,
+      solution: `int fewestMoves(List<Monster> items) {
+    List<Integer> tails = new ArrayList<>();
+    for (Monster thing : items) {
+        int lo = 0;
+        int hi = tails.size();
+        while (lo < hi) {
+            int mid = (lo + hi) / 2;
+            if (tails.get(mid) < thing.value) lo = mid + 1;
+            else hi = mid;
+        }
+        if (lo == tails.size()) tails.add(thing.value);
+        else tails.set(lo, thing.value);
+    }
+    return items.size() - tails.size();
+}
+
+void main() {
+    IO.println(fewestMoves(items));
+}
+`,
+    },
     check: (t) => {
       const fewestMoves = t.fn('fewestMoves')
       const lis = (v: number[]) => {
