@@ -73,3 +73,20 @@ class Ting {
   constructor(props) { Object.assign(this, props) }
 }`,
 ]
+
+/** What the playground opens with in Java; the class is classes.ts' JAVA_LIST_MONSTER. */
+export const JAVA_STARTER = `// Monstrene over koden er en lenket liste av Monster: klassen står over monstrene.
+// Hvert monster har value, color og next, og next peker på neste. head peker på det første.
+// Bokstavene A, B, C … er monstrene selv; head kan du flytte.
+
+void main() {
+    Monster node = head;
+    while (node != null) {
+        IO.println(node.value + " " + node.color);
+        node = node.next;
+    }
+}
+
+// Prøv: head = head.next; eller A.color = "gold";
+// eller Monster m = new Monster(); m.value = 5; m.next = head; head = m;
+`

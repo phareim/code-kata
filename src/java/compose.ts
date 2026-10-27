@@ -27,7 +27,7 @@ export interface ComposeInput {
 /** What the worker needs to mirror the classes and answer the check. */
 export interface JavaMeta {
   /** The classes the bridge mirrors: items (the item class and what extends it) and others, with their methods. */
-  classes: { name: string; item: boolean; parent: string | null; methods: string[]; statics: string[] }[]
+  classes: { name: string; item: boolean; parent: string | null; fields: string[]; methods: string[]; statics: string[] }[]
   /** The item class's fields, in order: the world's `fields`. */
   fields: string[]
   itemClass: string
@@ -153,11 +153,12 @@ export function compose(input: ComposeInput): Composed {
   let first = true
   for (const c of visible) {
     if (c.kind === 'record') continue
+    const vars = new Map(ancestors(c).flatMap((x) => [...x.typeVars]))
     const sets = fieldsOf(c, true).map((f) => {
       noteArray(f.type)
       const read = `KataBridge.in(KataBridge.get(js, ${quote(f.name)}), ${tyOf(f.type)})`
       const boxed = BOXED[f.type]
-      const assign = boxed ? `if (v != null) x.${f.name} = (${boxed}) v;` : `x.${f.name} = (${erased(f.type)}) v;`
+      const assign = boxed ? `if (v != null) x.${f.name} = (${boxed}) v;` : `x.${f.name} = (${erased(f.type, vars)}) v;`
       return `if (KataBridge.has(js, ${quote(f.name)})) { Object v = ${read}; ${assign} }`
     })
     gen.push(`    ${first ? '' : 'else '}if (o instanceof ${ref(c)} x) { ${sets.join(' ')} }`)
@@ -209,7 +210,7 @@ export function compose(input: ComposeInput): Composed {
   for (const c of exportedClasses) {
     if (c.kind === 'enum' || c.isAbstract) continue
     const create = (ps: Param[]) => {
-      const m: Method = { name: c.name, ret: c.name, params: ps, isStatic: false, isPrivate: false, typeVars: new Map() }
+      const m: Method = { name: c.name, ret: c.name, params: ps, isStatic: false, isPrivate: false, isAbstract: false, typeVars: c.typeVars }
       return c.member && !c.isStatic ? `KataBridge.code.new ${c.name}(${callArgs(m)})` : `new ${c.name}(${callArgs(m)})`
     }
     const ctors = c.kind === 'record' ? [c.components] : c.ctors.length ? c.ctors : [[]]
@@ -253,6 +254,26 @@ export function compose(input: ComposeInput): Composed {
     gen.push('    }')
   }
   gen.push('    return KataBridge.VOID;')
+  gen.push('  }')
+
+  // A function from the check as one of the code's (or the task's) interfaces with a single abstract method.
+  const interfaces = [...top, ...preludeClasses, ...members.classes].filter((c) => c.kind === 'interface' && !c.isPrivate)
+  gen.push('  static Object fn(String t, KataBridge.Fn f) {')
+  gen.push('    switch (t) {')
+  for (const c of interfaces) {
+    const abstract = c.methods.filter((m) => m.isAbstract)
+    if (abstract.length !== 1) continue
+    const m = abstract[0]
+    const ps = m.params.map((p) => `${erased(p.type, m.typeVars)} ${p.name}`).join(', ')
+    const pass = ['', ...m.params.map((p) => p.name)].join(', ')
+    const ret = erased(m.ret, m.typeVars)
+    const body = m.ret === 'void'
+      ? `f.call(KataBridge.VOID_TY${pass});`
+      : `return (${BOXED[m.ret] ?? ret}) f.call(${tyOf(m.ret)}${pass});`
+    gen.push(`      case ${quote(c.name)}: return new ${c.name}() { public ${ret} ${m.name}(${ps}) { ${body} } };`)
+  }
+  gen.push('      default: return null;')
+  gen.push('    }')
   gen.push('  }')
 
   const main = members.methods.find((m) => m.name === 'main' && m.params.length === 0)
@@ -311,6 +332,7 @@ export function compose(input: ComposeInput): Composed {
       name: c.name,
       item: isItem(c),
       parent: c.extendsName && byName.has(c.extendsName) ? c.extendsName : null,
+      fields: c.kind === 'record' ? c.components.map((p) => p.name) : fieldsOf(c, false).map((f) => f.name),
       methods: [...new Set(c.methods.filter((m) => !m.isStatic && !m.isPrivate).map((m) => m.name))],
       statics: [...new Set(c.methods.filter((m) => m.isStatic && !m.isPrivate).map((m) => m.name))],
     })),

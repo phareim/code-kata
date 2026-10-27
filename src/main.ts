@@ -4,23 +4,35 @@ import type { EditorView } from '@codemirror/view'
 import { Bank, levelBadge, randomTask } from './app/bank'
 import { confetti, stamp } from './app/celebrate'
 import { initLayout } from './app/layout'
-import { flushProgress, isSolved, lastTask, markSolved, rememberLast, startSync, syncNow, taskState, updateTask, type Account, type Vote } from './app/progress'
+import { flushProgress, isSolved, lastTask, markSolved, rememberLast, saveIn, savedIn, startSync, syncNow, taskState, updateTask, type Account, type Vote } from './app/progress'
 import { Talk } from './app/talk'
 import { inlineText, richText } from './app/text'
+import { fingerprint, translateCode } from './app/translate'
 import { createEditor, firstSyntaxErrorLine, goToLine, markErrorLine, replaceDoc } from './editor/editor'
-import { Runner, TIME_LIMIT_MS, type Entry, type Outcome, type Verdict, type Where } from './run/runner'
+import { Runner, TIME_LIMIT_MS, type Entry, type JavaRun, type Outcome, type Verdict, type Where } from './run/runner'
 import { Stage } from './stage/stage'
-import { MONSTER_CLASS, OLD_CLASSES, OLD_STARTERS, STARTER } from './starter'
+import { JAVA_STARTER, MONSTER_CLASS, OLD_CLASSES, OLD_STARTERS, STARTER } from './starter'
 import { seeded } from './tasks/build'
+import { JAVA_LIST_MONSTER } from './tasks/classes'
 import { TASKS, taskById, taskNumber } from './tasks/index'
-import { hasScaffold, opening, scaffolded } from './tasks/opening'
+import { javaExpected, javaRoots } from './tasks/java'
+import {
+  hasLang, hasScaffoldIn, hintsIn, isLang, LANG_NAMES, monsterIn, openingIn, scaffoldedIn, solutionIn, solutionMonsterIn,
+  textIn, type Lang,
+} from './tasks/lang'
 import { TOPICS, type Task } from './tasks/types'
 import { renderObjects } from './world/objects'
 import { label, randomWorld, type World } from './world/world'
 
-// The playground keeps the keys the page used before it had tasks.
+// The playground keeps the keys the page used before it had tasks; in Java it has keys of its own.
 const PLAY_CODE = 'code-kata:code'
 const PLAY_CLASS = 'code-kata:ting'
+const PLAY_JAVA_CODE = 'code-kata:java-code'
+const PLAY_JAVA_CLASS = 'code-kata:java-ting'
+/** The language the visitor last picked, a per-browser choice; a task without it opens in JavaScript. */
+const LANG_KEY = 'code-kata:lang'
+/** Per task (or the playground), the fingerprint of the code each language's code was last translated from. */
+const TRANSLATED_KEY = 'code-kata:translated'
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 const runButton = $<HTMLButtonElement>('run')
@@ -72,6 +84,9 @@ let built: World | null = null
 let world: World = start
 /** Keeps a run that was overtaken (by another run, «Nye», «Nullstill», another task) from landing. */
 let version = 0
+/** The language the visitor picked, and the one the editors hold now (JavaScript for a task without the pick). */
+let lang: Lang = 'js'
+let codeLang: Lang = 'js'
 
 const stage = new Stage($('stage'))
 const currentTask = () => (mode?.kind === 'task' ? mode.task : null)
@@ -95,8 +110,15 @@ for (const type of ['pointerover', 'pointerout'] as const) {
   })
 }
 
-// The editors: the code, and the Monster class at the top of the objects pane. Both are saved for what is open.
-const itemNames = () => [...world.roots.map((p) => p.key), 'Monster', 'vis', ...world.items.map((_, i) => label(i))]
+// The editors: the code, and the Monster class at the top of the objects pane. Both are saved for what is open, in
+// the language they are in.
+const itemNames = () => [
+  ...world.roots.map((p) => p.key), 'Monster', 'vis', ...(codeLang === 'java' ? ['IO'] : []), ...world.items.map((_, i) => label(i)),
+]
+const playKeys = (l: Lang) => (l === 'java' ? [PLAY_JAVA_CODE, PLAY_JAVA_CLASS] : [PLAY_CODE, PLAY_CLASS])
+const playCode = (l: Lang) => (l === 'java' ? load(PLAY_JAVA_CODE, JAVA_STARTER) : load(PLAY_CODE, STARTER, OLD_STARTERS))
+const playStarters = (l: Lang) => (l === 'java' ? [JAVA_STARTER] : [STARTER, ...OLD_STARTERS])
+const playClass = (l: Lang) => (l === 'java' ? load(PLAY_JAVA_CLASS, JAVA_LIST_MONSTER) : load(PLAY_CLASS, MONSTER_CLASS, OLD_CLASSES))
 let saveTimer = 0
 function saveNow(): void {
   window.clearTimeout(saveTimer)
@@ -105,13 +127,13 @@ function saveNow(): void {
   const ting = classView.state.doc.toString()
   if (mode.kind === 'task') {
     const task = mode.task
-    updateTask(task.id, {
-      code: code === opening(task) ? undefined : code,
-      ting: ting === (task.monster ?? MONSTER_CLASS) ? undefined : ting,
-    })
+    saveIn(task.id, codeLang,
+      code === openingIn(task, codeLang) ? undefined : code,
+      ting === monsterIn(task, codeLang) ? undefined : ting)
   } else {
-    store(PLAY_CODE, code)
-    store(PLAY_CLASS, ting)
+    const [codeKey, classKey] = playKeys(codeLang)
+    store(codeKey, code)
+    store(classKey, ting)
   }
 }
 const saveSoon = () => {
@@ -182,9 +204,14 @@ function formatMs(ms: number): string {
  * tasks about the class, and when the visitor has changed the class; folded otherwise, to leave room for the items.
  */
 function classSummaryText(source: string): string {
-  const fields = [...source.matchAll(/^\s*(#?[A-Za-z_$][\w$]*)\s*=/gm)].map((m) => m[1])
-  const methods = [...source.matchAll(/^\s*(?:static\s+|get\s+|set\s+|async\s+)?\*?\s*([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{/gm)]
-    .map((m) => m[1]).filter((name) => name !== 'constructor')
+  const java = codeLang === 'java'
+  const fields = java
+    ? [...source.matchAll(/^\s*(?:(?:public|protected|private|static|final)\s+)*[\w$.<>[\], ?]+?\s+([A-Za-z_$][\w$]*)\s*(?:=[^;]*)?;/gm)].map((m) => m[1])
+    : [...source.matchAll(/^\s*(#?[A-Za-z_$][\w$]*)\s*=/gm)].map((m) => m[1])
+  const methods = (java
+    ? [...source.matchAll(/^\s*(?:(?:public|protected|private|static|final|abstract)\s+)*[\w$.<>[\], ?]+?\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{/gm)]
+    : [...source.matchAll(/^\s*(?:static\s+|get\s+|set\s+|async\s+)?\*?\s*([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{/gm)])
+    .map((m) => m[1]).filter((name) => name !== 'constructor' && !/^(if|for|while|switch|catch)$/.test(name))
   const name = /class\s+([A-Za-z_$][\w$]*)/.exec(source)?.[1] ?? 'Monster'
   return `class ${name} { ${[...fields, ...methods.map((n) => `${n}()`)].join(', ')} }`
 }
@@ -232,7 +259,20 @@ function showError(outcome: Extract<Outcome, { kind: 'error' }>): void {
   }
   const div = line('error', `${outcome.name}: ${outcome.message}`)
   if (at !== null && where) div.append(' · ', lineLink(where, at))
-  appendLines([div])
+  // A compiler's other errors, each on its line; only the first is marked in the editor.
+  const more = (outcome.more ?? []).map((p) => {
+    const extra = line('error', p.message)
+    if (p.line !== null && p.where) {
+      const go = document.createElement('button')
+      go.type = 'button'
+      go.className = 'goto'
+      go.textContent = p.where === 'klasse' ? `Monster linje ${p.line}` : `linje ${p.line}`
+      go.addEventListener('click', () => goToLine(views[p.where!], p.line!))
+      extra.append(' · ', go)
+    }
+    return extra
+  })
+  appendLines([div, ...more])
   const place = where === 'klasse' ? `Monster linje ${at}` : `linje ${at}`
   setStatus(at !== null ? `Feil · ${place}` : where === 'klasse' ? 'Feil · Monster' : 'Feil', 'error')
 }
@@ -337,6 +377,7 @@ function run(kind: 'code' | 'class'): void {
     clear: () => output.replaceChildren(),
     world: (next, frames, dropped) => { result = { world: next, frames, dropped } },
     verdict: (v) => { verdict = v },
+    stage: showStage,
     end: (outcome) => {
       finished(outcome, kind)
       if (version !== started) return
@@ -350,12 +391,39 @@ function run(kind: 'code' | 'class'): void {
       if (landed) play(landed.frames, landed.world, landed.dropped, after)
       else after()
     },
-  }, checked ? { check: String(task.check), exports: task.exports } : undefined)
+  }, checked ? { check: String(task.check), exports: task.exports } : undefined, javaRun())
 }
 
-/** Builds the start from the class without a word in the console, unless the class fails. */
+/** What a run in Java needs: the roots' types, the task's own types, how its exports are declared. */
+function javaRun(): JavaRun | undefined {
+  if (codeLang !== 'java') return undefined
+  const task = currentTask()
+  if (!task) return { roots: world.roots.map((p) => ({ name: p.key, type: 'Monster' })) }
+  return { roots: javaRoots(task), prelude: task.java?.prelude, expected: javaExpected(task) }
+}
+
+/** Java compiles before it runs: the status says so, and the first time, that the compiler is on its way. */
+function showStage(stage: 'loading' | 'compiling' | 'running'): void {
+  setStatus(stage === 'loading' ? 'Laster Java' : stage === 'compiling' ? 'Kompilerer' : 'Kjører', 'running')
+  if (stage === 'loading') {
+    const note = line('note', 'Henter Java-kompilatoren (javac og TeaVM, 8 MB). Det skjer bare første gang. ')
+    const link = Object.assign(document.createElement('a'), { href: '/licenses/java-wasm.md', textContent: 'Lisenser', target: '_blank', rel: 'noopener' })
+    note.append(link)
+    appendLines([note])
+  }
+}
+
+/**
+ * Builds the start from the class without a word in the console, unless the class fails. In Java only for a class
+ * the visitor has changed: the task's own class is what the items were made with, and compiling takes a moment.
+ */
 function build(): void {
   const started = ++version
+  const java = javaRun()
+  if (java && classView.state.doc.toString() === (currentTask() ? monsterIn(currentTask()!, 'java') : JAVA_LIST_MONSTER)) {
+    built = start
+    return
+  }
   builder.run('', classView.state.doc.toString(), start, {
     output: () => {},
     clear: () => {},
@@ -365,7 +433,7 @@ function build(): void {
       showWorld(next, true)
     },
     end: (outcome) => { if (outcome.kind === 'error' && version === started) showError(outcome) },
-  })
+  }, undefined, java)
 }
 
 function nextTask(task: Task, step: 1 | -1): Task | undefined {
@@ -396,7 +464,7 @@ function showVerdict(task: Task, v: Verdict): void {
     return node
   }
   if (v.ok) {
-    const first = markSolved(task.id)
+    const first = markSolved(task.id, codeLang)
     const next = nextOpenTask(task)
     verdictEl.replaceChildren(strong('Løst!'), ` ${first ? 'Monstrene er fornøyde.' : 'Løst igjen, like fint.'} `)
     if (next) {
@@ -440,10 +508,12 @@ function showVerdict(task: Task, v: Verdict): void {
  */
 let signedIn = false
 let talkUp = false
+/** Whether the site's API answers (not on a dev server, not in an outage): the talk and the translations need it. */
+let apiUp = false
 const signInUrl = () => `https://auth.phareim.no/?redirect=${encodeURIComponent(location.href)}&theme=neon`
 const talkButton = $<HTMLButtonElement>('talk-btn')
 const talk = new Talk($('talk'), {
-  code: () => ({ code: codeView.state.doc.toString(), ting: classView.state.doc.toString() }),
+  code: () => ({ code: codeView.state.doc.toString(), ting: classView.state.doc.toString(), lang: codeLang }),
   synced: async () => {
     saveNow()
     await syncNow()
@@ -492,7 +562,7 @@ function scaffoldButton(task: Task): HTMLButtonElement {
   button.textContent = SCAFFOLD_LABEL
   button.addEventListener('click', () => {
     const code = codeView.state.doc.toString()
-    const own = code.trim() !== '' && code !== opening(task) && code !== scaffolded(task)
+    const own = code.trim() !== '' && code !== openingIn(task, codeLang) && code !== scaffoldedIn(task, codeLang)
     if (own && !scaffoldArmed) {
       button.textContent = 'Bytte ut koden din? Trykk igjen'
       scaffoldArmed = window.setTimeout(() => {
@@ -504,7 +574,7 @@ function scaffoldButton(task: Task): HTMLButtonElement {
     window.clearTimeout(scaffoldArmed)
     scaffoldArmed = 0
     button.textContent = SCAFFOLD_LABEL
-    setText(codeView, scaffolded(task))
+    setText(codeView, scaffoldedIn(task, codeLang))
     verdictEl.hidden = true
     codeView.focus()
   })
@@ -514,11 +584,12 @@ function scaffoldButton(task: Task): HTMLButtonElement {
 function renderHints(task: Task): void {
   window.clearTimeout(scaffoldArmed)
   scaffoldArmed = 0
-  const opened = Math.min(taskState(task.id).hints ?? 0, task.hints.length)
-  hintsEl.replaceChildren(...task.hints.slice(0, opened).map((hint, i) => {
+  const hints = hintsIn(task, codeLang)
+  const opened = Math.min(taskState(task.id).hints ?? 0, hints.length)
+  hintsEl.replaceChildren(...hints.slice(0, opened).map((hint, i) => {
     const li = document.createElement('li')
     li.append(inlineText(hint))
-    if (i === 0 && hasScaffold(task)) li.append(scaffoldButton(task))
+    if (i === 0 && hasScaffoldIn(task, codeLang)) li.append(scaffoldButton(task))
     return li
   }))
   hintButton.disabled = opened >= task.hints.length
@@ -531,7 +602,8 @@ function renderSolution(task: Task, open: boolean): void {
   solutionArmed = 0
   solutionEl.hidden = !open
   solutionButton.textContent = open ? 'Skjul løsningen' : 'Løsning'
-  $('solution-code').textContent = task.solutionMonster ? `${task.solutionMonster}\n\n${task.solution}` : task.solution
+  const cls = solutionMonsterIn(task, codeLang)
+  $('solution-code').textContent = cls ? `${cls}\n\n${solutionIn(task, codeLang)}` : solutionIn(task, codeLang)
 }
 
 function renderTask(task: Task): void {
@@ -541,7 +613,7 @@ function renderTask(task: Task): void {
   showTalkButton()
   showVote()
   $('task-title').textContent = task.title
-  $('task-text').replaceChildren(richText(task.text))
+  $('task-text').replaceChildren(richText(textIn(task, codeLang)))
   $('task-actions').hidden = false
   verdictEl.hidden = true
   renderHints(task)
@@ -600,13 +672,22 @@ function openTask(task: Task): void {
   }
   start = task.world(seeded(seed))
   built = null
-  replaceDoc(codeView, state.code ?? opening(task))
-  replaceDoc(classView, state.ting ?? task.monster ?? MONSTER_CLASS)
+  codeLang = hasLang(task, lang) ? lang : 'js'
+  const saved = loadEditors(task)
   renderTask(task)
-  setClassOpen(task.topic === 'objekter' || state.ting !== undefined)
-  showClass(start.items.length > 0 || state.ting !== undefined)
+  setClassOpen(task.topic === 'objekter' || saved.ting !== undefined)
+  showClass(start.items.length > 0 || saved.ting !== undefined)
   showWorld(start, false)
+  showLang()
   build()
+}
+
+/** Puts a task's code and class in the editors, in the language they are in now; what was saved, or the opening. */
+function loadEditors(task: Task): { code?: string; ting?: string } {
+  const saved = savedIn(task.id, codeLang)
+  replaceDoc(codeView, saved.code ?? openingIn(task, codeLang), codeLang)
+  replaceDoc(classView, saved.ting ?? monsterIn(task, codeLang), codeLang)
+  return saved
 }
 
 function openPlay(): void {
@@ -614,14 +695,122 @@ function openPlay(): void {
   mode = { kind: 'play' }
   start = randomWorld()
   built = null
-  replaceDoc(codeView, load(PLAY_CODE, STARTER, OLD_STARTERS))
-  replaceDoc(classView, load(PLAY_CLASS, MONSTER_CLASS, OLD_CLASSES))
+  codeLang = lang
+  replaceDoc(codeView, playCode(codeLang), codeLang)
+  replaceDoc(classView, playClass(codeLang), codeLang)
   renderPlay()
   setClassOpen(true)
   showClass(true)
   showWorld(start, false)
+  showLang()
   build()
 }
+
+/*
+ * The language switch by «Kode». Each language keeps its own code per task. Switching after writing code of one's own
+ * asks Claude to write it in the other language (worker/translate.ts), so the visitor sees what they are doing now in
+ * that one; the editor gets it as an edit, so Cmd/Ctrl+Z brings back what that language had. Switching back without
+ * changing anything gives back exactly what was there: a translation is only made from code that changed since.
+ */
+const langButtons = [...document.querySelectorAll<HTMLButtonElement>('#lang [data-lang]')]
+let switching = 0
+
+function showLang(): void {
+  const task = currentTask()
+  for (const button of langButtons) {
+    const l = button.dataset.lang as Lang
+    const available = !task || hasLang(task, l)
+    button.setAttribute('aria-pressed', String(l === codeLang))
+    button.disabled = !available
+    button.title = available ? `Skriv koden i ${LANG_NAMES[l]}` : `Oppgaven finnes bare i JavaScript ennå`
+  }
+}
+
+function translatedFor(key: string): Partial<Record<Lang, string>> {
+  try {
+    const all = JSON.parse(localStorage.getItem(TRANSLATED_KEY) ?? '{}') as Record<string, Partial<Record<Lang, string>>>
+    return all[key] ?? {}
+  } catch {
+    return {}
+  }
+}
+
+function rememberTranslated(key: string, marks: Partial<Record<Lang, string>>): void {
+  try {
+    const all = JSON.parse(localStorage.getItem(TRANSLATED_KEY) ?? '{}') as Record<string, Partial<Record<Lang, string>>>
+    all[key] = { ...all[key], ...marks }
+    localStorage.setItem(TRANSLATED_KEY, JSON.stringify(all))
+  } catch {
+    // Not remembered: the next switch translates again.
+  }
+}
+
+async function switchLang(to: Lang): Promise<void> {
+  const task = currentTask()
+  if (!mode || to === codeLang || (task && !hasLang(task, to))) return
+  saveNow()
+  const from = codeLang
+  const code = codeView.state.doc.toString()
+  const ting = classView.state.doc.toString()
+  lang = to
+  store(LANG_KEY, to)
+  endPlayback(false)
+  runner.stop()
+  builder.stop()
+  version++
+  codeLang = to
+  for (const view of Object.values(views)) markErrorLine(view, null)
+  output.replaceChildren()
+  verdictEl.hidden = true
+  setStatus('Klar', 'idle')
+  if (task) {
+    loadEditors(task)
+    renderTask(task)
+  } else {
+    replaceDoc(codeView, playCode(to), to)
+    replaceDoc(classView, playClass(to), to)
+  }
+  if (!classSummary.hidden) classSummary.textContent = classSummaryText(classView.state.doc.toString())
+  showLang()
+  showWorld(built ?? start, false)
+
+  // Translate code of the visitor's own, unless this language's code was made from it already.
+  const key = task?.id ?? 'lekeplass'
+  const own = task ? code.trim() !== openingIn(task, from).trim() : !playStarters(from).includes(code)
+  const print = fingerprint(code, ting)
+  if (!own || translatedFor(key)[to] === print) return
+  if (!apiUp) {
+    appendLines([line('note', `Koden din i ${LANG_NAMES[from]} er der den var. Her står det du hadde i ${LANG_NAMES[to]}.`)])
+    return
+  }
+  const turn = ++switching
+  const before = codeView.state.doc.toString()
+  setStatus('Oversetter', 'running')
+  const result = await translateCode(key, from, to, code, ting)
+  if (turn !== switching || codeLang !== to || currentTask() !== task) return
+  if (!result.ok) {
+    setStatus('Klar', 'idle')
+    const why = result.reason === 'limit' ? 'Det er oversatt nok for i dag; prøv igjen i morgen.'
+      : result.reason === 'long' ? 'Koden er for lang til å oversette.'
+        : result.reason === 'off' ? 'Oversettelsen er ikke tilgjengelig nå.'
+          : 'Oversettelsen gikk ikke denne gangen.'
+    appendLines([line('note', `${why} Her står det du hadde i ${LANG_NAMES[to]}.`)])
+    return
+  }
+  if (codeView.state.doc.toString() !== before) {
+    setStatus('Klar', 'idle')
+    appendLines([line('note', 'Oversettelsen kom etter at du begynte å skrive, så den ble ikke satt inn.')])
+    return
+  }
+  setText(codeView, result.code)
+  if (result.ting && result.ting !== classView.state.doc.toString()) setText(classView, result.ting)
+  rememberTranslated(key, { [to]: print, [from]: fingerprint(codeView.state.doc.toString(), classView.state.doc.toString()) })
+  saveNow()
+  setStatus('Oversatt', 'done')
+  appendLines([line('note', `Claude har skrevet koden din fra ${LANG_NAMES[from]} i ${LANG_NAMES[to]}. `
+    + `${shortcut.replace('Enter', 'Z')} gir deg tilbake det som stod her før.`)])
+}
+for (const button of langButtons) button.addEventListener('click', () => void switchLang(button.dataset.lang as Lang))
 
 const bank = new Bank($('bank'), () => currentTask()?.id ?? null)
 
@@ -666,9 +855,10 @@ function setText(view: EditorView, text: string): void {
 $('use-solution').addEventListener('click', () => {
   const task = currentTask()
   if (!task) return
-  setText(codeView, task.solution)
-  if (task.solutionMonster) {
-    setText(classView, task.solutionMonster)
+  setText(codeView, solutionIn(task, codeLang))
+  const cls = solutionMonsterIn(task, codeLang)
+  if (cls) {
+    setText(classView, cls)
     setClassOpen(true)
   }
   codeView.focus()
@@ -676,8 +866,8 @@ $('use-solution').addEventListener('click', () => {
 $('restart-btn').addEventListener('click', () => {
   const task = currentTask()
   if (!task) return
-  setText(codeView, opening(task))
-  setText(classView, task.monster ?? MONSTER_CLASS)
+  setText(codeView, openingIn(task, codeLang))
+  setText(classView, monsterIn(task, codeLang))
   verdictEl.hidden = true
   codeView.focus()
 })
@@ -731,6 +921,7 @@ const accountLink = $<HTMLAnchorElement>('account')
 function showAccount(account: Account | null, available: boolean): void {
   signedIn = !!account
   talkUp = available
+  apiUp = available
   showTalkButton()
   accountLink.hidden = !available
   accountLink.href = signInUrl()
@@ -751,21 +942,25 @@ function merged(ids: string[]): void {
   if (bank.isOpen) bank.render()
   const task = currentTask()
   if (!task || !ids.includes(task.id)) return
-  const state = taskState(task.id)
   $('task-solved').hidden = !isSolved(task.id)
   showTalkButton()
   showVote()
   renderHints(task)
-  const code = state.code ?? opening(task)
-  if (code !== codeView.state.doc.toString()) replaceDoc(codeView, code)
-  const ting = state.ting ?? task.monster ?? MONSTER_CLASS
+  const saved = savedIn(task.id, codeLang)
+  const code = saved.code ?? openingIn(task, codeLang)
+  if (code !== codeView.state.doc.toString()) replaceDoc(codeView, code, codeLang)
+  const ting = saved.ting ?? monsterIn(task, codeLang)
   if (ting !== classView.state.doc.toString()) {
-    replaceDoc(classView, ting)
-    showClass(start.items.length > 0 || state.ting !== undefined)
+    replaceDoc(classView, ting, codeLang)
+    showClass(start.items.length > 0 || saved.ting !== undefined)
     build()
   }
 }
 
+{
+  const saved = load(LANG_KEY, 'js')
+  lang = isLang(saved) ? saved : 'js'
+}
 updateProgress()
 route()
 codeView.focus()

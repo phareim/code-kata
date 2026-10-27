@@ -102,6 +102,44 @@ while (todo.length) {
   todo.push([y - 1, x], [y + 1, x], [y, x - 1], [y, x + 1])
 }
 `,
+    java: {
+      code: { "'pink'": '"pink"', 'const old = grid[r][c]': 'String old = grid[r][c]' },
+      scaffold: `void main() {
+    int r = start[0];
+    int c = start[1];
+    String old = grid[r][c];
+    Deque<int[]> todo = new ArrayDeque<>();
+    todo.push(new int[] {r, c});
+    while (!todo.isEmpty()) {
+        int[] cell = todo.pop();
+        int y = cell[0];
+        int x = cell[1];
+        // Er ruta innenfor og har fargen old? Mal den, og legg naboene i todo.
+    }
+}
+`,
+      solution: `void main() {
+    int r = start[0];
+    int c = start[1];
+    String old = grid[r][c];
+    Deque<int[]> todo = new ArrayDeque<>();
+    todo.push(new int[] {r, c});
+    while (!todo.isEmpty()) {
+        int[] cell = todo.pop();
+        int y = cell[0];
+        int x = cell[1];
+        if (y < 0 || y >= grid.length || x < 0 || x >= grid[y].length) continue;
+        if (!grid[y][x].equals(old)) continue;
+        grid[y][x] = "pink";
+        vis();
+        todo.push(new int[] {y - 1, x});
+        todo.push(new int[] {y + 1, x});
+        todo.push(new int[] {y, x - 1});
+        todo.push(new int[] {y, x + 1});
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.start.grid as string[][]
       const [r, c] = t.start.start as number[]
@@ -162,6 +200,38 @@ for (let r = 0; r < rows; r++) {
   }
 }
 `,
+    java: {
+      code: {
+        "'.'": '"."',
+        "'gold'": '"gold"',
+        "if (r === 0 || r === rows - 1 || c === 0 || c === cols - 1) grid[r][c] = 'gold'": 'if (r == 0 || r == rows - 1 || c == 0 || c == cols - 1) grid[r][c] = "gold"',
+        'rows = grid.length': 'int rows = grid.length',
+        'cols = grid[0].length': 'int cols = grid[0].length',
+      },
+      scaffold: `void main() {
+    int rows = grid.length;
+    int cols = grid[0].length;
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            // Ligger ruta [r][c] ytterst? Mal den "gold".
+        }
+    }
+}
+`,
+      solution: `void main() {
+    int rows = grid.length;
+    int cols = grid[0].length;
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            if (r == 0 || r == rows - 1 || c == 0 || c == cols - 1) {
+                grid[r][c] = "gold";
+                vis();
+            }
+        }
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.start.grid as string[][]
       const grid = t.grid
@@ -213,6 +283,30 @@ Speilvend hver rad, så den første ruta i raden havner sist og den siste først
   vis()
 }
 `,
+    java: {
+      hints: [
+        'Gjør én rad om gangen: `for (String[] row : grid) { … }`.',
+        'I en rad bytter du den første og den siste ruta, så den nest første og den nest siste, og slik innover til du møter midten.',
+        'Bytt `row[i]` og `row[row.length - 1 - i]` for `i` i første halvdel av raden, med en hjelpevariabel imellom: `String tmp = row[i]`. Eller bruk `Collections.reverse(Arrays.asList(row))`: `Arrays.asList(row)` er en liste som skriver rett i `row`, så det er raden som blir snudd.',
+      ],
+      scaffold: `void main() {
+    for (String[] row : grid) {
+        // Bytt første og siste i raden, så nest første og nest siste …
+    }
+}
+`,
+      solution: `void main() {
+    for (String[] row : grid) {
+        for (int i = 0, j = row.length - 1; i < j; i++, j--) {
+            String tmp = row[i];
+            row[i] = row[j];
+            row[j] = tmp;
+        }
+        vis();
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.start.grid as string[][]
       const grid = t.grid
@@ -260,6 +354,32 @@ for (let r = 0; r < n; r++) {
   }
 }
 `,
+    java: {
+      hints: [
+        'Ruta i `grid[r][c]` og ruta i `grid[c][r]` skal bytte plass.',
+        'Bytter du alle rutene, bytter du hvert par to ganger og ender der du begynte. Bytt bare de over diagonalen: de der `c > r`.',
+        'To løkker: `for (int r = 0; r < n; r++)` og inni den `for (int c = r + 1; c < n; c++)`. Java bytter ikke to verdier i én setning, så ta vare på den ene først: `String tmp = grid[r][c]`, så `grid[r][c] = grid[c][r]` og `grid[c][r] = tmp`.',
+      ],
+      scaffold: `void main() {
+    int n = grid.length;
+    for (int r = 0; r < n; r++) {
+        // Bytt grid[r][c] og grid[c][r] for rutene over diagonalen (c > r)
+    }
+}
+`,
+      solution: `void main() {
+    int n = grid.length;
+    for (int r = 0; r < n; r++) {
+        for (int c = r + 1; c < n; c++) {
+            String tmp = grid[r][c];
+            grid[r][c] = grid[c][r];
+            grid[c][r] = tmp;
+            vis();
+        }
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.start.grid as string[][]
       const grid = t.grid
@@ -309,6 +429,31 @@ for (const row of grid) {
   vis()
 }
 `,
+    java: {
+      code: { 'row.reverse()': 'Collections.reverse(Arrays.asList(row))' },
+      scaffold: `void main() {
+    int n = grid.length;
+    // 1. Bytt rader og kolonner
+    // 2. Speilvend hver rad
+}
+`,
+      solution: `void main() {
+    int n = grid.length;
+    for (int r = 0; r < n; r++) {
+        for (int c = r + 1; c < n; c++) {
+            String tmp = grid[r][c];
+            grid[r][c] = grid[c][r];
+            grid[c][r] = tmp;
+        }
+    }
+    vis("rader og kolonner byttet");
+    for (String[] row : grid) {
+        Collections.reverse(Arrays.asList(row));
+        vis();
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.start.grid as string[][]
       const n = before.length
@@ -380,6 +525,53 @@ console.log(spiral(grid))
 console.log(spiral(grid))
 `,
     exports: ['spiral'],
+    java: {
+      text: `\`grid\` er et rutenett av tall. Skriv \`List<Integer> spiral(int[][] grid)\` som gir tilbake verdiene i en spiral: start øverst til venstre, gå til høyre langs øverste rad, ned langs høyre kant, til venstre langs nederste rad og opp langs venstre kant. Fortsett innover, med klokka, til alle rutene er med, hver nøyaktig én gang. Et rutenett på 3 × 3 med tallene 1 til 9 gir \`[1, 2, 3, 6, 9, 8, 7, 4, 5]\`.
+
+Rutenettet kan være bare én rad eller bare én kolonne, og det kan være tomt (\`{}\` eller \`{{}}\`). Da skal du gi tilbake alle verdiene på rad, eller en tom liste. Koden nederst skriver ut spiralen for rutenettet på scenen.`,
+      scaffold: `List<Integer> spiral(int[][] grid) {
+    List<Integer> out = new ArrayList<>();
+    int top = 0;
+    int bottom = grid.length - 1;
+    int left = 0;
+    int right = grid.length > 0 ? grid[0].length - 1 : -1;
+    // Så lenge det er noe igjen: øverst mot høyre, høyre kant nedover,
+    // nederst mot venstre, venstre kant oppover. Trekk kantene inn.
+    return out;
+}
+
+void main() {
+    IO.println(spiral(grid));
+}
+`,
+      solution: `List<Integer> spiral(int[][] grid) {
+    List<Integer> out = new ArrayList<>();
+    int top = 0;
+    int bottom = grid.length - 1;
+    int left = 0;
+    int right = grid.length > 0 ? grid[0].length - 1 : -1;
+    while (top <= bottom && left <= right) {
+        for (int c = left; c <= right; c++) out.add(grid[top][c]);
+        top++;
+        for (int r = top; r <= bottom; r++) out.add(grid[r][right]);
+        right--;
+        if (top <= bottom) {
+            for (int c = right; c >= left; c--) out.add(grid[bottom][c]);
+            bottom--;
+        }
+        if (left <= right) {
+            for (int r = bottom; r >= top; r--) out.add(grid[r][left]);
+            left++;
+        }
+    }
+    return out;
+}
+
+void main() {
+    IO.println(spiral(grid));
+}
+`,
+    },
     check: (t) => {
       const spiral = t.fn('spiral')
       const make = (rows: number, cols: number) =>
@@ -481,6 +673,60 @@ console.log(islands(grid))
 `,
     exports: ['islands'],
     source: 'https://en.wikipedia.org/wiki/Connected-component_labeling',
+    java: {
+      code: { "'#'": '"#"', "'.'": '"."', 'function islands(grid)': 'int islands(String[][] grid)', '[]': '{}' },
+      hints: [
+        'Gå gjennom alle rutene. Hver gang du treffer land du ikke har telt, har du funnet en ny øy: øk telleren.',
+        'Da må du få med hele øya, så du ikke teller den igjen. Bruk en stabel av ruter som skal sjekkes, som i malingsbøtta: land blir malt, og de fire naboene legges på stabelen.',
+        'Mal øya med en farge, for eksempel `grid[y][x] = "pink"`: malt land er ikke `"#"` lenger, så det telles ikke på nytt. Pass på kanten: sjekk at `y` og `x` er innenfor rutenettet før du leser `grid[y][x]`, ellers får du en `ArrayIndexOutOfBoundsException`.',
+      ],
+      scaffold: `int islands(String[][] grid) {
+    int count = 0;
+    for (int r = 0; r < grid.length; r++) {
+        for (int c = 0; c < grid[r].length; c++) {
+            // Er ruta land ("#") du ikke har talt? Tell en øy, og mal hele øya.
+        }
+    }
+    return count;
+}
+
+void main() {
+    IO.println(islands(grid));
+}
+`,
+      solution: `int islands(String[][] grid) {
+    String[] colors = {"pink", "cyan", "gold", "lime", "violet", "orange", "red", "teal"};
+    int count = 0;
+    for (int r = 0; r < grid.length; r++) {
+        for (int c = 0; c < grid[r].length; c++) {
+            if (!grid[r][c].equals("#")) continue;
+            String color = colors[count % colors.length];
+            count++;
+            Deque<int[]> todo = new ArrayDeque<>();
+            todo.push(new int[] {r, c});
+            while (!todo.isEmpty()) {
+                int[] cell = todo.pop();
+                int y = cell[0];
+                int x = cell[1];
+                if (y < 0 || y >= grid.length || x < 0 || x >= grid[y].length) continue;
+                if (!grid[y][x].equals("#")) continue;
+                grid[y][x] = color;
+                todo.push(new int[] {y - 1, x});
+                todo.push(new int[] {y + 1, x});
+                todo.push(new int[] {y, x - 1});
+                todo.push(new int[] {y, x + 1});
+            }
+            vis("ny øy", count);
+        }
+    }
+    return count;
+}
+
+void main() {
+    IO.println(islands(grid));
+}
+`,
+    },
     check: (t) => {
       const islands = t.fn('islands')
       // The right count: take each patch of land once and wipe it out.
@@ -590,6 +836,54 @@ console.log(steps(grid))
 `,
     exports: ['steps'],
     source: 'https://en.wikipedia.org/wiki/Breadth-first_search',
+    java: {
+      code: { "'#'": '"#"', "'.'": '"."', "'S'": '"S"', "'E'": '"E"', 'function steps(grid)': 'int steps(String[][] grid)' },
+      hints: [
+        'Finn først `S`, og let utover i ringer: alle ruter ett steg unna, så to steg unna, og så videre. Første gang du treffer `E`, har du den korteste veien.',
+        'Bruk en kø, `ArrayDeque<int[]>`, med `new int[] {rad, kolonne, steg}`: ta ut den fremste med `poll()` og legg naboene bakerst med `add`. Merk ruter du har vært på, for eksempel ved å male dem, så du ikke går i ring.',
+        'For hver nabo innenfor rutenettet: er det `E`, gi tilbake `steg + 1`; er det `"."`, mal den og legg den i køen med `steg + 1`. Er køen tom uten at du fant `E`, gi tilbake `-1`.',
+      ],
+      scaffold: `int steps(String[][] grid) {
+    // Finn S, og let utover derfra ett steg om gangen
+    return -1;
+}
+
+void main() {
+    IO.println(steps(grid));
+}
+`,
+      solution: `int steps(String[][] grid) {
+    int[] start = null;
+    for (int r = 0; r < grid.length; r++) {
+        for (int c = 0; c < grid[r].length; c++) {
+            if (grid[r][c].equals("S")) start = new int[] {r, c, 0};
+        }
+    }
+    if (start == null) return -1;
+    int[][] moves = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    Deque<int[]> queue = new ArrayDeque<>();
+    queue.add(start);
+    while (!queue.isEmpty()) {
+        int[] here = queue.poll();
+        for (int[] move : moves) {
+            int y = here[0] + move[0];
+            int x = here[1] + move[1];
+            if (y < 0 || y >= grid.length || x < 0 || x >= grid[y].length) continue;
+            if (grid[y][x].equals("E")) return here[2] + 1;
+            if (!grid[y][x].equals(".")) continue;
+            grid[y][x] = "cyan";
+            queue.add(new int[] {y, x, here[2] + 1});
+            vis();
+        }
+    }
+    return -1;
+}
+
+void main() {
+    IO.println(steps(grid));
+}
+`,
+    },
     check: (t) => {
       const steps = t.fn('steps')
       // The right answer: ring after ring from S.
@@ -705,6 +999,46 @@ grid = next
 vis('ett steg')
 `,
     source: 'https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life',
+    java: {
+      code: { "'lime'": '"lime"', "'.'": '"."' },
+      hints: [
+        'Du kan ikke endre `grid` mens du teller: en rute som skifter, ville ødelegge tellingen for naboene. Lag en kopi, `next`, og skriv den nye tilstanden dit.',
+        'Tell de levende naboene med to løkker, `dr` og `dc` fra -1 til 1, og hopp over (0, 0). Pass på kanten: sjekk at `r + dr` og `c + dc` er innenfor rutenettet før du leser ruta, ellers får du en `ArrayIndexOutOfBoundsException`.',
+        'Levende med 2 eller 3 levende naboer og død med akkurat 3 blir levende, alt annet blir dødt. Til slutt `grid = next`.',
+      ],
+      scaffold: `void main() {
+    String[][] next = Arrays.stream(grid).map(String[]::clone).toArray(String[][]::new);
+    for (int r = 0; r < grid.length; r++) {
+        for (int c = 0; c < grid[r].length; c++) {
+            // Tell de levende naboene (åtte ruter) til [r][c] i grid
+            // og skriv den nye tilstanden i next[r][c]
+        }
+    }
+    grid = next;
+}
+`,
+      solution: `void main() {
+    String[][] next = Arrays.stream(grid).map(String[]::clone).toArray(String[][]::new);
+    for (int r = 0; r < grid.length; r++) {
+        for (int c = 0; c < grid[r].length; c++) {
+            int alive = 0;
+            for (int dr = -1; dr <= 1; dr++) {
+                for (int dc = -1; dc <= 1; dc++) {
+                    if (dr == 0 && dc == 0) continue;
+                    int y = r + dr;
+                    int x = c + dc;
+                    if (y >= 0 && y < grid.length && x >= 0 && x < grid[y].length && grid[y][x].equals("lime")) alive++;
+                }
+            }
+            boolean lives = grid[r][c].equals("lime") ? alive == 2 || alive == 3 : alive == 3;
+            next[r][c] = lives ? "lime" : ".";
+        }
+    }
+    grid = next;
+    vis("ett steg");
+}
+`,
+    },
     check: (t) => {
       const before = t.start.grid as string[][]
       const grid = t.grid
@@ -766,6 +1100,43 @@ Minene selv blir stående som de er.`,
 }
 `,
     source: 'https://en.wikipedia.org/wiki/Minesweeper_(video_game)',
+    java: {
+      roots: { grid: 'Object[][]' },
+      text: `I \`grid\` er \`"*"\` en mine, og de andre rutene er tomme (\`"."\`). Skriv inn hvor farlig hver tomme rute er: bytt ut hver \`"."\` med antall miner blant de åtte naboene, også de på skrå. En rute uten miner rundt seg får tallet \`0\`.
+
+\`grid\` er et \`Object[][]\`, så en rute kan holde både tekst og tall. Tallet skal være et tall (\`3\`, ikke \`"3"\`), og minene selv blir stående som de er.`,
+      hints: [
+        'Gå gjennom alle rutene. Bare de tomme (`"."`) skal endres; hopp over minene. `grid[r][c].equals(".")` virker selv om ruta er et `Object`.',
+        'For en tom rute: gå gjennom naboene med `dr` og `dc` fra -1 til 1, og tell dem som er `"*"`. Selve ruta er tom, så den teller aldri med.',
+        'Ruter utenfor kanten finnes ikke: sjekk at `r + dr` og `c + dc` er innenfor rutenettet før du ser på ruta, ellers får du en `ArrayIndexOutOfBoundsException`. Skriv tallet i ruta når du har telt ferdig.',
+      ],
+      scaffold: `void main() {
+    for (int r = 0; r < grid.length; r++) {
+        for (int c = 0; c < grid[r].length; c++) {
+            // Er ruta tom (".")? Tell minene ("*") rundt den, og skriv tallet i ruta.
+        }
+    }
+}
+`,
+      solution: `void main() {
+    for (int r = 0; r < grid.length; r++) {
+        for (int c = 0; c < grid[r].length; c++) {
+            if (!grid[r][c].equals(".")) continue;
+            int mines = 0;
+            for (int dr = -1; dr <= 1; dr++) {
+                for (int dc = -1; dc <= 1; dc++) {
+                    int y = r + dr;
+                    int x = c + dc;
+                    if (y >= 0 && y < grid.length && x >= 0 && x < grid[y].length && grid[y][x].equals("*")) mines++;
+                }
+            }
+            grid[r][c] = mines;
+        }
+        vis();
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.start.grid as string[][]
       const grid = t.grid
@@ -829,6 +1200,48 @@ for (let step = 1; step <= 200; step++) {
 }
 `,
     source: 'https://en.wikipedia.org/wiki/Langton%27s_ant',
+    java: {
+      prelude: `class Ant {
+    int row;
+    int col;
+    int dir;
+    String color;
+    String shape;
+}`,
+      roots: { ant: 'Ant' },
+      code: { '[-1, 0, 1, 0]': 'int[] dr = {-1, 0, 1, 0}', '[0, 1, 0, -1]': 'int[] dc = {0, 1, 0, -1}' },
+      text: `En maur går rundt på \`grid\`, et rutenett på 15 × 15 tomme ruter. Hvor den står og hvilken vei den ser, ligger i \`ant\`, et objekt av klassen \`Ant\`: \`ant.row\`, \`ant.col\` og \`ant.dir\`, der 0 er opp, 1 høyre, 2 ned og 3 venstre. (\`color\` og \`shape\` i \`ant\` er bare for at du skal se maura på scenen.)
+
+Hvert steg gjør maura dette, ut fra ruta den står på. Er den \`"."\`: sving til høyre, mal ruta \`"violet"\` og gå ett steg fram. Er den \`"violet"\`: sving til venstre, mal ruta \`"."\` og gå ett steg fram. Går maura ut over kanten, kommer den inn på motsatt side.
+
+Gjør 200 steg. Til slutt skal \`grid\` vise det maura har malt, og \`ant\` skal vise hvor den står og ser.`,
+      scaffold: `void main() {
+    int n = grid.length;
+    for (int step = 1; step <= 200; step++) {
+        // På ".": sving høyre og mal "violet". På "violet": sving venstre og mal ".".
+        // Gå så ett steg fram i retningen ant.dir, og rund kanten.
+    }
+}
+`,
+      solution: `void main() {
+    int[] dr = {-1, 0, 1, 0};
+    int[] dc = {0, 1, 0, -1};
+    int n = grid.length;
+    for (int step = 1; step <= 200; step++) {
+        if (grid[ant.row][ant.col].equals(".")) {
+            ant.dir = (ant.dir + 1) % 4;
+            grid[ant.row][ant.col] = "violet";
+        } else {
+            ant.dir = (ant.dir + 3) % 4;
+            grid[ant.row][ant.col] = ".";
+        }
+        ant.row = (ant.row + dr[ant.dir] + n) % n;
+        ant.col = (ant.col + dc[ant.dir] + n) % n;
+        if (step % 10 == 0) vis("steg", step);
+    }
+}
+`,
+    },
     check: (t) => {
       const start = t.start.grid as string[][]
       const from = t.start.ant as { row: number; col: number; dir: number }
@@ -962,6 +1375,78 @@ for (const [r, c] of solve(grid)) {
 `,
     exports: ['solve'],
     source: 'https://en.wikipedia.org/wiki/Lights_Out_(game)',
+    java: {
+      code: { "'gold'": '"gold"', "'.'": '"."', 'function solve(grid)': 'List<int[]> solve(String[][] grid)', '[rad, kolonne]': 'new int[] {rad, kolonne}' },
+      scaffold: `// Trykk på (r, c): den og de fire naboene skifter tilstand
+void press(String[][] grid, int r, int c) {
+    int[][] cells = {{r, c}, {r - 1, c}, {r + 1, c}, {r, c - 1}, {r, c + 1}};
+    for (int[] cell : cells) {
+        int y = cell[0];
+        int x = cell[1];
+        if (y < 0 || y >= grid.length || x < 0 || x >= grid[y].length) continue;
+        grid[y][x] = grid[y][x].equals("gold") ? "." : "gold";
+    }
+}
+
+List<int[]> solve(String[][] grid) {
+    List<int[]> presses = new ArrayList<>();
+    // Finn trykkene på en kopi:
+    // Arrays.stream(grid).map(String[]::clone).toArray(String[][]::new)
+    return presses;
+}
+
+void main() {
+    for (int[] p : solve(grid)) {
+        press(grid, p[0], p[1]);
+        vis();
+    }
+}
+`,
+      solution: `// Trykk på (r, c): den og de fire naboene skifter tilstand
+void press(String[][] grid, int r, int c) {
+    int[][] cells = {{r, c}, {r - 1, c}, {r + 1, c}, {r, c - 1}, {r, c + 1}};
+    for (int[] cell : cells) {
+        int y = cell[0];
+        int x = cell[1];
+        if (y < 0 || y >= grid.length || x < 0 || x >= grid[y].length) continue;
+        grid[y][x] = grid[y][x].equals("gold") ? "." : "gold";
+    }
+}
+
+List<int[]> solve(String[][] grid) {
+    int n = grid.length;
+    for (int mask = 0; mask < 1 << n; mask++) {
+        String[][] copy = Arrays.stream(grid).map(String[]::clone).toArray(String[][]::new);
+        List<int[]> presses = new ArrayList<>();
+        // Øverste rad etter mønsteret i mask
+        for (int c = 0; c < n; c++) {
+            if ((mask & (1 << c)) != 0) {
+                press(copy, 0, c);
+                presses.add(new int[] {0, c});
+            }
+        }
+        // Radene under slukker det som lyser rett over
+        for (int r = 1; r < n; r++) {
+            for (int c = 0; c < n; c++) {
+                if (copy[r - 1][c].equals("gold")) {
+                    press(copy, r, c);
+                    presses.add(new int[] {r, c});
+                }
+            }
+        }
+        if (Arrays.stream(copy[n - 1]).noneMatch("gold"::equals)) return presses;
+    }
+    return null;
+}
+
+void main() {
+    for (int[] p : solve(grid)) {
+        press(grid, p[0], p[1]);
+        vis();
+    }
+}
+`,
+    },
     check: (t) => {
       const solve = t.fn('solve')
       const press = (g: string[][], r: number, c: number) => {
@@ -1076,6 +1561,68 @@ console.log(flashes(grid, 10))
 console.log(flashes(grid, 10))
 `,
     exports: ['flashes'],
+    java: {
+      code: { 'function flashes(grid, steps)': 'int flashes(int[][] grid, int steps)' },
+      scaffold: `int flashes(int[][] grid, int steps) {
+    int count = 0;
+    for (int s = 0; s < steps; s++) {
+        // Øk alle, la blinkene spre seg, nullstill de som blinket
+    }
+    return count;
+}
+
+void main() {
+    IO.println(flashes(grid, 10));
+}
+`,
+      solution: `int flashes(int[][] grid, int steps) {
+    int count = 0;
+    int rows = grid.length;
+    int cols = rows > 0 ? grid[0].length : 0;
+    for (int s = 0; s < steps; s++) {
+        boolean[][] flashed = new boolean[rows][cols];
+        Deque<int[]> todo = new ArrayDeque<>();
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                grid[r][c]++;
+                if (grid[r][c] > 9) {
+                    flashed[r][c] = true;
+                    todo.push(new int[] {r, c});
+                }
+            }
+        }
+        while (!todo.isEmpty()) {
+            int[] cell = todo.pop();
+            count++;
+            for (int dr = -1; dr <= 1; dr++) {
+                for (int dc = -1; dc <= 1; dc++) {
+                    int y = cell[0] + dr;
+                    int x = cell[1] + dc;
+                    if ((dr != 0 || dc != 0) && y >= 0 && y < rows && x >= 0 && x < cols) {
+                        grid[y][x]++;
+                        if (grid[y][x] > 9 && !flashed[y][x]) {
+                            flashed[y][x] = true;
+                            todo.push(new int[] {y, x});
+                        }
+                    }
+                }
+            }
+        }
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                if (flashed[r][c]) grid[r][c] = 0;
+            }
+        }
+        vis();
+    }
+    return count;
+}
+
+void main() {
+    IO.println(flashes(grid, 10));
+}
+`,
+    },
     check: (t) => {
       const flashes = t.fn('flashes')
       const reference = (start: number[][], steps: number) => {

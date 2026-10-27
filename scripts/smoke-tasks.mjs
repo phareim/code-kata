@@ -1,8 +1,11 @@
 // Browser check of the task bank in the built site, Chrome and WebKit: every task's solution solves it there (the
 // checks travel as minified source, which only the built bundle tests), a task opens without a skeleton and hint 1
-// puts one in, and the bank searches, filters and picks. Screenshots of each view, the bank and a solved task go to the shots dir.
+// puts one in, and the bank searches, filters and picks. Then the same in Java: the switch, the compiler in the
+// browser, and every task's Java solution solving it. Screenshots of each view, the bank and a solved task go to the
+// shots dir.
 //   PLAYWRIGHT=<path to playwright-core/index.mjs> node scripts/smoke-tasks.mjs <url> [shots dir] [task ids…]
-// Serve dist/ first. CHROME_BIN points at an installed Chrome. Exits 1 when a check fails.
+// Serve dist/ first. CHROME_BIN points at an installed Chrome; BROWSERS=chrome (or webkit) runs one. JAVA=0 leaves the
+// Java tasks out (compiling all of them takes a few minutes). Exits 1 when a check fails.
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -46,9 +49,9 @@ const editorText = (page) => page.$$eval('#editor .cm-line', (els) => els.map((e
  * Runs and waits for the verdict (skipping the playback) or an error; returns what the card and status say. With
  * untilVerdict an error doesn't end the wait: a missing export's verdict comes after the playback.
  */
-async function runTask(page, untilVerdict = false) {
+async function runTask(page, untilVerdict = false, ms = 15000) {
   await page.click('#run')
-  const deadline = Date.now() + 15000
+  const deadline = Date.now() + ms
   for (;;) {
     const state = await page.evaluate(() => ({
       verdict: document.getElementById('verdict').hidden ? null : document.getElementById('verdict').className,
@@ -203,6 +206,8 @@ async function browser(name, launch) {
   await page.waitForFunction(() => /Lekeplass/i.test(document.getElementById('task-title').textContent))
   r = await runTask(page)
   check(`${name}: the playground runs`, /Ferdig/i.test(r.status), r.status)
+
+  if (process.env.JAVA !== '0') await java(name, page, todo)
   await desktop.close()
 
   // Phone: a task, the bank as a sheet.
@@ -235,8 +240,74 @@ async function browser(name, launch) {
   await b.close()
 }
 
+/**
+ * Java: the switch by «Kode», the opening, the compiler fetched and run in the browser, a missing method named, the
+ * way back to JavaScript, and every task's Java solution. Without the API (a preview), switching doesn't translate.
+ */
+async function java(name, page, todo) {
+  await goTask(page, 'tell-tingene')
+  await page.click('#lang [data-lang="java"]')
+  await page.waitForFunction(() => document.querySelector('#lang [data-lang="java"]').getAttribute('aria-pressed') === 'true')
+  let code = await editorText(page)
+  check(`${name}: Java opens with main calling the method`, /void main\(\) \{/.test(code) && /IO\.println\(count\(head\)\)/.test(code) && !/int count/.test(code), code)
+  const text = await page.textContent('#task-text')
+  check(`${name}: the text names the method in Java`, /int count\(Monster head\)/.test(text), text)
+  const started = Date.now()
+  let r = await runTask(page, true, 120000)
+  check(`${name}: the opening in Java names the missing method`, /Fant ikke metoden count/.test(r.text), `${r.text} · ${r.status}`)
+  check(`${name}: the compiler loads in time`, Date.now() - started < 90000, `${Math.round((Date.now() - started) / 1000)} s`)
+  await insertSolution(page)
+  r = await runTask(page, false, 60000)
+  check(`${name}: the Java solution solves it`, /is-ok/.test(r.verdict ?? ''), `${r.text} · ${r.status}`)
+  await page.screenshot({ path: join(shots, `${name}-java-solved.png`) })
+  await page.click('#lang [data-lang="js"]')
+  code = await editorText(page)
+  check(`${name}: back in JavaScript, its code is there again`, /function count|console\.log\(count\(head\)\)/.test(code), code)
+  await page.click('#lang [data-lang="java"]')
+  code = await editorText(page)
+  check(`${name}: and the Java code too`, /int count\(Monster head\)/.test(code), code)
+
+  // An error in Java, on its line, and a compile error on its.
+  const typeCode = async (text) => {
+    await page.click('#editor .cm-content')
+    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A')
+    await page.keyboard.insertText(text)
+  }
+  await typeCode('void main() {\n    Monster m = null;\n    IO.println(m.color);\n}\n')
+  r = await runTask(page, false, 60000)
+  let out = await page.textContent('#output')
+  check(`${name}: a null in Java is named and placed`, /NullPointerException/.test(out) && /linje 3/.test(r.status), `${r.status} · ${out}`)
+  await typeCode('void main() {\n    int n = "tre";\n}\n')
+  r = await runTask(page, false, 60000)
+  out = await page.textContent('#output')
+  check(`${name}: a compile error is placed`, /Kompileringsfeil/.test(out) && /linje 2/.test(r.status), `${r.status} · ${out}`)
+  await page.click('#restart-btn')
+
+  let solved = 0
+  for (const id of todo) {
+    await goTask(page, id)
+    const pressed = await page.$eval('#lang [data-lang="java"]', (b) => !b.disabled)
+    if (!pressed) continue
+    await page.click('#lang [data-lang="java"]')
+    await insertSolution(page)
+    r = await runTask(page, false, 60000)
+    if (/is-ok/.test(r.verdict ?? '')) solved++
+    else check(`${name}: ${id} is solved by its Java solution`, false, `${r.verdict} ${r.text} ${r.status}`)
+  }
+  check(`${name}: Java solutions solve their tasks`, solved > 0, `${solved}/${todo.length}`)
+
+  // The playground in Java.
+  await page.evaluate(() => { location.hash = '#/lekeplass' })
+  await page.waitForFunction(() => /Lekeplass/i.test(document.getElementById('task-title').textContent))
+  r = await runTask(page, false, 60000)
+  check(`${name}: the playground runs in Java`, /Ferdig/i.test(r.status) && /\d+ \w+/.test(await page.textContent('#output')), r.status)
+  await page.screenshot({ path: join(shots, `${name}-java-playground.png`) })
+  await page.click('#lang [data-lang="js"]')
+}
+
 const chromeBin = process.env.CHROME_BIN
-await browser('chrome', () => pw.chromium.launch(chromeBin ? { executablePath: chromeBin } : {}))
-await browser('webkit', () => pw.webkit.launch())
+const wanted = (process.env.BROWSERS ?? 'chrome,webkit').split(',')
+if (wanted.includes('chrome')) await browser('chrome', () => pw.chromium.launch(chromeBin ? { executablePath: chromeBin } : {}))
+if (wanted.includes('webkit')) await browser('webkit', () => pw.webkit.launch())
 console.log(failures ? `${failures} failed` : 'all ok')
 process.exit(failures ? 1 : 0)

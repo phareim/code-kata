@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0616" />
-  <meta name="description" content="Kodekata: små oppgaver i JavaScript, der pikselmonstre ber deg sortere, rydde og flytte dem. Skrevet og kjørt rett i nettleseren." />
-  <title>Kodekata · JavaScript i nettleseren</title>
+  <meta name="description" content="Kodekata: små oppgaver i JavaScript og Java, der pikselmonstre ber deg sortere, rydde og flytte dem. Skrevet og kjørt rett i nettleseren." />
+  <title>Kodekata · JavaScript og Java i nettleseren</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="/fonts/neon-pixel.woff" as="font" type="font/woff" crossorigin />
 </head>
@@ -99,6 +99,10 @@
         <section class="pane px-box editor-pane" data-pane="editor" aria-labelledby="code-title">
           <div class="pane-bar">
             <h2 id="code-title" class="pane-title px">Kode</h2>
+            <div id="lang" class="lang-switch" role="group" aria-label="Språket koden er i">
+              <button class="lang-btn px" type="button" data-lang="js" aria-pressed="true">JS</button>
+              <button class="lang-btn px" type="button" data-lang="java" aria-pressed="false">Java</button>
+            </div>
             <span id="run-status" class="status run-status px" aria-hidden="true"></span>
             <span class="spacer"></span>
             <span id="hint" class="hint px" aria-hidden="true"></span>

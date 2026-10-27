@@ -28,7 +28,7 @@ interface Line {
 
 export interface TalkHooks {
   /** The code and the class in the editors now. */
-  code: () => { code: string; ting: string }
+  code: () => { code: string; ting: string; lang: 'js' | 'java' }
   /** Resolves when the account knows what this browser knows (that the task is solved). */
   synced: () => Promise<void>
   /** Whether the visitor is signed in: a conversation of their own, or the fixed questions. */
@@ -183,11 +183,11 @@ export class Talk {
   private async askQuestion(id: QuestionId): Promise<void> {
     const task = this.task
     if (!task || this.busy || !this.quick) return
-    const { code, ting } = this.hooks.code()
-    const key = `${task.id}\n${id}\n${code}\n${ting}`
+    const { code, ting, lang } = this.hooks.code()
+    const key = `${task.id}\n${id}\n${lang}\n${code}\n${ting}`
     if (this.asked.has(key)) return
     this.line('user', QUESTIONS[id])
-    const reply = await this.turn({ task: task.id, question: id, code, ting })
+    const reply = await this.turn({ task: task.id, question: id, code, ting, lang })
     if (reply === null) {
       // Nothing to keep: the question goes again with the answer that didn't come.
       this.log.querySelector('.talk-line.is-user:last-child')?.remove()
@@ -319,9 +319,9 @@ export class Talk {
     this.send.textContent = busy ? 'Skriver …' : 'Send'
     const task = this.task
     if (!task) return
-    const { code, ting } = this.hooks.code()
+    const { code, ting, lang } = this.hooks.code()
     for (const [id, button] of Object.entries(this.questions)) {
-      this.disable(button, busy || this.asked.has(`${task.id}\n${id}\n${code}\n${ting}`))
+      this.disable(button, busy || this.asked.has(`${task.id}\n${id}\n${lang}\n${code}\n${ting}`))
     }
   }
 

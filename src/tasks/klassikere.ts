@@ -43,24 +43,66 @@ console.log(find(items, items[3].value))
 console.log(find(items, items[3].value))
 `,
     exports: ['find'],
+    java: {
+      // The check can't count the looks in Java (the row crosses whole), so the text doesn't say it does.
+      text: `Monstrene i \`items\` står sortert etter \`value\`, minst først. Skriv \`int find(List<Monster> items, int value)\` som gir tilbake plassen til monsteret med den verdien, eller \`-1\` hvis ingen har den.
+
+Del på midten hver gang: se på monsteret i midten, og let videre bare i den halvdelen verdien må være i. Sjekken prøver med 1000 monstre, og med binærsøk holder det med rundt ti titt.`,
+      hints: [
+        'Hold styr på et område med `lo = 0` og `hi = items.size() - 1`.',
+        'Så lenge `lo <= hi`: se på `mid = (lo + hi) / 2`; deling av to `int` runder ned av seg selv. Er verdien der, er du ferdig.',
+        'Er `items.get(mid).value` for liten, let videre fra `mid + 1`; er den for stor, let til `mid - 1`.',
+      ],
+      scaffold: `int find(List<Monster> items, int value) {
+    int lo = 0;
+    int hi = items.size() - 1;
+    // Let i midten til lo og hi møtes
+    return -1;
+}
+
+void main() {
+    IO.println(find(items, items.get(3).value));
+}
+`,
+      solution: `int find(List<Monster> items, int value) {
+    int lo = 0;
+    int hi = items.size() - 1;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        vis(items.get(mid));
+        if (items.get(mid).value == value) return mid;
+        if (items.get(mid).value < value) lo = mid + 1;
+        else hi = mid - 1;
+    }
+    return -1;
+}
+
+void main() {
+    IO.println(find(items, items.get(3).value));
+}
+`,
+    },
     check: (t) => {
       const find = t.fn('find')
       for (const n of [1, 2, 7, 100, 1000]) {
         const sorted = Array.from({ length: n }, (_, i) => t.monster({ value: i * 3 + 1 }))
-        // The places find looks at, each counted once.
+        // The places find looks at, each counted once. Only in JavaScript: in Java the row crosses whole.
         const looked = new Set<string>()
-        const watched = new Proxy(sorted, {
-          get(target, key, receiver) {
-            if (typeof key === 'string' && /^\d+$/.test(key)) looked.add(key)
-            return Reflect.get(target, key, receiver)
-          },
-        })
+        let watched = sorted
+        if (t.lang === 'js') {
+          watched = new Proxy(sorted, {
+            get(target, key, receiver) {
+              if (typeof key === 'string' && /^\d+$/.test(key)) looked.add(key)
+              return Reflect.get(target, key, receiver)
+            },
+          })
+        }
         for (const i of [0, n - 1, Math.floor(n / 2), Math.floor(n / 3)]) {
           looked.clear()
           const got = find(watched, i * 3 + 1)
           if (got !== i) return `find gav ${t.show(got)} for verdien ${i * 3 + 1} blant ${n} monstre; den står på plass ${i}.`
           const most = Math.ceil(Math.log2(n + 1)) + 2
-          if (n >= 100 && looked.size > most) {
+          if (t.lang === 'js' && n >= 100 && looked.size > most) {
             return `find så på ${looked.size} monstre blant ${n}. Med binærsøk holder det med rundt ${Math.ceil(Math.log2(n))}.`
           }
         }
@@ -107,6 +149,39 @@ console.log(twoSum(items, items[1].value + items[4].value))
 console.log(twoSum(items, items[1].value + items[4].value))
 `,
     exports: ['twoSum'],
+    java: {
+      code: {
+        'function twoSum(items, target)': 'int[] twoSum(List<Monster> items, int target)',
+        '[i, j]': 'new int[] { i, j }',
+        Map: 'Map<Integer, Integer>',
+        'target - items[j].value': 'target - items.get(j).value',
+        'seen.set(value, j)': 'seen.put(value, j)',
+        '[seen.get(need), j]': 'new int[] { seen.get(need), j }',
+      },
+      scaffold: `int[] twoSum(List<Monster> items, int target) {
+    // Finn i og j der verdiene blir target til sammen
+    return null;
+}
+
+void main() {
+    IO.println(Arrays.toString(twoSum(items, items.get(1).value + items.get(4).value)));
+}
+`,
+      solution: `int[] twoSum(List<Monster> items, int target) {
+    Map<Integer, Integer> seen = new HashMap<>();
+    for (int j = 0; j < items.size(); j++) {
+        int need = target - items.get(j).value;
+        if (seen.containsKey(need)) return new int[] { seen.get(need), j };
+        seen.put(items.get(j).value, j);
+    }
+    return null;
+}
+
+void main() {
+    IO.println(Arrays.toString(twoSum(items, items.get(1).value + items.get(4).value)));
+}
+`,
+    },
     check: (t) => {
       const twoSum = t.fn('twoSum')
       const cases: [number[], number, boolean][] = [
@@ -167,6 +242,34 @@ console.log(bestProfit(items))
 console.log(bestProfit(items))
 `,
     exports: ['bestProfit'],
+    java: {
+      code: { 'function bestProfit(items)': 'int bestProfit(List<Monster> items)' },
+      scaffold: `int bestProfit(List<Monster> items) {
+    int lowest = Integer.MAX_VALUE;
+    int best = 0;
+    // Gå gjennom dagene
+    return best;
+}
+
+void main() {
+    IO.println(bestProfit(items));
+}
+`,
+      solution: `int bestProfit(List<Monster> items) {
+    int lowest = Integer.MAX_VALUE;
+    int best = 0;
+    for (Monster day : items) {
+        lowest = Math.min(lowest, day.value);
+        best = Math.max(best, day.value - lowest);
+    }
+    return best;
+}
+
+void main() {
+    IO.println(bestProfit(items));
+}
+`,
+    },
     check: (t) => {
       const bestProfit = t.fn('bestProfit')
       const want = (v: number[]) => {
@@ -219,6 +322,29 @@ console.log(missing(items))
 console.log(missing(items))
 `,
     exports: ['missing'],
+    java: {
+      code: { 'function missing(items)': 'int missing(List<Monster> items)', 'items.length + 1': 'items.size() + 1' },
+      scaffold: `int missing(List<Monster> items) {
+    // Hvilken verdi fra 1 til items.size() + 1 er borte?
+    return 0;
+}
+
+void main() {
+    IO.println(missing(items));
+}
+`,
+      solution: `int missing(List<Monster> items) {
+    int n = items.size() + 1;
+    int total = n * (n + 1) / 2;
+    for (Monster thing : items) total -= thing.value;
+    return total;
+}
+
+void main() {
+    IO.println(missing(items));
+}
+`,
+    },
     check: (t) => {
       const missing = t.fn('missing')
       for (const n of [9, 5, 2, 12]) {
@@ -275,6 +401,33 @@ console.log(balance(items))
 console.log(balance(items))
 `,
     exports: ['balance'],
+    java: {
+      code: { 'function balance(items)': 'int balance(List<Monster> items)', 'total - left - items[i].value': 'total - left - items.get(i).value' },
+      scaffold: `int balance(List<Monster> items) {
+    // Finn plassen der venstre og høyre er like tunge
+    return -1;
+}
+
+void main() {
+    IO.println(balance(items));
+}
+`,
+      solution: `int balance(List<Monster> items) {
+    int total = 0;
+    for (Monster thing : items) total += thing.value;
+    int left = 0;
+    for (int i = 0; i < items.size(); i++) {
+        if (left == total - left - items.get(i).value) return i;
+        left += items.get(i).value;
+    }
+    return -1;
+}
+
+void main() {
+    IO.println(balance(items));
+}
+`,
+    },
     check: (t) => {
       const balance = t.fn('balance')
       const want = (v: number[]) => {
@@ -331,6 +484,38 @@ console.log(bestThree(items))
 console.log(bestThree(items))
 `,
     exports: ['bestThree'],
+    java: {
+      code: {
+        'function bestThree(items)': 'Integer bestThree(List<Monster> items)',
+        'items[i].value': 'items.get(i).value',
+        'items[i - 3].value': 'items.get(i - 3).value',
+      },
+      scaffold: `Integer bestThree(List<Monster> items) {
+    if (items.size() < 3) return null;
+    // Flytt et vindu på tre gjennom raden
+    return 0;
+}
+
+void main() {
+    IO.println(bestThree(items));
+}
+`,
+      solution: `Integer bestThree(List<Monster> items) {
+    if (items.size() < 3) return null;
+    int sum = items.get(0).value + items.get(1).value + items.get(2).value;
+    int best = sum;
+    for (int i = 3; i < items.size(); i++) {
+        sum += items.get(i).value - items.get(i - 3).value;
+        best = Math.max(best, sum);
+    }
+    return best;
+}
+
+void main() {
+    IO.println(bestThree(items));
+}
+`,
+    },
     check: (t) => {
       const bestThree = t.fn('bestThree')
       const want = (v: number[]) => {
@@ -385,6 +570,25 @@ Rekkefølgen i \`items\` skal være som før.`,
   vis(thing)
 }
 `,
+    java: {
+      code: { "'gold'": '"gold"', "'pink'": '"pink"', "'cyan'": '"cyan"', "'violet'": '"violet"', 'value % 3 === 0': 'value % 3 == 0' },
+      scaffold: `void main() {
+    for (Monster thing : items) {
+        // Gi thing riktig farge
+    }
+}
+`,
+      solution: `void main() {
+    for (Monster thing : items) {
+        if (thing.value % 15 == 0) thing.color = "gold";
+        else if (thing.value % 3 == 0) thing.color = "pink";
+        else if (thing.value % 5 == 0) thing.color = "cyan";
+        else thing.color = "violet";
+        vis(thing);
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.before('items')
       if (!Array.isArray(t.items) || t.items.length !== before.length || t.items.some((n: unknown, i: number) => n !== before[i])) return '`items` skal stå i samme rekkefølge som før.'
@@ -427,6 +631,25 @@ Bruk køen som en ring: det som ikke går ut, stilles bakerst med \`queue.push(q
   vis()
 }
 `,
+    java: {
+      code: { 'queue.push(queue.shift())': 'queue.add(queue.remove(0))', 'removed.push(queue.shift())': 'removed.add(queue.remove(0))' },
+      scaffold: `void main() {
+    while (queue.size() > 1) {
+        // Tell én, to, tre: de to første går bakerst, det tredje går ut
+        break;
+    }
+}
+`,
+      solution: `void main() {
+    while (queue.size() > 1) {
+        queue.add(queue.remove(0));
+        queue.add(queue.remove(0));
+        removed.add(queue.remove(0));
+        vis();
+    }
+}
+`,
+    },
     check: (t) => {
       const ring = t.before('queue')
       const want: typeof ring = []
@@ -486,6 +709,34 @@ console.log(majority(items))
 console.log(majority(items))
 `,
     exports: ['majority'],
+    java: {
+      code: { 'function majority(items)': 'String majority(List<Monster> items)', Map: 'Map<String, Integer>', 'items.length / 2': 'items.size() / 2' },
+      scaffold: `String majority(List<Monster> items) {
+    // Hvilken farge har mer enn halvparten?
+    return null;
+}
+
+void main() {
+    IO.println(majority(items));
+}
+`,
+      solution: `String majority(List<Monster> items) {
+    String candidate = null;
+    int count = 0;
+    for (Monster thing : items) {
+        if (count == 0) candidate = thing.color;
+        count += thing.color.equals(candidate) ? 1 : -1;
+    }
+    int votes = 0;
+    for (Monster thing : items) if (thing.color.equals(candidate)) votes++;
+    return votes > items.size() / 2 ? candidate : null;
+}
+
+void main() {
+    IO.println(majority(items));
+}
+`,
+    },
     check: (t) => {
       const majority = t.fn('majority')
       const rows: [string[], string | null][] = [
@@ -543,6 +794,35 @@ console.log(happiest(items))
 console.log(happiest(items))
 `,
     exports: ['happiest'],
+    java: {
+      code: { 'function happiest(items)': 'Integer happiest(List<Monster> items)' },
+      scaffold: `Integer happiest(List<Monster> items) {
+    if (items.isEmpty()) return null;
+    // Finn den gladeste strekningen
+    return 0;
+}
+
+void main() {
+    IO.println(happiest(items));
+}
+`,
+      solution: `Integer happiest(List<Monster> items) {
+    if (items.isEmpty()) return null;
+    int here = items.get(0).value - 50;
+    int best = here;
+    for (int i = 1; i < items.size(); i++) {
+        int mood = items.get(i).value - 50;
+        here = Math.max(mood, here + mood);
+        best = Math.max(best, here);
+    }
+    return best;
+}
+
+void main() {
+    IO.println(happiest(items));
+}
+`,
+    },
     check: (t) => {
       const happiest = t.fn('happiest')
       const want = (v: number[]) => {
@@ -597,14 +877,46 @@ shuffle(items)
 shuffle(items)
 `,
     exports: ['shuffle'],
+    java: {
+      code: {
+        'function shuffle(items)': 'void shuffle(List<Monster> items)',
+        'items.sort(() => Math.random() - 0.5)': 'items.sort((a, b) -> Math.random() < 0.5 ? -1 : 1)',
+      },
+      hints: [
+        'Gå baklengs fra den siste plassen `i` ned til 1.',
+        'Velg en tilfeldig plass `j` fra 0 til og med `i`: `(int) (Math.random() * (i + 1))`.',
+        'Bytt monstrene på plass `i` og `j`: `Collections.swap(items, i, j)`.',
+      ],
+      scaffold: `void shuffle(List<Monster> items) {
+    // Stokk items rettferdig
+}
+
+void main() {
+    shuffle(items);
+}
+`,
+      solution: `void shuffle(List<Monster> items) {
+    for (int i = items.size() - 1; i > 0; i--) {
+        int j = (int) (Math.random() * (i + 1));
+        Collections.swap(items, i, j);
+    }
+}
+
+void main() {
+    shuffle(items);
+}
+`,
+    },
     check: (t) => {
       const shuffle = t.fn('shuffle')
       const counts = new Map()
       const runs = 6000
+      // In Java the row is three monsters a, b and c, since a List<Monster> casts what the code takes out of it.
+      const abc = t.lang === 'js' ? [] : ['a', 'b', 'c'].map((color) => t.monster({ color }))
       for (let k = 0; k < runs; k++) {
-        const row = ['a', 'b', 'c']
+        const row: any[] = t.lang === 'js' ? ['a', 'b', 'c'] : [...abc]
         shuffle(row)
-        const key = row.join('')
+        const key = t.lang === 'js' ? row.join('') : row.map((m) => m?.color).join('')
         counts.set(key, (counts.get(key) ?? 0) + 1)
       }
       for (const key of counts.keys()) {
@@ -666,6 +978,43 @@ console.log(rain(items))
 console.log(rain(items))
 `,
     exports: ['rain'],
+    java: {
+      code: { 'function rain(items)': 'int rain(List<Monster> items)' },
+      scaffold: `int rain(List<Monster> items) {
+    // Hvor mye vann blir liggende?
+    return 0;
+}
+
+void main() {
+    IO.println(rain(items));
+}
+`,
+      solution: `int rain(List<Monster> items) {
+    int[] h = items.stream().mapToInt((thing) -> thing.value).toArray();
+    int lo = 0;
+    int hi = h.length - 1;
+    int leftMax = 0;
+    int rightMax = 0;
+    int water = 0;
+    while (lo < hi) {
+        if (h[lo] < h[hi]) {
+            leftMax = Math.max(leftMax, h[lo]);
+            water += leftMax - h[lo];
+            lo++;
+        } else {
+            rightMax = Math.max(rightMax, h[hi]);
+            water += rightMax - h[hi];
+            hi--;
+        }
+    }
+    return water;
+}
+
+void main() {
+    IO.println(rain(items));
+}
+`,
+    },
     check: (t) => {
       const rain = t.fn('rain')
       const want = (h: number[]) => {
@@ -724,6 +1073,40 @@ let i = 0
 console.log(pickOne(() => items[i++] ?? null))
 `,
     exports: ['pickOne'],
+    java: {
+      code: { 'next()': 'next.get()', 'function pickOne(next)': 'Monster pickOne(Supplier<Monster> next)' },
+      hints: [
+        'Det første monsteret blir kandidat med en gang.',
+        'Monster nummer `i` (fra 1) skal ta over som kandidat med sjanse `1 / i`: `Math.random() < 1.0 / i`. Skriv `1.0`, for `1 / i` er heltallsdivisjon i Java og blir 0 så snart `i` er større enn 1.',
+        'Da ender hvert monster med sjanse `1 / n` til slutt (reservoir sampling).',
+      ],
+      scaffold: `Monster pickOne(Supplier<Monster> next) {
+    Monster chosen = null;
+    // Les strømmen og velg ett
+    return chosen;
+}
+
+void main() {
+    Iterator<Monster> stream = items.iterator();
+    IO.println(pickOne(() -> stream.hasNext() ? stream.next() : null));
+}
+`,
+      solution: `Monster pickOne(Supplier<Monster> next) {
+    Monster chosen = null;
+    int seen = 0;
+    for (Monster thing = next.get(); thing != null; thing = next.get()) {
+        seen++;
+        if (Math.random() < 1.0 / seen) chosen = thing;
+    }
+    return chosen;
+}
+
+void main() {
+    Iterator<Monster> stream = items.iterator();
+    IO.println(pickOne(() -> stream.hasNext() ? stream.next() : null));
+}
+`,
+    },
     check: (t) => {
       const pickOne = t.fn('pickOne')
       for (const n of [1, 2, 5]) {
@@ -740,7 +1123,7 @@ console.log(pickOne(() => items[i++] ?? null))
           })
           const at = stream.indexOf(got)
           if (at < 0) return `Med ${n} monstre i strømmen gav pickOne ${t.show(got)}, ikke ett av monstrene.`
-          if (!ended) return 'pickOne må lese hele strømmen, til next() gir null.'
+          if (!ended) return `pickOne må lese hele strømmen, til ${t.lang === 'js' ? 'next()' : 'next.get()'} gir null.`
           counts[at]++
         }
         for (let j = 0; j < n; j++) {
@@ -785,6 +1168,28 @@ console.log(survivor(queue.length), survivor(41))
 console.log(survivor(queue.length), survivor(41))
 `,
     exports: ['survivor'],
+    java: {
+      code: { 'function survivor(n)': 'int survivor(int n)', '2 ** Math.floor(Math.log2(n))': 'Integer.highestOneBit(n)' },
+      scaffold: `int survivor(int n) {
+    // Hvem står igjen når annenhver går ut?
+    return 1;
+}
+
+void main() {
+    IO.println(survivor(queue.size()) + " " + survivor(41));
+}
+`,
+      solution: `int survivor(int n) {
+    int power = 1;
+    while (power * 2 <= n) power *= 2;
+    return 2 * (n - power) + 1;
+}
+
+void main() {
+    IO.println(survivor(queue.size()) + " " + survivor(41));
+}
+`,
+    },
     check: (t) => {
       const survivor = t.fn('survivor')
       const simulate = (n: number) => {

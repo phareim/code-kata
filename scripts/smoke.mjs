@@ -286,6 +286,7 @@ async function suite(name, browser) {
 
   await layoutSuite(name, browser)
   await talkSuite(name, browser)
+  await langSuite(name, browser)
 
   // A phone: editor over console, page scrolls, code at 16 px.
   const phone = await browser.newContext({
@@ -487,10 +488,69 @@ async function talkSuite(name, browser) {
   await context.close()
 }
 
+// The language switch (main.ts, switchLang) with /api/translate played by the test: switching after writing code of
+// one's own sends the task, the languages, the code and the class, and lands the answer as an edit; switching back
+// gives back exactly what was there, and going forth again asks nothing.
+async function langSuite(name, browser) {
+  const context = await browser.newContext({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2 })
+  const sent = []
+  const translated = 'int count(Monster head) {\n    int n = 0;\n    for (Monster node = head; node != null; node = node.next) n++;\n    return n;\n}\n\nvoid main() {\n    IO.println(count(head));\n}\n'
+  await context.route('**/api/progress', (route) => route.fulfill({ status: 401, contentType: 'application/json', body: '{"user":null}' }))
+  await context.route('**/api/translate', (route) => {
+    sent.push(JSON.parse(route.request().postData() ?? '{}'))
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ code: translated, ting: '' }) })
+  })
+  const page = await context.newPage()
+  await page.goto(`${url.replace(/#.*$/, '')}#/tell-tingene`)
+  await page.waitForSelector('#editor .cm-content')
+  // The API answers (the sign-in link shows): a switch may translate.
+  await page.waitForSelector('#account:not([hidden])')
+  const text = () => page.$$eval('#editor .cm-line', (els) => els.map((el) => el.textContent).join('\n'))
+  const pressed = () => page.$eval('#lang [aria-pressed="true"]', (b) => b.dataset.lang)
+  check(`${name}: the switch shows JavaScript`, (await pressed()) === 'js')
+  await page.click('#solution-btn')
+  await page.click('#solution-btn')
+  await page.click('#use-solution')
+  const own = await text()
+  await page.click('#lang [data-lang="java"]')
+  await page.waitForFunction(() => /Oversatt|Klar/.test(document.getElementById('status').textContent) && document.querySelector('#lang [data-lang="java"]').getAttribute('aria-pressed') === 'true')
+  await page.waitForFunction(() => /Oversatt/.test(document.getElementById('status').textContent), null, { timeout: 5000 }).catch(() => {})
+  const java = await text()
+  const body = sent[0] ?? {}
+  check(`${name}: switching sends the task, the languages, the code and the class, nothing else`,
+    sent.length === 1 && body.task === 'tell-tingene' && body.from === 'js' && body.to === 'java' && typeof body.code === 'string'
+    && Object.keys(body).sort().join() === 'code,from,task,ting,to', JSON.stringify(Object.keys(body)))
+  check(`${name}: the translation lands in the editor, and the console says so`,
+    java.includes('for (Monster node = head') && /Claude har skrevet koden din/.test(await page.textContent('#output')), java)
+  check(`${name}: the task text reads in Java`, /int count\(Monster head\)/.test(await page.textContent('#task-text')))
+  await page.screenshot({ path: join(shots, `${name}-lang-java.png`) })
+  await page.click('#lang [data-lang="js"]')
+  check(`${name}: back in JavaScript, the code is as it was`, (await text()) === own && sent.length === 1)
+  await page.click('#lang [data-lang="java"]')
+  await page.waitForTimeout(300)
+  check(`${name}: forth again, nothing is translated anew`, sent.length === 1 && (await text()) === java)
+  await page.reload()
+  await page.waitForSelector('#editor .cm-content')
+  check(`${name}: the language and its code survive a reload`, (await pressed()) === 'java' && (await text()) === java)
+  await page.click('#lang [data-lang="js"]')
+  await page.close()
+
+  // A phone: the switch fits the code's bar.
+  const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, hasTouch: true })
+  const mobile = await phone.newPage()
+  await mobile.goto(`${url.replace(/#.*$/, '')}#/snu-lista`)
+  await mobile.waitForSelector('#editor .cm-content')
+  const over = await mobile.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  const box = await mobile.$eval('#lang', (el) => el.getBoundingClientRect().right)
+  check(`${name}: the switch fits a phone`, over <= 0 && box <= 390, `overflow ${over}px, right ${box}`)
+  await phone.close()
+  await context.close()
+}
+
 const browsers = [
   ['chrome', () => pw.chromium.launch({ executablePath: process.env.CHROME_BIN })],
   ['webkit', () => pw.webkit.launch()],
-]
+].filter(([name]) => (process.env.BROWSERS ?? 'chrome,webkit').split(',').includes(name))
 for (const [name, launch] of browsers) {
   const browser = await launch()
   try {

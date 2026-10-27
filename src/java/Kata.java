@@ -10,7 +10,9 @@ final class KataBridge {
   static final ArrayList<Integer> seen = new ArrayList<>();
   static int pass = 1;
   static final Object VOID = new Object();
+  /** The current call's arguments, as the code got them, and their types: what goes back after it (and after a callback). */
   static final ArrayList<Object> args = new ArrayList<>();
+  static final ArrayList<Ty> argTypes = new ArrayList<>();
 
   @org.teavm.jso.JSBody(params = {"n"}, script = "return __kata.root(n);")
   static native org.teavm.jso.JSObject root(String n);
@@ -48,7 +50,7 @@ final class KataBridge {
   static native boolean has(org.teavm.jso.JSObject o, String k);
   @org.teavm.jso.JSBody(params = {"o", "k"}, script = "return o[k];")
   static native org.teavm.jso.JSObject get(org.teavm.jso.JSObject o, String k);
-  @org.teavm.jso.JSBody(params = {"o", "k", "v"}, script = "o[k] = v;")
+  @org.teavm.jso.JSBody(params = {"o", "k", "v"}, script = "__kata.put(o, k, v);")
   static native void put(org.teavm.jso.JSObject o, String k, org.teavm.jso.JSObject v);
   @org.teavm.jso.JSBody(params = {"a"}, script = "return a.length;")
   static native int len(org.teavm.jso.JSObject a);
@@ -59,6 +61,9 @@ final class KataBridge {
   static native void empty(org.teavm.jso.JSObject a);
   @org.teavm.jso.JSBody(params = {"a", "v"}, script = "a.push(v);")
   static native void push(org.teavm.jso.JSObject a, org.teavm.jso.JSObject v);
+  /** Puts these values in an array mirror, unless it holds them already: an unchanged row isn't written to. */
+  @org.teavm.jso.JSBody(params = {"a", "values"}, script = "__kata.fill(a, values);")
+  static native void fill(org.teavm.jso.JSObject a, org.teavm.jso.JSObject values);
   @org.teavm.jso.JSBody(params = {"m", "k", "v"}, script = "m.set(k, v);")
   static native void mapSet(org.teavm.jso.JSObject m, org.teavm.jso.JSObject k, org.teavm.jso.JSObject v);
   @org.teavm.jso.JSBody(params = {"s", "v"}, script = "s.add(v);")
@@ -74,6 +79,11 @@ final class KataBridge {
   static native void thrownJs(String cls, String msg, int line);
   @org.teavm.jso.JSBody(params = {"v"}, script = "return __kata.show(v);")
   static native String showJs(org.teavm.jso.JSObject v);
+  /** Calls a function of the check's; true when it threw, which the worker keeps to throw again once Java is out. */
+  @org.teavm.jso.JSBody(params = {"f", "args"}, script = "return __kata.apply(f, args);")
+  static native org.teavm.jso.JSObject applyJs(org.teavm.jso.JSObject f, org.teavm.jso.JSObject args);
+  @org.teavm.jso.JSBody(script = "return __kata.threw();")
+  static native boolean threw();
 
   /** An item as text, the way the console prints one: the item class's toString when it declares none. */
   static String show(Object o) {
@@ -103,6 +113,65 @@ final class KataBridge {
   }
   static final List<String> PRIMITIVES = List.of("int", "long", "short", "byte", "double", "float", "char", "boolean");
   static final Ty OBJECT = new Ty("Object", new Ty[0], 0);
+  static final Ty VOID_TY = new Ty("void", new Ty[0], 0);
+  static final Ty INT = new Ty("int", new Ty[0], 0);
+  static final Ty BOOL = new Ty("boolean", new Ty[0], 0);
+
+  /** Unwinds the code when a function of the check's threw: the worker throws that error again. */
+  static final class Abort extends RuntimeException {
+    Abort() { super("kastet av sjekken"); }
+  }
+
+  /**
+   * A function the check passed (a `swap(i, j)` that counts the moves). The code calls it through the interface its
+   * parameter has: the call sends what the code has done to the check's objects so far, calls the function, and
+   * reads back what the function did to them, so both sides see the same row.
+   */
+  static final class Fn {
+    final org.teavm.jso.JSObject f;
+    Fn(org.teavm.jso.JSObject f) { this.f = f; }
+
+    Object call(Ty ret, Object... values) {
+      pass++;
+      for (Object a : args) out(a);
+      org.teavm.jso.JSObject list = newArray();
+      for (Object v : values) push(list, out(v));
+      org.teavm.jso.JSObject r = applyJs(f, list);
+      if (threw()) throw new Abort();
+      pass++;
+      for (int i = 0; i < args.size(); i++) {
+        Object a = args.get(i);
+        Integer id = a == null ? null : ids.get(a);
+        if (id != null) in(mirror(id, "Object", 1), argTypes.get(i));
+      }
+      return in(r, ret);
+    }
+  }
+
+  /** A function as the interface a parameter asks for: java.util.function's, Runnable and Comparator here, the code's own in KataGen. */
+  static Object fn(Ty t, Fn f) {
+    switch (t.name) {
+      case "Runnable": return (Runnable) () -> f.call(VOID_TY);
+      case "Supplier": return (Supplier<Object>) () -> f.call(t.arg(0));
+      case "Consumer": return (Consumer<Object>) a -> f.call(VOID_TY, a);
+      case "BiConsumer": return (BiConsumer<Object, Object>) (a, b) -> f.call(VOID_TY, a, b);
+      case "Function": return (Function<Object, Object>) a -> f.call(t.arg(1), a);
+      case "BiFunction": return (BiFunction<Object, Object, Object>) (a, b) -> f.call(t.arg(2), a, b);
+      case "UnaryOperator": return (UnaryOperator<Object>) a -> f.call(t.arg(0), a);
+      case "BinaryOperator": return (BinaryOperator<Object>) (a, b) -> f.call(t.arg(0), a, b);
+      case "Predicate": return (Predicate<Object>) a -> (Boolean) f.call(BOOL, a);
+      case "BiPredicate": return (BiPredicate<Object, Object>) (a, b) -> (Boolean) f.call(BOOL, a, b);
+      case "Comparator": return (Comparator<Object>) (a, b) -> (Integer) f.call(INT, a, b);
+      case "IntConsumer": return (IntConsumer) a -> f.call(VOID_TY, a);
+      case "IntPredicate": return (IntPredicate) a -> (Boolean) f.call(BOOL, a);
+      case "IntUnaryOperator": return (IntUnaryOperator) a -> (Integer) f.call(INT, a);
+      case "IntBinaryOperator": return (IntBinaryOperator) (a, b) -> (Integer) f.call(INT, a, b);
+      case "IntSupplier": return (IntSupplier) () -> (Integer) f.call(INT);
+      case "IntFunction": return (IntFunction<Object>) a -> f.call(t.arg(0), a);
+      case "ToIntFunction": return (ToIntFunction<Object>) a -> (Integer) f.call(INT, a);
+      default: return Main.KataGen.fn(t.name, f);
+    }
+  }
 
   static Ty ty(String text) {
     int[] at = {0};
@@ -169,10 +238,8 @@ final class KataBridge {
     if (cls != null) {
       int id = idFor(o);
       org.teavm.jso.JSObject js = mirror(id, cls, Main.KataGen.isItem(cls) ? 0 : 1);
-      if (visit(id)) {
-        empty(js);
-        Main.KataGen.out(o, js);
-      }
+      // Field by field, and only what changed: what else the check has on its own object stays.
+      if (visit(id)) Main.KataGen.out(o, js);
       return js;
     }
     if (o instanceof Map<?, ?> m) {
@@ -197,8 +264,9 @@ final class KataBridge {
       int id = idFor(o);
       org.teavm.jso.JSObject js = mirror(id, "Array", 2);
       if (visit(id)) {
-        empty(js);
-        for (Object x : list) push(js, out(x));
+        org.teavm.jso.JSObject values = newArray();
+        for (Object x : list) push(values, out(x));
+        fill(js, values);
       }
       return js;
     }
@@ -206,9 +274,10 @@ final class KataBridge {
       int id = idFor(o);
       org.teavm.jso.JSObject js = mirror(id, "Array", 2);
       if (visit(id)) {
-        empty(js);
+        org.teavm.jso.JSObject values = newArray();
         int n = arrayLength(o);
-        for (int i = 0; i < n; i++) push(js, out(arrayGet(o, i)));
+        for (int i = 0; i < n; i++) push(values, out(arrayGet(o, i)));
+        fill(js, values);
       }
       return js;
     }
@@ -276,6 +345,7 @@ final class KataBridge {
         break;
     }
     if (k == 7) return inObject(v, t.name);
+    if (k == 8) return fn(t, new Fn(v));
     return guess(v, k);
   }
 
@@ -440,6 +510,7 @@ final class KataBridge {
   static Object arg(org.teavm.jso.JSObject a, int i, Ty t) {
     Object o = in(i < len(a) ? at(a, i) : null, t);
     args.add(o);
+    argTypes.add(t);
     return o;
   }
 
@@ -458,7 +529,25 @@ final class KataBridge {
     for (int i = 0; i < objs.size(); i++) out(objs.get(i));
   }
 
+  /** How many objects the world started with (the items and what the roots hold): ids 0 … world - 1. */
+  static int world = 0;
+
+  /**
+   * After a call from the check: the roots and the world's own objects, not every object the check has passed in
+   * before (a check that calls the code thousands of times with new rows would pay for all of them every time).
+   */
+  static void syncWorld() {
+    pass++;
+    KataWorld.rootsOut();
+    for (int i = 0; i < world && i < objs.size(); i++) out(objs.get(i));
+  }
+
+  @org.teavm.jso.JSBody(script = "return __kata.recording();")
+  static native boolean recording();
+
   static void vis(Object[] marks) {
+    // After the run (the check calling the code) the page keeps no more frames: don't build one.
+    if (!recording()) return;
     sync();
     org.teavm.jso.JSObject list = newArray();
     for (Object m : marks) push(list, out(m));
@@ -493,6 +582,7 @@ final class KataMain {
   public static void run() {
     try {
       KataWorld.start();
+      KataBridge.world = KataBridge.objs.size();
       KataBridge.code = new Main();
       Main.KataGen.main();
     } catch (Throwable e) {
@@ -520,9 +610,12 @@ final class KataMain {
   @org.teavm.jso.JSExport
   public static org.teavm.jso.JSObject invoke(org.teavm.jso.JSObject target, String name, org.teavm.jso.JSObject args) {
     return after(() -> {
-      int id = KataBridge.idOf(target);
-      Object self = id >= 0 ? KataBridge.objs.get(id) : null;
-      if (self != null && KataBridge.visit(id)) Main.KataGen.in(self, target);
+      // An item the check made and never sent over is made in Java now, so its methods can run.
+      Object self = KataBridge.inObject(target, KataBridge.clsOf(target));
+      if (self != null) {
+        KataBridge.args.add(self);
+        KataBridge.argTypes.add(KataBridge.OBJECT);
+      }
       return self == null ? KataBridge.VOID : Main.KataGen.invoke(self, name, args);
     });
   }
@@ -538,14 +631,17 @@ final class KataMain {
   static org.teavm.jso.JSObject after(Call call) {
     KataBridge.pass++;
     KataBridge.args.clear();
+    KataBridge.argTypes.clear();
     Object result;
     try {
       result = call.get();
+    } catch (KataBridge.Abort e) {
+      return null;
     } catch (Throwable e) {
       KataBridge.thrown(e);
       return null;
     }
-    KataBridge.sync();
+    KataBridge.syncWorld();
     for (Object a : new ArrayList<>(KataBridge.args)) KataBridge.out(a);
     return KataBridge.out(result);
   }
