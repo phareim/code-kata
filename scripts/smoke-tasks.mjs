@@ -5,7 +5,8 @@
 // shots dir.
 //   PLAYWRIGHT=<path to playwright-core/index.mjs> node scripts/smoke-tasks.mjs <url> [shots dir] [task ids…]
 // Serve dist/ first. CHROME_BIN points at an installed Chrome; BROWSERS=chrome (or webkit) runs one. JAVA=0 leaves the
-// Java tasks out (compiling all of them takes a few minutes). Exits 1 when a check fails.
+// Java tasks out (compiling all of them takes a few minutes). Exits 1 when a check fails. Give CHROME_BIN a full Chrome
+// or Chromium: chrome-headless-shell crashes on a WebAssembly GC null dereference (README → Develop).
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 

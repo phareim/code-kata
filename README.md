@@ -386,6 +386,10 @@ npm run preview    # serve dist/ on 4173
 PLAYWRIGHT=/path/to/playwright-core/index.mjs CHROME_BIN=/path/to/chrome node scripts/smoke-tasks.mjs http://127.0.0.1:4173/
 ```
 
+`CHROME_BIN` should be a full Chrome or Chromium: Playwright's `chrome-headless-shell` (build 1243, Chromium 153) takes
+the whole tab down on a WebAssembly GC null dereference, which the smoke test provokes on purpose (a
+`NullPointerException` in Java); the full build of the same version catches it as it should.
+
 ## Deploy
 
 `dist/` is served as static assets by the Cloudflare Worker `code-kata` (`wrangler.jsonc`), with the custom domain
