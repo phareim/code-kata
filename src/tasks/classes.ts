@@ -43,3 +43,38 @@ const TEXT = "value = ''"
 export const TEXT_MONSTER = monsterClass([TEXT, COLOR])
 /** value (a letter or a word), color and next: a list. */
 export const TEXT_LIST_MONSTER = monsterClass([TEXT, COLOR, 'next = null'])
+
+/*
+ * The same classes in Java: fields with their types, and no constructor, so `new Monster()` makes one at its defaults.
+ * A field the visitor adds gets its default on every item, as in JavaScript.
+ */
+const javaClass = (fields: string[]) => `// Legg til eller ta bort et felt og trykk «Bruk».
+class Monster {
+${fields.map((f) => `    ${f};\n`).join('')}}`
+
+const J_VALUE = 'int value = 0'
+const J_COLOR = 'String color = "pink"'
+const J_TEXT = 'String value = ""'
+const J_NEXT = 'Monster next'
+const J_PREV = 'Monster prev'
+const J_TREE = ['Monster left', 'Monster right']
+const J_GRAPH = 'List<Monster> neighbors = new ArrayList<>()'
+
+/** The playground's class in Java: value, color, next. */
+export const JAVA_LIST_MONSTER = javaClass([J_VALUE, J_COLOR, J_NEXT])
+
+/** Each class above, in Java. */
+export const JAVA_CLASSES = new Map<string, string>([
+  [LIST_MONSTER, JAVA_LIST_MONSTER],
+  [PLAIN_MONSTER, javaClass([J_VALUE, J_COLOR])],
+  [DOUBLE_MONSTER, javaClass([J_VALUE, J_COLOR, J_PREV, J_NEXT])],
+  [TREE_MONSTER, javaClass([J_VALUE, J_COLOR, ...J_TREE])],
+  [GRAPH_MONSTER, javaClass([J_VALUE, J_COLOR, J_GRAPH])],
+  [COLOR_LIST_MONSTER, javaClass([J_COLOR, J_NEXT])],
+  [COLOR_MONSTER, javaClass([J_COLOR])],
+  [COLOR_DOUBLE_MONSTER, javaClass([J_COLOR, J_PREV, J_NEXT])],
+  [COLOR_TREE_MONSTER, javaClass([J_COLOR, ...J_TREE])],
+  [COLOR_GRAPH_MONSTER, javaClass([J_COLOR, J_GRAPH])],
+  [TEXT_MONSTER, javaClass([J_TEXT, J_COLOR])],
+  [TEXT_LIST_MONSTER, javaClass([J_TEXT, J_COLOR, J_NEXT])],
+])

@@ -37,6 +37,12 @@ export interface Node {
 
 /** The argument a check gets; the worker builds it (worker.js, «A task's check»). */
 export interface Check {
+  /**
+   * The language the code is in. The items are the same either way (in Java, mirrors of the Java objects), but a
+   * check that watches how the code works (a getter that counts reads, a ban on Array.prototype.sort) can only do so
+   * in JavaScript.
+   */
+  lang: 'js' | 'java'
   /** The roots as the code left them: t.head, t.items, t.root … */
   [root: string]: any
   /** The items the run started with (A, B …), the same objects the code had. */
@@ -70,6 +76,29 @@ export interface Check {
 
 export type CheckResult = true | string
 
+/**
+ * A task in Java (src/tasks/java.ts): the code it opens with, its skeleton and its solution, and how its text and hints
+ * read in Java. The check, the items and the prose are the task's own.
+ */
+export interface JavaTask {
+  scaffold: string
+  solution: string
+  /** As the task's `opening`: the code under the comment, when the scaffold's rest is part of the answer. */
+  opening?: string
+  /** The class, when it isn't the Java version of the task's JavaScript class (classes.ts, JAVA_CLASSES). */
+  monster?: string
+  solutionMonster?: string
+  /** Types the task gives the code: a record a method returns, the ant's class. */
+  prelude?: string
+  /** A root's type, when its start doesn't tell (an empty row, null, an object): { stack: 'List<Monster>' }. */
+  roots?: Record<string, string>
+  /** The code in backticks in the text and the hints, as it reads in Java: { 'while (node)': 'while (node != null)' }. */
+  code?: Record<string, string>
+  /** The text or the hints, whole, where replacing the code in them isn't enough. */
+  text?: string
+  hints?: string[]
+}
+
 export interface Task {
   /** Stable forever: progress is stored by it. Retire a task with `hidden`, never rename. */
   id: string
@@ -100,5 +129,7 @@ export interface Task {
   views?: Record<string, ViewKind>
   /** Where the idea came from, when it has a clear origin. */
   source?: string
+  /** The task in Java; a task without it is in JavaScript only. */
+  java?: JavaTask
   hidden?: boolean
 }

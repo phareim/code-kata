@@ -390,6 +390,7 @@ function errorLine(err, cal, compiling, lineCount) {
  *   t.out                       the lines the code printed
  *   t.fn(name)                  a function (or class, for `new`) the code declared, one of the task's exports
  *   t.Monster                   the class
+ *   t.lang                      'js' or 'java': in Java the items are mirrors, so a check can't watch how they are read
  *   t.chain(node, key)          the nodes from node along key ('next'), or null when it loops or hits a non-object
  *   t.values(node, key)         their values
  *   t.list(values, colors)      a new list of Monster; returns its head (null for none)
@@ -402,7 +403,7 @@ function errorLine(err, cal, compiling, lineCount) {
  */
 const USER_ERROR = Symbol('kata user error')
 
-function checkContext({ Monster, slots, start, roots, out, exported, slotOf }) {
+function checkContext({ lang, Monster, slots, start, roots, out, exported, slotOf }) {
   const userCall = (name, fn) => {
     const call = function (...args) {
       let r
@@ -465,6 +466,7 @@ function checkContext({ Monster, slots, start, roots, out, exported, slotOf }) {
     return i >= 0 ? slots[i] : undefined
   }
   const t = {
+    lang,
     Monster,
     slots,
     start,
@@ -505,6 +507,106 @@ function checkContext({ Monster, slots, start, roots, out, exported, slotOf }) {
     if (!(name in t)) Object.defineProperty(t, name, { get: () => self[name], enumerable: true })
   }
   return t
+}
+
+/*
+ * Java (src/java/): the page compiles the class, the code and the bridge (src/java/compose.ts, Kata.java) to
+ * WebAssembly with TeaVM, and sends the module with TeaVM's loader. The Java objects are mirrored to JavaScript
+ * objects here, by id (the `__kata` global the bridge calls): the world in and out, vis() and the check use the
+ * mirrors as they use the items of a JavaScript run, and the check's calls into the code go through the bridge. An
+ * exception in the code comes back with its class, its message and its line; a trap (a null, an index out of bounds)
+ * is named as Java names it, and its line found with TeaVM's deobfuscator.
+ */
+const TRAPS = [
+  [/null/i, 'NullPointerException'],
+  [/out of bounds/i, 'ArrayIndexOutOfBoundsException'],
+  [/divi\w* by zero/i, 'ArithmeticException'],
+  [/call stack|stack overflow|too much recursion/i, 'StackOverflowError'],
+  [/cast/i, 'ClassCastException'],
+  [/memory/i, 'OutOfMemoryError'],
+]
+
+/** A line of the Java source as a line in the class editor or the code. */
+function placeJava(line, lines) {
+  if (typeof line !== 'number' || line < 1) return { line: null, where: null }
+  if (line >= lines.classFrom && line <= lines.classTo) return { line: line - lines.classFrom + 1, where: 'klasse' }
+  if (line >= lines.codeFrom && line <= lines.codeTo) return { line: line - lines.codeFrom + 1, where: 'kode' }
+  return { line: null, where: null }
+}
+
+/**
+ * The mirrors and the `__kata` functions the bridge calls. Each class the code's items are made of gets a JavaScript
+ * class of the same name (one that extends the item class extends its mirror), with its methods calling back into
+ * Java, so a check can call them on an item.
+ */
+function javaBridge(meta, slots, call) {
+  const byId = []
+  const ids = new Map()
+  const classes = new Map()
+  const methods = (cls, names, statics) => {
+    for (const m of names) {
+      Object.defineProperty(cls.prototype, m, {
+        configurable: true,
+        writable: true,
+        value(...args) { return call((p) => p.invoke(this, m, args)) },
+      })
+    }
+    for (const m of statics) cls[m] = (...args) => call((p) => p.invokeStatic(cls.name, m, args))
+  }
+  const named = (name, Parent) => (Parent
+    ? { [name]: class extends Parent {} }[name]
+    : { [name]: class { constructor(props) { if (props && typeof props === 'object') Object.assign(this, props) } } }[name])
+  const pending = [...meta.classes]
+  while (pending.length) {
+    const i = pending.findIndex((c) => !c.parent || classes.has(c.parent) || !pending.some((p) => p.name === c.parent))
+    const c = pending.splice(i < 0 ? 0 : i, 1)[0]
+    const cls = named(c.name, c.parent ? classes.get(c.parent) : undefined)
+    methods(cls, c.methods, c.statics)
+    classes.set(c.name, cls)
+  }
+  if (!classes.has(meta.itemClass)) classes.set(meta.itemClass, named(meta.itemClass))
+  const callable = new Set(meta.classes.filter((c) => c.methods.length || c.statics.length).map((c) => c.name))
+  const adopt = (v, id) => {
+    ids.set(v, id)
+    byId[id] = v
+  }
+  let thrown = null
+  const api = {
+    root: (name) => self[name],
+    setRoot: (name, v) => { self[name] = v },
+    slot: (i) => slots[i],
+    kind: (v) => (v === null || v === undefined ? 0 : typeof v === 'string' ? 1 : typeof v === 'number' ? 2
+      : typeof v === 'boolean' ? 3 : Array.isArray(v) ? 4 : v instanceof Map ? 5 : v instanceof Set ? 6
+        : typeof v === 'object' ? 7 : 8),
+    idOf: (v) => ids.get(v) ?? -1,
+    clsOf: (v) => constructorName(v) ?? 'Object',
+    adopt,
+    mirror: (id, cls, kind) => {
+      if (byId[id] !== undefined) return byId[id]
+      // An item is of its class's mirror, and so is an object whose class has methods (a stack the code declared);
+      // anything else (a record, the ant) is a plain object, as it would be in JavaScript.
+      const v = kind === 0 ? new (classes.get(cls) ?? classes.get(meta.itemClass))()
+        : kind === 1 ? (callable.has(cls) ? new (classes.get(cls))() : {})
+          : kind === 2 ? [] : kind === 3 ? new Map() : new Set()
+      adopt(v, id)
+      return v
+    },
+    has: (o, k) => o !== null && typeof o === 'object' && Object.prototype.hasOwnProperty.call(o, k),
+    empty: (v) => {
+      if (Array.isArray(v)) v.length = 0
+      else if (v instanceof Map || v instanceof Set) v.clear()
+      else for (const k of Object.keys(v)) delete v[k]
+    },
+    vis: (args) => self.vis(...args),
+    show: (v) => format(v, 0, new Set()),
+    thrown: (cls, message, line) => { thrown = { cls, message, line } },
+    take: () => {
+      const t = thrown
+      thrown = null
+      return t
+    },
+  }
+  return { api, classes }
 }
 
 /** Runs a check's source against the context. Never throws: the verdict says what happened. */
@@ -651,12 +753,23 @@ function start() {
     }
   }
 
-  const where = (err) => place(errorLine(err, cal, false, source.split('\n').length), classLines)
+  // A Java error knows its place already (javaError, trap).
+  const where = (err) => err?.kataPlace ?? place(errorLine(err, cal, false, source.split('\n').length), classLines)
 
   // A function or class the task wants and the code hasn't declared; a capital letter says class.
-  const missingExport = (name) => /^[A-Z]/.test(name)
-    ? `Fant ikke klassen ${name}. Skriv class ${name} { … } i koden.`
-    : `Fant ikke funksjonen ${name}. Skriv function ${name}(…) { … } i koden.`
+  // In Java, the task's solution says how it is declared (`expected`).
+  let expected = null
+  const missingExport = (name) => {
+    if (expected) {
+      const decl = expected[name] ?? (/^[A-Z]/.test(name) ? `class ${name}` : `${name}(…)`)
+      return /^[A-Z]/.test(name)
+        ? `Fant ikke klassen ${name}. Skriv \`${decl} { … }\` i koden.`
+        : `Fant ikke metoden ${name}. Skriv \`${decl} { … }\` i koden.`
+    }
+    return /^[A-Z]/.test(name)
+      ? `Fant ikke klassen ${name}. Skriv class ${name} { … } i koden.`
+      : `Fant ikke funksjonen ${name}. Skriv function ${name}(…) { … } i koden.`
+  }
 
   const fail = (err, compiling) => {
     if (finished) return
@@ -672,7 +785,7 @@ function start() {
       send({ type: 'verdict', ok: false, broken: false, line: null, where: null, message: missingExport(name) })
     }
     const isError = err instanceof Error
-    const at = place(errorLine(err, cal, compiling, source.split('\n').length), classLines)
+    const at = err?.kataPlace ?? place(errorLine(err, cal, compiling, source.split('\n').length), classLines)
     send({
       type: 'error',
       name: isError ? err.name || 'Error' : 'Uncaught',
@@ -697,6 +810,7 @@ function start() {
       finished = true
       if (task && world) {
         const t = checkContext({
+          lang: expected ? 'java' : 'js',
           Monster: world.Monster,
           slots: world.objs.slice(0, world.start.objs.length),
           start: Object.assign({ slots: world.start.objs }, Object.fromEntries(world.start.roots)),
@@ -741,11 +855,130 @@ function start() {
     fail(event.reason, false)
   })
 
+  // Java: the module the page compiled, its loader, and what the bridge needs (msg.java). The items are mirrors of
+  // the Java objects; once the code has run, the check runs as it does for JavaScript.
+  const runJava = async (msg) => {
+    const java = msg.java
+    expected = java.expected ?? {}
+    let program = null
+    let deobfuscate = () => []
+    const javaError = ({ cls, message, line }) => {
+      const err = new Error(message ?? '')
+      err.name = cls
+      err.kataPlace = placeJava(line, java.lines)
+      return err
+    }
+    const trap = (err) => {
+      if (err === null || typeof err !== 'object' || err.kataPlace) return err
+      const known = TRAPS.find(([re]) => re.test(String(err.message)))
+      if (!known && !(err instanceof WebAssembly.RuntimeError)) return err
+      const offsets = [...String(err.stack).matchAll(/wasm-function\[\d+\]:0x([0-9a-f]+)/g)].map((m) => parseInt(m[1], 16))
+      let line = null
+      try {
+        for (const f of deobfuscate(offsets)) {
+          if (f.file === 'Main.java' && f.line > 0 && !String(f.className).startsWith('Kata')) {
+            line = f.line
+            break
+          }
+        }
+      } catch {
+        // No line, then.
+      }
+      return javaError({ cls: known ? known[1] : 'Error', message: known ? '' : String(err.message), line })
+    }
+    const call = (f) => {
+      bridge.api.take()
+      let result
+      try {
+        result = f(program.exports)
+      } catch (err) {
+        throw trap(err)
+      }
+      const thrown = bridge.api.take()
+      if (thrown) throw javaError(thrown)
+      return result
+    }
+
+    const objs = []
+    const bridge = javaBridge(java.meta, objs, call)
+    if (msg.world) {
+      const Item = bridge.classes.get(java.meta.itemClass)
+      objs.push(...msg.world.items.map((item) => new (bridge.classes.get(item.cls) ?? Item)()))
+      const decode = decoder(objs)
+      msg.world.items.forEach((item, i) => {
+        for (const p of item.props) objs[i][p.key] = decode(p)
+      })
+      const roots = (msg.world.roots ?? []).map((p) => [p.key, decode(p)])
+      world = {
+        objs,
+        roots: roots.map(([name]) => name),
+        fields: java.meta.fields,
+        Monster: Item,
+        start: buildWorld(structuredClone(msg.world), undefined),
+      }
+      for (const [name, value] of roots) self[name] = value
+    }
+    self.__kata = bridge.api
+
+    // System.out and System.err, a line at a time.
+    const lines = { log: '', error: '' }
+    const put = (level, c) => {
+      if (c === 10) {
+        emit(level, [lines[level]])
+        lines[level] = ''
+      } else lines[level] += String.fromCharCode(c & 0xffff)
+    }
+    const flushLines = () => {
+      for (const level of ['log', 'error']) if (lines[level]) put(level, 10)
+    }
+    try {
+      const teavm = new Function(java.runtime)()
+      const deobfuscator = new Uint8Array(java.deobfuscator)
+      program = await teavm.load(new Uint8Array(java.wasm), {
+        noAutoImports: true,
+        stackDeobfuscator: { enabled: true, path: deobfuscator },
+        installImports(imports) {
+          imports.teavmConsole = {
+            ...imports.teavmConsole,
+            putcharStdout: (c) => put('log', c),
+            putcharStderr: (c) => put('error', c),
+          }
+        },
+      })
+      const own = await teavm.load(deobfuscator, { noAutoImports: true })
+      const frames = own.exports.createForModule(program.module)
+      deobfuscate = (offsets) => frames.deobfuscate(offsets)
+    } catch (err) {
+      const e = new Error(`Fikk ikke startet Java: ${errorText(err)}`)
+      return fail(e, false)
+    }
+    try {
+      call((p) => p.run())
+    } catch (err) {
+      flushLines()
+      // A trap ends the code before the bridge sends the world back; the module still works, so ask it to.
+      try { program.exports.sync() } catch { /* the world as it was */ }
+      return fail(err, false)
+    }
+    flushLines()
+    for (const name of java.meta.exports) {
+      if (/^[A-Z]/.test(name)) {
+        const cls = bridge.classes.get(name)
+        const make = function (...args) { return call((p) => p.construct(name, args)) }
+        if (cls) make.prototype = cls.prototype
+        exported[name] = make
+      } else exported[name] = (...args) => call((p) => p.call(name, args))
+    }
+    mainDone = true
+    settle()
+  }
+
   self.onmessage = async (event) => {
     const msg = event.data
     if (!msg || msg.type !== 'run' || startedAt) return
     startedAt = performance.now()
     task = msg.task && typeof msg.task.check === 'string' ? msg.task : null
+    if (msg.java) return runJava(msg)
     const code = String(msg.code) + (task ? exportsTrailer(task.exports) : '')
     const install = (Monster) => {
       if (!msg.world) return

@@ -20,6 +20,8 @@ export interface RunMessage {
   classSource?: string
   world?: World
   task?: TaskRun
+  /** A Java run: the compiled module and what the bridge needs (test/java.ts). */
+  java?: unknown
 }
 
 export function runWorker(msg: RunMessage, timeoutMs = 4000): Promise<WorkerRun> {
@@ -65,6 +67,8 @@ export function runWorker(msg: RunMessage, timeoutMs = 4000): Promise<WorkerRun>
       clearInterval(id: ReturnType<typeof setInterval>) { intervals.delete(id); clearInterval(id) },
       performance,
       structuredClone,
+      TextDecoder,
+      TextEncoder,
       addEventListener() {},
     }
     const context = vm.createContext(sandbox)
