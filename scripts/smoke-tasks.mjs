@@ -284,17 +284,21 @@ async function java(name, page, todo) {
   await page.click('#restart-btn')
 
   let solved = 0
+  let jsOnly = 0
   for (const id of todo) {
     await goTask(page, id)
     const pressed = await page.$eval('#lang [data-lang="java"]', (b) => !b.disabled)
-    if (!pressed) continue
+    if (!pressed) {
+      jsOnly++
+      continue
+    }
     await page.click('#lang [data-lang="java"]')
     await insertSolution(page)
     r = await runTask(page, false, 60000)
     if (/is-ok/.test(r.verdict ?? '')) solved++
     else check(`${name}: ${id} is solved by its Java solution`, false, `${r.verdict} ${r.text} ${r.status}`)
   }
-  check(`${name}: Java solutions solve their tasks`, solved > 0, `${solved}/${todo.length}`)
+  check(`${name}: Java solutions solve their tasks`, solved > 0 && solved === todo.length - jsOnly, `${solved}/${todo.length - jsOnly}${jsOnly ? `, ${jsOnly} in JavaScript only` : ''}`)
 
   // The playground in Java.
   await page.evaluate(() => { location.hash = '#/lekeplass' })
