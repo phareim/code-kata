@@ -6,7 +6,7 @@ off a row of letters. Write a few lines, run them in the browser (Java too: java
 and watch the monsters do what the code says. Switch language halfway and Claude writes what you have so far in the
 other one. Neon Coast's pixel look from phareim.no (the night palette, Neon Shrine's 5×7 font, notched boxes).
 
-Live: https://kata.phareim.no (public; signing in is optional and only carries the progress along; 144 tasks, every one solved in Chrome against the built site 2026-10-24; the first 131 also in WebKit 2026-10-23).
+Live: https://kata.phareim.no (public; signing in is optional and only carries the progress along; 144 tasks, every one solved in JavaScript and in Java in Chromium 153 against the built site 2026-10-27; the first 131 also in WebKit 2026-10-23, in JavaScript; Java is untested in WebKit).
 
 ## What it does
 
