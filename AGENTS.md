@@ -100,4 +100,7 @@ how code runs and where things live.
 - A Java root's or field's type comes from the start world (`typeOf` in `src/tasks/java.ts`); when it can't (an empty
   array, null, a plain object), give `java.roots` and, for an object, a class in `java.prelude`. A field the item class
   doesn't declare is not mirrored back: a task whose items carry a `shape` needs `String shape` in its Java class.
+- «Til byen» (`src/app/town.ts`) shows only for a visit from phareim.no's town (`?from=phareim`, kept for the tab).
+  It reads messages only from `https://phareim.no` in the parent window; `.app`'s padding takes the frame's
+  `--frame-*` edges, so keep them there if the padding changes.
 - A push to `main` deploys.

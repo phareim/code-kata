@@ -8,6 +8,7 @@ import { flushProgress, isSolved, lastTask, markSolved, rememberLast, saveIn, sa
 import { Talk } from './app/talk'
 import { inlineText, richText } from './app/text'
 import { fingerprint, translateCode } from './app/translate'
+import { cameFromTown, joinTown, leaveThroughFrame, townReady, TOWN_URL } from './app/town'
 import { createEditor, firstSyntaxErrorLine, goToLine, markErrorLine, replaceDoc } from './editor/editor'
 import { Runner, TIME_LIMIT_MS, type Entry, type JavaRun, type Outcome, type Verdict, type Where } from './run/runner'
 import { Stage } from './stage/stage'
@@ -935,6 +936,16 @@ function showAccount(account: Account | null, available: boolean): void {
 accountLink.addEventListener('click', () => {
   accountLink.href = signInUrl()
 })
+
+/* «Til byen»: back to the town on phareim.no, for a visit from its KODING KATA stand (src/app/town.ts). */
+joinTown()
+const townLink = $<HTMLAnchorElement>('town')
+townLink.href = TOWN_URL
+townLink.hidden = !cameFromTown()
+townLink.addEventListener('click', (e) => {
+  if (leaveThroughFrame()) e.preventDefault()
+})
+if (cameFromTown()) townReady()
 
 /** The account changed tasks: redraw what shows them, and the open task's code when the account's is newer. */
 function merged(ids: string[]): void {

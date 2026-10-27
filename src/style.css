@@ -77,11 +77,12 @@ body.has-sheet { overflow: hidden; }
   flex-direction: column;
   gap: 16px;
   height: 100dvh;
+  /* --frame-*: the screen's edges, as the town's frame measures them (src/app/town.ts); unset outside it. */
   padding:
-    max(16px, env(safe-area-inset-top))
-    max(16px, env(safe-area-inset-right))
-    max(16px, env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
+    max(16px, env(safe-area-inset-top), var(--frame-top, 0px))
+    max(16px, env(safe-area-inset-right), var(--frame-right, 0px))
+    max(16px, env(safe-area-inset-bottom), var(--frame-bottom, 0px))
+    max(16px, env(safe-area-inset-left), var(--frame-left, 0px));
 }
 
 /* The header: the name, the way to the tasks, and how many are solved. */
@@ -1209,3 +1210,7 @@ body.is-resizing { user-select: none; -webkit-user-select: none; }
 .code-rename-note { margin: 8px 0 0; }
 .code-rename-note.is-error { color: var(--red); }
 .code-notice { --edge: var(--gold); max-width: 320px; padding: 8px 12px; color: var(--gold); }
+
+/* «Til byen», first in the header: back to the town on phareim.no, for a visit from its KODING KATA stand. */
+.town { gap: 8px; }
+.town svg { display: block; fill: currentColor; shape-rendering: crispEdges; }

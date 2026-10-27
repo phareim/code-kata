@@ -24,6 +24,12 @@ Live: https://kata.phareim.no (public; signing in is optional and only carries t
   kept in localStorage (`code-kata:progress`). The header counts what is solved.
 - **On your account**: signed in at auth.phareim.no (the «Logg inn» link in the header, which becomes your name),
   the progress is kept on your account too and follows you to another browser (below).
+- **Til byen**: kata has a stand in the pixel town on phareim.no, KODING KATA, which opens the page with
+  `?from=phareim`. Such a visit gets «Til byen» first in the header, a link back to `https://phareim.no/`, where the
+  town stands the visitor at the stand again. The tab remembers it (sessionStorage `code-kata:from`), so a reload
+  keeps it; any other visit never sees it. `src/app/town.ts` also speaks the town's frame messages (hello, the
+  screen's edges as `--frame-*`, ready, home) for the day the town shows kata inside its installed app; it does not
+  yet (2026-10-27).
 - **Snakk om det**: a solved task offers a talk with Claude about your solution. Anyone can pick from three fixed
   questions (the alternatives, elegant or clunky, how to make it easier to read); signed in, it is a conversation
   that opens with those questions and goes on with whatever you ask (below).
@@ -343,7 +349,8 @@ the built site in Chrome and WebKit, which also covers the checks as minified so
 
 - `src/main.ts`: the page: what is open (a task or the playground), routing, runs, playback, verdicts, saving.
 - `src/app/`: the bank (`bank.ts`), progress and its sync with the account (`progress.ts`), the merge the page and
-  the Worker share (`merge.ts`), the success effect (`celebrate.ts`), task text (`text.ts`).
+  the Worker share (`merge.ts`), the success effect (`celebrate.ts`), task text (`text.ts`), the way back to the
+  town on phareim.no (`town.ts`).
 - `src/tasks/`: the task bank: one file per topic, `index.ts` (the order they are numbered in), `build.ts`
   (start worlds), `classes.ts` (the Monster classes), `opening.ts` (what the editor opens with), `types.ts`.
 - `src/stage/`: the stage (`stage.ts`: panels, views, tokens, glides) and the creatures (`creatures.ts`).
@@ -370,7 +377,8 @@ the built site in Chrome and WebKit, which also covers the checks as minified so
   translations.
 - `test/harness.ts`: runs `worker.js` in a Node vm the way the page runs it; `test/tasks.test.ts` uses it for every
   task, `test/docs.test.ts` keeps `docs/tasks.md` current, `test/sync.test.ts` covers the merge,
-  the Worker and the page's sync, `test/talk.test.ts` the talk (with a fake Messages API).
+  the Worker and the page's sync, `test/talk.test.ts` the talk (with a fake Messages API), `test/town.test.ts`
+  «Til byen» and the frame's messages.
 - `docs/tasks.md`: the bank's overview, sources and table.
 - `scripts/smoke.mjs` (the playground, the layout, and the talk sheet both ways with the API played by the test) and
   `scripts/smoke-tasks.mjs` (the tasks): browser checks in Chrome and WebKit, with screenshots.
