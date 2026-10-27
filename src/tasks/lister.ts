@@ -35,6 +35,29 @@ console.log(count(head))
 console.log(count(head))
 `,
     exports: ['count'],
+    java: {
+      code: { 'function count(head)': 'int count(Monster head)', 'let n = 0': 'int n = 0', 'while (node) { … }': 'while (node != null) { … }' },
+      scaffold: `int count(Monster head) {
+    int n = 0;
+    // Gå gjennom lista og tell
+    return n;
+}
+
+void main() {
+    IO.println(count(head));
+}
+`,
+      solution: `int count(Monster head) {
+    int n = 0;
+    for (Monster node = head; node != null; node = node.next) n++;
+    return n;
+}
+
+void main() {
+    IO.println(count(head));
+}
+`,
+    },
     check: (t) => {
       const count = t.fn('count')
       for (const values of [[7], [3, 1, 4, 1, 5], [], [2, 7, 1, 8, 2, 8, 1, 8, 2, 8]]) {
@@ -80,6 +103,33 @@ while (node) {
 }
 head = prev
 `,
+    java: {
+      scaffold: `void main() {
+    Monster prev = null;
+    Monster node = head;
+    while (node != null) {
+        Monster next = node.next;
+        // Snu pekeren til node her
+        prev = node;
+        node = next;
+    }
+    // Hvem skal head peke på nå?
+}
+`,
+      solution: `void main() {
+    Monster prev = null;
+    Monster node = head;
+    while (node != null) {
+        Monster next = node.next;
+        node.next = prev;
+        prev = node;
+        node = next;
+        vis(prev);
+    }
+    head = prev;
+}
+`,
+    },
     check: (t) => {
       const want = t.before('head').reverse()
       const got = t.chain(t.head)
@@ -135,6 +185,36 @@ if (bestPrev) {
   head = best
 }
 `,
+    java: {
+      scaffold: `void main() {
+    Monster best = head;
+    Monster bestPrev = null;
+    Monster prev = null;
+    for (Monster node = head; node != null; node = node.next) {
+        // Er node større enn best? Husk det, og det foran det.
+        prev = node;
+    }
+}
+`,
+      solution: `void main() {
+    Monster best = head;
+    Monster bestPrev = null;
+    Monster prev = null;
+    for (Monster node = head; node != null; node = node.next) {
+        if (node.value > best.value) {
+            best = node;
+            bestPrev = prev;
+        }
+        prev = node;
+    }
+    if (bestPrev != null) {
+        bestPrev.next = best.next;
+        best.next = head;
+        head = best;
+    }
+}
+`,
+    },
     check: (t) => {
       const before = t.before('head')
       const max = before.reduce((a, b) => (b.value > a.value ? b : a))
@@ -186,6 +266,26 @@ while (node && node.next) {
   else node = node.next
 }
 `,
+    java: {
+      code: { "color === 'pink'": 'color.equals("pink")' },
+      scaffold: `void main() {
+    Monster node = head;
+    while (node != null && node.next != null) {
+        // Er node.next rosa? Hopp over det.
+        node = node.next;
+    }
+}
+`,
+      solution: `void main() {
+    while (head != null && head.color.equals("pink")) head = head.next;
+    Monster node = head;
+    while (node != null && node.next != null) {
+        if (node.next.color.equals("pink")) node.next = node.next.next;
+        else node = node.next;
+    }
+}
+`,
+    },
     check: (t) => {
       const want = t.before('head').filter((n) => n.color !== 'pink')
       const got = t.chain(t.head)
@@ -231,6 +331,29 @@ console.log(sum(head))
 console.log(sum(head))
 `,
     exports: ['sum'],
+    java: {
+      code: { 'function sum(head)': 'int sum(Monster head)', 'let total = 0': 'int total = 0' },
+      scaffold: `int sum(Monster head) {
+    int total = 0;
+    // Gå gjennom lista og legg sammen
+    return total;
+}
+
+void main() {
+    IO.println(sum(head));
+}
+`,
+      solution: `int sum(Monster head) {
+    int total = 0;
+    for (Monster node = head; node != null; node = node.next) total += node.value;
+    return total;
+}
+
+void main() {
+    IO.println(sum(head));
+}
+`,
+    },
     check: (t) => {
       const sum = t.fn('sum')
       for (const values of [[5], [3, 1, 4, 1, 5], [], [90, 9, 99, 1]]) {
@@ -272,6 +395,36 @@ console.log(toArray(head))
 console.log(toArray(head))
 `,
     exports: ['toArray'],
+    java: {
+      text: `Skriv \`List<Integer> toArray(Monster head)\` som gir tilbake verdiene i lista som en liste av tall, i den rekkefølgen monstrene står: \`[17, 1, 32, …]\`.
+
+Monstrene skal stå som før etterpå. En tom liste gir \`[]\`.`,
+      hints: [
+        'Lag en tom liste først: `List<Integer> values = new ArrayList<>()`.',
+        'Gå gjennom lista og legg hver `node.value` til med `values.add`.',
+        'Ikke endre `next` underveis: flytt bare din egen peker.',
+      ],
+      scaffold: `List<Integer> toArray(Monster head) {
+    List<Integer> values = new ArrayList<>();
+    // Fyll values
+    return values;
+}
+
+void main() {
+    IO.println(toArray(head));
+}
+`,
+      solution: `List<Integer> toArray(Monster head) {
+    List<Integer> values = new ArrayList<>();
+    for (Monster node = head; node != null; node = node.next) values.add(node.value);
+    return values;
+}
+
+void main() {
+    IO.println(toArray(head));
+}
+`,
+    },
     check: (t) => {
       const toArray = t.fn('toArray')
       for (const values of [[4, 8, 15, 16, 23, 42], [], [7]]) {
@@ -315,6 +468,30 @@ console.log(nth(head, 3))
 console.log(nth(head, 3))
 `,
     exports: ['nth'],
+    java: {
+      code: { 'function nth(head, n)': 'Monster nth(Monster head, int n)' },
+      scaffold: `Monster nth(Monster head, int n) {
+    Monster node = head;
+    // Gå n steg
+    return node;
+}
+
+void main() {
+    IO.println(nth(head, 3));
+}
+`,
+      solution: `Monster nth(Monster head, int n) {
+    if (n < 0) return null;
+    Monster node = head;
+    for (int i = 0; i < n && node != null; i++) node = node.next;
+    return node;
+}
+
+void main() {
+    IO.println(nth(head, 3));
+}
+`,
+    },
     check: (t) => {
       const nth = t.fn('nth')
       const head = t.list([10, 20, 30, 40, 50])
@@ -365,6 +542,27 @@ before.next = G.next
 G.next = head
 head = G
 `,
+    java: {
+      code: { 'next === G': 'next == G' },
+      scaffold: `void main() {
+    Monster before = head;
+    while (before.next != G) {
+        before = before.next;
+    }
+    // Nå står before rett foran G
+}
+`,
+      solution: `void main() {
+    Monster before = head;
+    while (before.next != G) {
+        before = before.next;
+    }
+    before.next = G.next;
+    G.next = head;
+    head = G;
+}
+`,
+    },
     check: (t) => {
       const G = t.slots[6]
       const want = [G, ...t.before('head').filter((n) => n !== G)]
@@ -405,6 +603,25 @@ while (last.next) last = last.next
 last.next = first
 first.next = null
 `,
+    java: {
+      code: { 'const first = head': 'Monster first = head', 'next === null': 'next == null' },
+      scaffold: `void main() {
+    Monster first = head;
+    head = head.next;
+    Monster last = head;
+    // Finn det siste, og heng first på der
+}
+`,
+      solution: `void main() {
+    Monster first = head;
+    head = head.next;
+    Monster last = head;
+    while (last.next != null) last = last.next;
+    last.next = first;
+    first.next = null;
+}
+`,
+    },
     check: (t) => {
       const before = t.before('head')
       const want = [...before.slice(1), before[0]]
@@ -450,6 +667,29 @@ while (fast && fast.next) {
   vis()
 }
 `,
+    java: {
+      scaffold: `void main() {
+    slow = head;
+    fast = head;
+    while (fast != null && fast.next != null) {
+        // Ett steg for slow, to for fast
+        vis();
+        break;
+    }
+}
+`,
+      solution: `void main() {
+    slow = head;
+    fast = head;
+    vis();
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        vis();
+    }
+}
+`,
+    },
     check: (t) => {
       const nodes = t.before('head')
       const got = t.chain(t.head)
@@ -501,6 +741,39 @@ console.log(fromEnd(head, 2))
 console.log(fromEnd(head, 2))
 `,
     exports: ['fromEnd'],
+    java: {
+      code: { 'function fromEnd(head, k)': 'Monster fromEnd(Monster head, int k)' },
+      scaffold: `Monster fromEnd(Monster head, int k) {
+    Monster ahead = head;
+    Monster behind = head;
+    // Send ahead k steg i forveien, og flytt så begge
+    return behind;
+}
+
+void main() {
+    IO.println(fromEnd(head, 2));
+}
+`,
+      solution: `Monster fromEnd(Monster head, int k) {
+    if (k < 1) return null;
+    Monster ahead = head;
+    for (int i = 0; i < k; i++) {
+        if (ahead == null) return null;
+        ahead = ahead.next;
+    }
+    Monster behind = head;
+    while (ahead != null) {
+        ahead = ahead.next;
+        behind = behind.next;
+    }
+    return behind;
+}
+
+void main() {
+    IO.println(fromEnd(head, 2));
+}
+`,
+    },
     check: (t) => {
       const fromEnd = t.fn('fromEnd')
       const head = t.list([11, 22, 33, 44, 55, 66])
@@ -555,6 +828,42 @@ while (prev.next && prev.next.next) {
 }
 head = dummy.next
 `,
+    java: {
+      hints: [
+        'Det er lettere med et ekstra monster foran lista: `Monster dummy = new Monster()` med `dummy.next = head`, og en peker `prev = dummy`.',
+        'Så lenge det finnes to monstre etter `prev`: kall dem `a` og `b`. Sett `a.next = b.next`, `b.next = a` og `prev.next = b`.',
+        'Flytt `prev` til `a` og fortsett. Til slutt: `head = dummy.next`.',
+      ],
+      scaffold: `void main() {
+    Monster dummy = new Monster();
+    dummy.next = head;
+    Monster prev = dummy;
+    while (prev.next != null && prev.next.next != null) {
+        Monster a = prev.next;
+        Monster b = a.next;
+        // Bytt a og b
+        prev = b;
+    }
+    head = dummy.next;
+}
+`,
+      solution: `void main() {
+    Monster dummy = new Monster();
+    dummy.next = head;
+    Monster prev = dummy;
+    while (prev.next != null && prev.next.next != null) {
+        Monster a = prev.next;
+        Monster b = a.next;
+        a.next = b.next;
+        b.next = a;
+        prev.next = b;
+        prev = a;
+        vis(a, b);
+    }
+    head = dummy.next;
+}
+`,
+    },
     check: (t) => {
       const before = t.before('head')
       const want = []
@@ -616,6 +925,36 @@ while (a && b) {
 tail.next = a ?? b
 head = dummy.next
 `,
+    java: {
+      code: { 'const dummy = { next: null }': 'Monster dummy = new Monster()', 'let tail = dummy': 'Monster tail = dummy' },
+      scaffold: `void main() {
+    Monster dummy = new Monster();
+    Monster tail = dummy;
+    while (a != null && b != null) {
+        // Heng det minste av a og b på tail
+        break;
+    }
+    head = dummy.next;
+}
+`,
+      solution: `void main() {
+    Monster dummy = new Monster();
+    Monster tail = dummy;
+    while (a != null && b != null) {
+        if (a.value <= b.value) {
+            tail.next = a;
+            a = a.next;
+        } else {
+            tail.next = b;
+            b = b.next;
+        }
+        tail = tail.next;
+    }
+    tail.next = a != null ? a : b;
+    head = dummy.next;
+}
+`,
+    },
     check: (t) => {
       const all = [...t.before('a'), ...t.before('b')].sort((x, y) => x.value - y.value)
       const got = t.chain(t.head)
@@ -671,6 +1010,35 @@ console.log(hasLoop(head))
 console.log(hasLoop(head))
 `,
     exports: ['hasLoop'],
+    java: {
+      code: { 'function hasLoop(head)': 'boolean hasLoop(Monster head)', 'slow === fast': 'slow == fast' },
+      scaffold: `boolean hasLoop(Monster head) {
+    Monster slow = head;
+    Monster fast = head;
+    // La fast ta to steg og slow ett, til de møtes eller fast er ute
+    return false;
+}
+
+void main() {
+    IO.println(hasLoop(head));
+}
+`,
+      solution: `boolean hasLoop(Monster head) {
+    Monster slow = head;
+    Monster fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) return true;
+    }
+    return false;
+}
+
+void main() {
+    IO.println(hasLoop(head));
+}
+`,
+    },
     check: (t) => {
       const hasLoop = t.fn('hasLoop')
       const make = (n: number, back: number | null) => {
@@ -739,6 +1107,40 @@ console.log(loopStart(head))
 console.log(loopStart(head))
 `,
     exports: ['loopStart'],
+    java: {
+      code: { 'function loopStart(head)': 'Monster loopStart(Monster head)', 'p === slow': 'p == slow' },
+      scaffold: `Monster loopStart(Monster head) {
+    // Finn monsteret der ringen begynner
+    return null;
+}
+
+void main() {
+    IO.println(loopStart(head));
+}
+`,
+      solution: `Monster loopStart(Monster head) {
+    Monster slow = head;
+    Monster fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) {
+            Monster p = head;
+            while (p != slow) {
+                p = p.next;
+                slow = slow.next;
+            }
+            return p;
+        }
+    }
+    return null;
+}
+
+void main() {
+    IO.println(loopStart(head));
+}
+`,
+    },
     check: (t) => {
       const loopStart = t.fn('loopStart')
       for (const [n, back] of [[8, 3], [5, 0], [1, 0], [10, 9], [6, null], [3, 1]] as [number, number | null][]) {
@@ -798,6 +1200,40 @@ while (true) {
 }
 head = dummy.next
 `,
+    java: {
+      scaffold: `void main() {
+    Monster dummy = new Monster();
+    dummy.next = head;
+    Monster prev = dummy;
+    // Snu gruppene på tre, én om gangen
+    head = dummy.next;
+}
+`,
+      solution: `void main() {
+    Monster dummy = new Monster();
+    dummy.next = head;
+    Monster prev = dummy;
+    while (true) {
+        Monster check = prev;
+        for (int i = 0; i < 3 && check != null; i++) check = check.next;
+        if (check == null) break;
+        Monster first = prev.next;
+        Monster back = check.next;
+        Monster node = first;
+        for (int i = 0; i < 3; i++) {
+            Monster next = node.next;
+            node.next = back;
+            back = node;
+            node = next;
+        }
+        prev.next = back;
+        prev = first;
+        vis();
+    }
+    head = dummy.next;
+}
+`,
+    },
     check: (t) => {
       const before = t.before('head')
       const want: typeof before = []
@@ -862,6 +1298,31 @@ console.log(meeting(a, b))
 console.log(meeting(a, b))
 `,
     exports: ['meeting'],
+    java: {
+      code: { 'function meeting(a, b)': 'Monster meeting(Monster a, Monster b)' },
+      scaffold: `Monster meeting(Monster a, Monster b) {
+    // Finn det første monsteret begge listene har
+    return null;
+}
+
+void main() {
+    IO.println(meeting(a, b));
+}
+`,
+      solution: `Monster meeting(Monster a, Monster b) {
+    Set<Monster> seen = new HashSet<>();
+    for (Monster node = a; node != null; node = node.next) seen.add(node);
+    for (Monster node = b; node != null; node = node.next) {
+        if (seen.contains(node)) return node;
+    }
+    return null;
+}
+
+void main() {
+    IO.println(meeting(a, b));
+}
+`,
+    },
     check: (t) => {
       const meeting = t.fn('meeting')
       const build = (aLen: number, bLen: number, shared: number) => {
@@ -933,6 +1394,40 @@ bigTail.next = null
 smallTail.next = big.next
 head = small.next
 `,
+    java: {
+      scaffold: `void main() {
+    Monster small = new Monster();
+    Monster big = new Monster();
+    Monster smallTail = small;
+    Monster bigTail = big;
+    for (Monster node = head; node != null; node = node.next) {
+        // Heng node på smallTail eller bigTail
+    }
+}
+`,
+      solution: `void main() {
+    Monster small = new Monster();
+    Monster big = new Monster();
+    Monster smallTail = small;
+    Monster bigTail = big;
+    Monster node = head;
+    while (node != null) {
+        Monster next = node.next;
+        if (node.value < 50) {
+            smallTail.next = node;
+            smallTail = node;
+        } else {
+            bigTail.next = node;
+            bigTail = node;
+        }
+        node = next;
+    }
+    bigTail.next = null;
+    smallTail.next = big.next;
+    head = small.next;
+}
+`,
+    },
     check: (t) => {
       const before = t.before('head')
       const want = [...before.filter((n) => n.value < 50), ...before.filter((n) => n.value >= 50)]
@@ -979,6 +1474,24 @@ for (let node = head; node; node = node.next) {
   vis(node)
 }
 `,
+    java: {
+      scaffold: `void main() {
+    Monster prev = null;
+    for (Monster node = head; node != null; node = node.next) {
+        // Sett node.prev
+    }
+}
+`,
+      solution: `void main() {
+    Monster prev = null;
+    for (Monster node = head; node != null; node = node.next) {
+        node.prev = prev;
+        prev = node;
+        vis(node);
+    }
+}
+`,
+    },
     check: (t) => {
       const nodes = t.chain(t.head)
       const before = t.before('head')
@@ -1031,6 +1544,29 @@ while (node) {
   vis(head)
 }
 `,
+    java: {
+      scaffold: `void main() {
+    Monster node = head;
+    while (node != null) {
+        Monster next = node.next;
+        // Bytt next og prev på node
+        node = next;
+    }
+}
+`,
+      solution: `void main() {
+    Monster node = head;
+    while (node != null) {
+        Monster next = node.next;
+        node.next = node.prev;
+        node.prev = next;
+        head = node;
+        node = next;
+        vis(head);
+    }
+}
+`,
+    },
     check: (t) => {
       const want = t.before('head').reverse()
       const got = t.chain(t.head)
