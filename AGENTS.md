@@ -16,7 +16,7 @@ how code runs and where things live.
   minified build is only covered by `scripts/smoke-tasks.mjs`, so run it after adding or changing tasks.
 - Every task has a solution that passes, and an opening and a scaffold that don't (`test/tasks.test.ts`, three
   seeds). A world must look the same for the same seed, with the same roots.
-- A task opens without a skeleton (Petter, 2026-10-23: the starters gave too much and steered the answer): a comment
+- A task opens without a skeleton (Petter's call: a starter gives too much and steers the answer): a comment
   naming the roots, plus the code that runs the exports on the stage (`src/tasks/opening.ts`). The skeleton is the
   task's `scaffold`, behind a button in hint 1. Write the scaffold's exports at column 0 with the closing `}` at
   column 0 and the code that calls them after; set `opening` when the rest of the scaffold is part of the answer. A check message says what is wrong in a sentence, naming items by letter
@@ -33,19 +33,19 @@ how code runs and where things live.
   the top of the world section in `worker.js`; a change there goes in `world.ts` and `test/world.test.ts` too.
 - The page never mutates a `World`: every run returns a new one. `version` in `main.ts` drops a run's result when
   a later run, «Nye», «Nullstill» or another task came in between.
-- The playground keeps eight items (`ITEM_COUNT`), Petter's call (2026-10-22: "gjør det enklere"), and its storage
-  keys from before the tasks (`code-kata:code`, `code-kata:ting`). Nothing may be saved before the first route
+- The playground keeps eight items (`ITEM_COUNT`), Petter's call ("gjør det enklere"), and its storage
+  keys are `code-kata:code` and `code-kata:ting`. Nothing may be saved before the first route
   (`mode` is null until then), or the empty editors overwrite the playground.
 - The Monster class and the code compile as one source (`worker.js`: class, `__kata_build__`, code, exports); `place()`
   maps a line back to its editor. Keep that order, or `Monster` in the code stops being the items' class.
-- The creatures are «monstre» (Petter, 2026-10-23; «ting» before). «Monster» is neuter: et monster, monsteret,
+- The creatures are «monstre» (Petter's word). «Monster» is neuter: et monster, monsteret,
   monstre, monstrene, so «det første», «hvert monster», «ett av dem», «et stort monster». Saved code and classes still
   say `Ting`: the worker builds from whichever the class editor declares (Monster first) and gives the other name to
   the same class (`classNames()` in `worker.js`; `test/engine.test.ts` and every task's solution with a `class Ting`
   check it). The `ting` storage key and progress field are data and keep their names.
 - A blob's look (`blobLook` in `src/stage/creatures.ts`) is the stage's: from its letter and value (colour when it
   has none) when first drawn, never written to the item. A task's `shape` wins; checks read only `shape` and `color`.
-- Monsters have a `value` only where the task needs a number (Petter, 2026-10-23). Such a task takes a `COLOR_` class
+- Monsters have a `value` only where the task needs a number (Petter's rule). Such a task takes a `COLOR_` class
   from `classes.ts` and builds its items with `colored`; both must leave `value` out, or the class's default puts a 0
   under every monster (`test/tasks.test.ts` checks it). The pegs keep `value` as the discs' width. A task with no
   monsters hides the class (`showClass` in `main.ts`).
@@ -73,7 +73,7 @@ how code runs and where things live.
 - «Snakk om det» (`worker/talk.ts`, README → Talking about a solution) has two ways in. Signed in, Opus with the
   reference solution in the prompt: keep the server-side check that the account has solved the task (`/talk/begin` in
   `ProgressStore`). The conversation is append-only (Claude's whole answers, thinking blocks included); don't edit or
-  trim stored turns. Not signed in (Petter, 2026-10-24: open it with Haiku on low effort and a few fixed questions,
+  trim stored turns. Not signed in (Petter: open it with Haiku on low effort and a few fixed questions,
   with no way for the client to slip in its own): the page sends a question's id and the code, never words or a
   history, and nothing proves the task is solved, so that prompt must never carry the reference solution. Either
   way, task text and solution come from the bank in the Worker, never from the request.
